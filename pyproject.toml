@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "quipucordsctl"
+version = "0.1.0"
+description = "Utility for installing and managing a local quipucords server."
+authors = ["Brad Smith <brasmith@redhat.com>"]
+license = "GPLv3"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0"
+pytest = "^8.3.3"
+coverage = "^7.6.7"
+pytest-cov = "^6.0.0"
+Faker = "^33.0.0"
+setuptools = "^75.5.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
