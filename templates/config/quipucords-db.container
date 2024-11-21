@@ -1,0 +1,30 @@
+[Unit]
+Description=PostgreSQL Database for Quipucords
+Requires=podman.socket
+PartOf=quipucords-app.service
+
+[Container]
+ContainerName=quipucords-db
+Image=registry.redhat.io/rhel9/postgresql-15:latest
+ExposeHostPort=5432
+Environment=POSTGRESQL_USER=qpc
+Environment=POSTGRESQL_PASSWORD=qpc
+Environment=POSTGRESQL_DATABASE=qpc
+Volume=%h/.local/share/quipucords/db:/var/lib/pgsql/data:z
+Network=quipucords.network
+# for some reason podman default user mapping won't map host user to postgres container uid (26)[1]
+# (maybe due to fix-permission script it executes later on [2]), so we fix that setting this up with
+# UserNS.
+# [1] https://github.com/sclorg/postgresql-container/blob/1a91d2fd3842a166fff398ce732de7790d55881e/12/Dockerfile.rhel8#L88
+# [2] https://github.com/sclorg/postgresql-container/blob/1a91d2fd3842a166fff398ce732de7790d55881e/12/root/usr/libexec/fix-permissions
+UserNS=keep-id:uid=26,gid=26
+# RHEL 8 needs --pids-limit flag. This is not necessary on RHEL 9, and
+# in fact causes us to ignore user settings, if any.
+PidsLimit=0
+
+[Service]
+TimeoutStartSec=300
+Restart=always
+
+[Install]
+WantedBy=default.target
