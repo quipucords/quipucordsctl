@@ -1,0 +1,66 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main, "release/*"]
+
+jobs:
+  check-dependencies:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.12"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      - name: Set up Python
+        uses: actions/setup-python@v5.3.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "poetry"
+          cache-dependency-path: "poetry.lock"
+
+      - name: Check dependencies
+        run: |
+          poetry lock --no-update
+          git diff --exit-code
+  test:
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      - name: Set up Python
+        uses: actions/setup-python@v5.3.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "poetry"
+          cache-dependency-path: "poetry.lock"
+
+      - name: Install Python dependencies
+        run: poetry install
+
+      - name: Run Test
+        run: poetry run pytest --cov=quipucordsctl --cov-report=xml
+
+      - name: Report coverage
+        if: ${{ success() }}
+        uses: codecov/codecov-action@v4
+        with:
+          fail_ci_if_error: true # optional (default = false)
+          token: ${{ secrets.CODECOV_TOKEN }} # required
+          # verbose: true # optional (default = false)
