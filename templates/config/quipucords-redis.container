@@ -1,0 +1,21 @@
+[Unit]
+Description=Redis for Quipucords
+Requires=podman.socket
+PartOf=quipucords-app.service
+
+[Container]
+ContainerName=quipucords-redis
+Image=registry.redhat.io/rhel9/redis-6:latest
+ExposeHostPort=6379
+EnvironmentFile=%h/.config/quipucords/env/env-redis.env
+Network=quipucords.network
+# RHEL 8 needs --pids-limit flag. This is not necessary on RHEL 9, and
+# in fact causes us to ignore user settings, if any.
+PidsLimit=0
+
+[Service]
+TimeoutStartSec=300
+Restart=always
+
+[Install]
+WantedBy=default.target
