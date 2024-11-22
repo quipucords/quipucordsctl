@@ -1,13 +1,13 @@
 """Logic for the "reset_server_password" command."""
 
 
-def server_password_is_set(verbose: bool = False) -> bool:
+def server_password_is_set() -> bool:
     """Check if the server password is already set."""
     # TODO `podman secret exists quipucords-server-password`
     return False
 
 
-def run(verbose: bool = False):
+def run():
     """Reset the server password."""
     # TODO implement this.
     # TODO Should this also conditionally restart the server?

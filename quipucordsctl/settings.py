@@ -1,10 +1,13 @@
 """Global configuration settings for quipucordsctl."""
 
+import logging
 import pathlib
 
 PROGRAM_NAME = "quipucordsctl"
 SERVER_SOFTWARE = "quipucords"
 SERVER_SOFTWARE_NAME = "Quipucords"
+
+DEFAULT_LOG_LEVEL = logging.WARNING
 
 _home = pathlib.Path.home()
 SERVER_ENV_DIR = _home / f".config/{SERVER_SOFTWARE}/env"
