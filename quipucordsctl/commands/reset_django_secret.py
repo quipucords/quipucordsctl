@@ -1,13 +1,13 @@
 """Logic for the "reset_django_secret" command."""
 
 
-def django_secret_is_set(verbose: bool = False) -> bool:
+def django_secret_is_set() -> bool:
     """Check if the Django secret key password is already set."""
     # TODO `podman secret exists quipucords-django-secret-key`
     return False
 
 
-def run(verbose: bool = False):
+def run():
     """Reset the server password."""
     # TODO Implement this.
     # TODO Should this also conditionally restart the server?
