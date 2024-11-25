@@ -1,15 +1,21 @@
 """Test the main module."""
 
 import logging
+from unittest import mock
 
 import pytest
 
 from quipucordsctl import main
 
 
-def test_create_parser_and_parse():
+def test_create_parser_and_parse(faker):
     """Test the constructed argument parser."""
-    parser = main.create_parser()
+    mock_command_name = faker.slug()
+    mock_command_doc = faker.sentence()
+    mock_command = mock.Mock()
+    mock_command.__doc__ = mock_command_doc
+
+    parser = main.create_parser({mock_command_name: mock_command})
 
     # Simplest no-arg invocation.
     parsed_args = parser.parse_args([])
@@ -20,7 +26,7 @@ def test_create_parser_and_parse():
     # Many-args invocation
     # TODO use a TemporaryDirectory and assert bogus paths raise errors.
     override_conf_dir = "/bogus/path"
-    command = "install"
+    command = mock_command_name
     parsed_args = parser.parse_args(["-vv", "-q", "-c", override_conf_dir, command])
     assert parsed_args.verbosity == 2
     assert parsed_args.quiet

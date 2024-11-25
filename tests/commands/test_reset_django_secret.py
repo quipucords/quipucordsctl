@@ -1,6 +1,8 @@
 """Test the "reset_django_secret" command."""
-# TODO FIXME Implement the rest of these tests.
 
+from unittest import mock
+
+# TODO FIXME Implement the rest of these tests.
 from quipucordsctl.commands import reset_django_secret
 
 
@@ -11,4 +13,5 @@ def test_django_secret_is_set():
 
 def test_reset_django_secret_run():
     """Test placeholder for reset_django_secret.run."""
-    assert reset_django_secret.run() is None
+    mock_args = mock.Mock()
+    assert reset_django_secret.run(mock_args) is None

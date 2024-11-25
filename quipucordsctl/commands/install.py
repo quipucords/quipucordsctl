@@ -1,11 +1,14 @@
-"""Logic for the "install" command."""
+"""Install the server."""
 
+import argparse
 import itertools
 import logging
 import shutil
 
 from .. import settings, shell_utils
 from . import reset_django_secret, reset_server_password
+
+__doc__ = f"Install the {settings.SERVER_SOFTWARE_NAME} server."
 
 DATA_DIRS = ("data", "db", "log", "sshkeys")
 SYSTEMCTL_USER_RESET_FAILED_CMD = ["systemctl", "--user", "reset-failed"]
@@ -68,16 +71,16 @@ def systemctl_reload():
     shell_utils.run_command(SYSTEMCTL_USER_DAEMON_RELOAD_CMD)
 
 
-def run(override_conf_dir: str | None = None):
+def run(args: argparse.Namespace) -> None:
     """Install the server, ensuring requirements are met."""
     logger.info("Starting install command")
-    if override_conf_dir:
+    if args.override_conf_dir:
         raise NotImplementedError
 
     if not reset_server_password.server_password_is_set():
-        reset_server_password.run()
+        reset_server_password.run(args)
     if not reset_django_secret.django_secret_is_set():
-        reset_django_secret.run()
+        reset_django_secret.run(args)
 
     write_config_files()
     systemctl_reload()
