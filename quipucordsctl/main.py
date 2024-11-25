@@ -1,15 +1,27 @@
 """Main command-line entrypoint."""
 
 import argparse
+import importlib
 import logging
+import pkgutil
+from types import ModuleType
 
 from . import settings
-from .commands import install
 
 logger = logging.getLogger(__name__)
 
 
-def create_parser() -> argparse.ArgumentParser:
+def load_commands() -> dict[str, ModuleType]:
+    """Dynamically load command modules."""
+    commands = {}
+    for _, module_name, _ in pkgutil.iter_modules([settings.COMMANDS_PACKAGE_PATH]):
+        module = importlib.import_module(f"quipucordsctl.commands.{module_name}")
+        if not getattr(module, "NOT_A_COMMAND", False):
+            commands[module_name] = module
+    return commands
+
+
+def create_parser(commands: dict[str, ModuleType]) -> argparse.ArgumentParser:
     """Create the argument parser for the CLI."""
     parser = argparse.ArgumentParser(prog=settings.PROGRAM_NAME)
     parser.add_argument(
@@ -38,17 +50,12 @@ def create_parser() -> argparse.ArgumentParser:
     )
 
     subparsers = parser.add_subparsers(dest="command")
-    # TODO load subparsers dynamically from commands package.
-
-    subparsers.add_parser(
-        "install", help=f"Install the {settings.SERVER_SOFTWARE_NAME} server"
-    )
-    # TODO more arguments for this subparser.
-
-    subparsers.add_parser(
-        "uninstall", help=f"Uninstall the {settings.SERVER_SOFTWARE_NAME} server"
-    )
-    # TODO more arguments for this subparser.
+    for command_name, command_module in commands.items():
+        command_parser = subparsers.add_parser(
+            command_name, help=command_module.__doc__
+        )
+        if hasattr(command_module, "setup_parser"):
+            command_module.setup_parser(command_parser)
 
     return parser
 
@@ -74,15 +81,13 @@ def configure_logging(verbosity: int = 0, quiet: bool = False) -> int:
 
 def main():
     """Run the program with arguments from the CLI."""
-    parser = create_parser()
+    commands = load_commands()
+    parser = create_parser(commands)
     args = parser.parse_args()
     configure_logging(args.verbosity, args.quiet)
 
-    # TODO load commands dynamically from commands package.
-    if args.command == "install":
-        install.run(override_conf_dir=args.override_conf_dir)
-    elif args.command == "uninstall":
-        raise NotImplementedError
+    if args.command in commands:
+        commands[args.command].run(args)
     else:
         parser.print_help()
 

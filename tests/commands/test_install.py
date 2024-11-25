@@ -39,6 +39,8 @@ def mock_shell_utils():
 
 def test_install_run(temp_config_directories):
     """Test the install command happy path."""
+    mock_args = mock.Mock()
+    mock_args.override_conf_dir = None
     data_dir, env_dir, systemd_dir = temp_config_directories
     with (
         mock.patch.object(install, "reset_django_secret") as reset_django_secret,
@@ -48,7 +50,7 @@ def test_install_run(temp_config_directories):
         reset_django_secret.django_secret_is_set.return_value = False
         reset_server_password.server_password_is_set.return_value = False
 
-        install.run()
+        install.run(mock_args)
 
         # Spot-check only a few paths that should now exist.
         assert (pathlib.Path(data_dir) / "data").is_dir()

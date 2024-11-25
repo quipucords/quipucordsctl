@@ -7,6 +7,8 @@ PROGRAM_NAME = "quipucordsctl"
 SERVER_SOFTWARE = "quipucords"
 SERVER_SOFTWARE_NAME = "Quipucords"
 
+COMMANDS_PACKAGE_PATH = str(pathlib.Path(__file__).parent.resolve() / "commands")
+
 DEFAULT_LOG_LEVEL = logging.WARNING
 
 _home = pathlib.Path.home()
