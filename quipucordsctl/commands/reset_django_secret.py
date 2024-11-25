@@ -1,4 +1,10 @@
-"""Logic for the "reset_django_secret" command."""
+"""Reset the Django secret key."""
+
+import argparse
+import logging
+
+logger = logging.getLogger(__name__)
+NOT_A_COMMAND = True  # Until we complete the implementation.
 
 
 def django_secret_is_set() -> bool:
@@ -7,8 +13,9 @@ def django_secret_is_set() -> bool:
     return False
 
 
-def run():
+def run(args: argparse.Namespace) -> None:
     """Reset the server password."""
+    logger.warning("%s is not yet implemented.", __name__)
     # TODO Implement this.
     # TODO Should this also conditionally restart the server?
     # Old bash installer did the following:
