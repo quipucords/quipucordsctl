@@ -7,7 +7,7 @@ import shutil
 from gettext import gettext as _
 
 from .. import settings, shell_utils
-from . import reset_django_secret, reset_server_password
+from . import reset_admin_password, reset_django_secret
 
 DATA_DIRS = ("data", "db", "log", "sshkeys")
 SYSTEMCTL_USER_RESET_FAILED_CMD = ["systemctl", "--user", "reset-failed"]
@@ -100,8 +100,8 @@ def run(args: argparse.Namespace) -> None:
     if args.override_conf_dir:
         raise NotImplementedError
 
-    if not reset_server_password.server_password_is_set():
-        reset_server_password.run(args)
+    if not reset_admin_password.server_password_is_set():
+        reset_admin_password.run(args)
     if not reset_django_secret.django_secret_is_set():
         reset_django_secret.run(args)
 
