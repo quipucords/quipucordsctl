@@ -10,7 +10,7 @@ from quipucordsctl import main
 
 def test_load_commands():
     """Test some known commands are loaded and returned."""
-    from quipucordsctl.commands import install as install_module
+    from quipucordsctl.commands import install as install_module  # noqa: PLC0415
 
     commands = main.load_commands()
     assert "install" in commands

@@ -1,25 +1,32 @@
-[tool.poetry]
+[build-system]
+requires = ["setuptools >= 70"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["quipucordsctl"]
+
+[project]
 name = "quipucordsctl"
 version = "0.1.0"
 description = "Utility for installing and managing a local quipucords server."
-authors = ["Brad Smith <brasmith@redhat.com>"]
-license = "GPLv3"
+requires-python = "<3.14,>=3.12"
+authors = [
+    {name = "Quipucords Dev Team", email = "quipucords@redhat.com"},
+]
+# license should preferably follow identifiers listed at the SPDX Open Source License Registry.
+# https://spdx.org/licenses/
+license = {text = "GPL-3.0-or-later"}
 readme = "README.md"
+dependencies = []
 
-[tool.poetry.dependencies]
-python = "^3.12"
-
-[tool.poetry.group.dev.dependencies]
-ruff = "^0"
-pytest = "^8.3.3"
-coverage = "^7.6.7"
-pytest-cov = "^6.0.0"
-Faker = "^33.0.0"
-setuptools = "^75.5.0"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[dependency-groups]
+dev = [
+    "coverage>=7.9.2",
+    "faker>=37.4.0",
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+    "ruff>=0.12.2",
+]
 
 [tool.ruff]
 lint.select = [
