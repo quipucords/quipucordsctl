@@ -89,8 +89,15 @@ def main():
     configure_logging(args.verbosity, args.quiet)
 
     if args.command in commands:
-        if not commands[args.command].run(args):
+        try:
+            if not commands[args.command].run(args):
+                sys.exit(1)
+        except SystemExit:
+            raise
+        except Exception as e:  # noqa: BLE001
+            logger.exception(e)
             sys.exit(1)
+
     else:
         parser.print_help()
 
