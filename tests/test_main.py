@@ -2,6 +2,7 @@
 
 import logging
 from unittest import mock
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -143,3 +144,24 @@ def test_main_without_command():
         main.main()
 
         mock_parser.print_help.assert_called_once()
+
+
+def test_main_nonzero_exit_when_command_fails():
+    """Test the main CLI exits with non-zero exit code when the command fails."""
+    with (
+        mock.patch.object(main, "create_parser") as mock_create_parser,
+        mock.patch.object(main, "load_commands") as mock_load_commands,
+        mock.patch.object(main, "sys") as mock_sys,
+    ):
+        command_name = "failure"
+
+        mock_parser = mock_create_parser.return_value
+        mock_args = mock_parser.parse_args.return_value
+        mock_args.command = command_name
+
+        mock_command = MagicMock()
+        mock_command.run.return_value = False
+        mock_load_commands.return_value = {command_name: mock_command}
+
+        main.main()
+        mock_sys.exit.assert_called_once_with(1)

@@ -4,6 +4,7 @@ import argparse
 import importlib
 import logging
 import pkgutil
+import sys
 from gettext import gettext as _
 from types import ModuleType
 
@@ -88,7 +89,8 @@ def main():
     configure_logging(args.verbosity, args.quiet)
 
     if args.command in commands:
-        commands[args.command].run(args)
+        if not commands[args.command].run(args):
+            sys.exit(1)
     else:
         parser.print_help()
 
