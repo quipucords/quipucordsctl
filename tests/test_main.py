@@ -165,3 +165,28 @@ def test_main_nonzero_exit_when_command_fails():
 
         main.main()
         mock_sys.exit.assert_called_once_with(1)
+
+
+def test_main_nonzero_exit_when_command_raises_exception(caplog):
+    """Test the main CLI exits with non-zero exit code following an exception."""
+    with (
+        mock.patch.object(main, "create_parser") as mock_create_parser,
+        mock.patch.object(main, "load_commands") as mock_load_commands,
+        mock.patch.object(main, "sys") as mock_sys,
+        caplog.at_level(logging.ERROR),
+    ):
+        command_name = "failure"
+
+        mock_parser = mock_create_parser.return_value
+        mock_args = mock_parser.parse_args.return_value
+        mock_args.command = command_name
+
+        exception = Exception("something bad happened")
+        mock_command = MagicMock()
+        mock_command.run.side_effect = exception
+        mock_load_commands.return_value = {command_name: mock_command}
+
+        main.main()
+        mock_sys.exit.assert_called_once_with(1)
+
+        assert caplog.messages == [str(exception)]
