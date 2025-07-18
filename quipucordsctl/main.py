@@ -4,6 +4,7 @@ import argparse
 import importlib
 import logging
 import pkgutil
+from gettext import gettext as _
 from types import ModuleType
 
 from . import settings
@@ -14,7 +15,7 @@ logger = logging.getLogger(__name__)
 def load_commands() -> dict[str, ModuleType]:
     """Dynamically load command modules."""
     commands = {}
-    for _, module_name, _ in pkgutil.iter_modules([settings.COMMANDS_PACKAGE_PATH]):
+    for __, module_name, __ in pkgutil.iter_modules([settings.COMMANDS_PACKAGE_PATH]):
         module = importlib.import_module(f"quipucordsctl.commands.{module_name}")
         if not getattr(module, "NOT_A_COMMAND", False):
             commands[module_name] = module
@@ -30,7 +31,7 @@ def create_parser(commands: dict[str, ModuleType]) -> argparse.ArgumentParser:
         action="count",
         dest="verbosity",
         default=0,
-        help="Increase verbose output",
+        help=_("Increase verbose output"),
     )
     parser.add_argument(
         "-q",
@@ -38,21 +39,21 @@ def create_parser(commands: dict[str, ModuleType]) -> argparse.ArgumentParser:
         action="store_true",
         dest="quiet",
         default=0,
-        help="Quiet output (overrides `-v`/`--verbose`)",
+        help=_("Quiet output (overrides `-v`/`--verbose`)"),
     )
 
     parser.add_argument(
         "-c",
         "--override-conf-dir",
         dest="override_conf_dir",
-        help="Override configuration directory",
+        help=_("Override configuration directory"),
         # TODO specify a type that enforces a valid directory path.
     )
 
     subparsers = parser.add_subparsers(dest="command")
     for command_name, command_module in commands.items():
         command_parser = subparsers.add_parser(
-            command_name, help=command_module.__doc__
+            command_name, help=command_module.get_help()
         )
         if hasattr(command_module, "setup_parser"):
             command_module.setup_parser(command_parser)
