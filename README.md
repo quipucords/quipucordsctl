@@ -15,25 +15,14 @@ uv run pytest
 ## l10n/i18n
 
 ```sh
-DOMAIN=messages
-SOURCE_CODE_DIR=quipucordsctl
-LOCALES_DIR="${SOURCE_CODE_DIR}"/locale
-
 # export strings to template
-uv run bin/translations.py
-
-# create each language-specific po file (first time only)
-# replace "XX" with desired ISO 639-1 (two-letter) language code (e.g. "es")
-# https://www.gnu.org/software/gettext/manual/html_node/Usual-Language-Codes.html
-# https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes
-uv run pybabel init -i "${LOCALES_DIR}"/"${DOMAIN}".pot -d "${LOCALES_DIR}" -D "${DOMAIN}" -l XX
+uv run bin/translations.py extract
 
 # update each language-specific po file
-# replace "XX" with desired ISO 639-1 (two-letter) language code (e.g. "es")
-uv run pybabel update -i "${LOCALES_DIR}"/"${DOMAIN}".pot -d "${LOCALES_DIR}" -D "${DOMAIN}" -l XX
+uv run bin/translations.py update
 
 # compile binary mo file(s) after filling out all po file(s)
-uv run pybabel compile -d "${LOCALES_DIR}" -D "${DOMAIN}"
+uv run bin/translations.py compile
 ```
 
 ## running
