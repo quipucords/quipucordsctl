@@ -9,11 +9,13 @@ from .. import settings
 logger = logging.getLogger(__name__)
 NOT_A_COMMAND = True  # Until we complete the implementation.
 
+
 def get_help() -> str:
     """Get the help/docstring for this command."""
     return _("Uninstall the %(server_software_name)s server.") % {
-        "server_software_name": settings.SERVER_SOFTWARE
+        "server_software_name": settings.SERVER_SOFTWARE_NAME
     }
+
 
 def run(args: argparse.Namespace) -> None:
     """Uninstall the server."""

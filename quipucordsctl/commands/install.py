@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 def get_help() -> str:
     """Get the help/docstring for this command."""
     return _("Install the %(server_software_name)s server.") % {
-        "server_software_name": settings.SERVER_SOFTWARE
+        "server_software_name": settings.SERVER_SOFTWARE_NAME
     }
 
 
