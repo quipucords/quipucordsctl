@@ -20,7 +20,7 @@ SOURCE_CODE_DIR=quipucordsctl
 LOCALES_DIR="${SOURCE_CODE_DIR}"/locale
 
 # export strings to template
-uv run pybabel extract -o "${LOCALES_DIR}"/"${DOMAIN}".pot "${SOURCE_CODE_DIR}"
+uv run bin/translations.py
 
 # create each language-specific po file (first time only)
 # replace "XX" with desired ISO 639-1 (two-letter) language code (e.g. "es")
