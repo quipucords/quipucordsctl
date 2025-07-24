@@ -167,7 +167,17 @@ def test_main_nonzero_exit_when_command_fails():
         mock_sys.exit.assert_called_once_with(1)
 
 
-def test_main_nonzero_exit_when_command_raises_exception(caplog):
+@pytest.mark.parametrize(
+    "exception,error_message",
+    [
+        (Exception("uh oh"), "uh oh"),
+        (KeyboardInterrupt, "Exiting due to keyboard interrupt."),
+        (EOFError, "Input closed unexpectedly."),
+    ],
+)
+def test_main_nonzero_exit_when_command_raises_exception(
+    exception, error_message, caplog
+):
     """Test the main CLI exits with non-zero exit code following an exception."""
     with (
         mock.patch.object(main, "create_parser") as mock_create_parser,
@@ -181,7 +191,6 @@ def test_main_nonzero_exit_when_command_raises_exception(caplog):
         mock_args = mock_parser.parse_args.return_value
         mock_args.command = command_name
 
-        exception = Exception("something bad happened")
         mock_command = MagicMock()
         mock_command.run.side_effect = exception
         mock_load_commands.return_value = {command_name: mock_command}
@@ -189,4 +198,4 @@ def test_main_nonzero_exit_when_command_raises_exception(caplog):
         main.main()
         mock_sys.exit.assert_called_once_with(1)
 
-        assert caplog.messages == [str(exception)]
+        assert caplog.messages == [error_message]
