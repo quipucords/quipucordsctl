@@ -61,29 +61,6 @@ def test_prompt_password_fail_check_password(
     assert caplog.messages[0] == "Password was not updated."
 
 
-@pytest.mark.parametrize(
-    "exception,error_message",
-    [
-        (KeyboardInterrupt, "Exiting due to keyboard interrupt."),
-        (EOFError, "Input closed unexpectedly when prompting for password."),
-    ],
-)
-@mock.patch.object(reset_admin_password.getpass, "getpass")
-@mock.patch.object(reset_admin_password, "check_password")
-def test_prompt_password_unexpected_interrupt(
-    mock_check_password, mock_getpass, exception, error_message, caplog
-):
-    """Test prompt_password_success with input that fails check_password."""
-    caplog.set_level(logging.ERROR)
-    mock_getpass.side_effect = exception
-    mock_check_password.return_value = False
-
-    assert reset_admin_password.prompt_password() is None
-    mock_check_password.assert_not_called()
-    assert len(caplog.messages) == 1
-    assert caplog.messages[0] == error_message
-
-
 @mock.patch.object(reset_admin_password.subprocess, "Popen")
 @mock.patch.object(reset_admin_password, "prompt_password")
 def test_reset_admin_password_run_success(mock_prompt_password, mock_popen, caplog):

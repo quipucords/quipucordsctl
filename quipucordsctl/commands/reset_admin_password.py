@@ -58,18 +58,8 @@ def check_password(new_password, confirm_password):
 
 def prompt_password() -> str | None:
     """Prompt the user to enter a new password."""
-    try:
-        new_password = getpass.getpass(_("Enter new server login password: "))
-        confirm_password = getpass.getpass(_("Confirm new server login password: "))
-    except KeyboardInterrupt:  # can occur via control-c input
-        # TODO move this higher in the stack as a general catch-all?
-        print()  # new line to clean output because cursor is probably stuck on getpass
-        logger.error(_("Exiting due to keyboard interrupt."))
-        return None
-    except EOFError:  # can occur via control-d input
-        print()  # new line to clean output because cursor is probably stuck on getpass
-        logger.error(_("Input closed unexpectedly when prompting for password."))
-        return None
+    new_password = getpass.getpass(_("Enter new server login password: "))
+    confirm_password = getpass.getpass(_("Confirm new server login password: "))
     if not check_password(new_password, confirm_password):
         logger.error(_("Password was not updated."))
         return None

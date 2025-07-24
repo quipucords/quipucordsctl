@@ -94,7 +94,16 @@ def main():
                 sys.exit(1)
         except SystemExit:
             raise
+        except KeyboardInterrupt:  # can occur via control-c input
+            print()  # new line for cleaner output before logger
+            logger.error(_("Exiting due to keyboard interrupt."))
+            sys.exit(1)
+        except EOFError:  # can occur via control-d input
+            print()  # new line for cleaner output before logger
+            logger.error(_("Input closed unexpectedly."))
+            sys.exit(1)
         except Exception as e:  # noqa: BLE001
+            print()  # new line for cleaner output before logger
             logger.exception(e)
             sys.exit(1)
 
