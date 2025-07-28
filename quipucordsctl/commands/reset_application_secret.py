@@ -13,8 +13,8 @@ def get_help() -> str:
     return _("Reset the server's internal secret encryption key.")
 
 
-def django_secret_is_set() -> bool:
-    """Check if the Django secret key password is already set."""
+def application_secret_is_set() -> bool:
+    """Check if the application/Django secret key is already set."""
     # TODO `podman secret exists quipucords-django-secret-key`
     return False
 
