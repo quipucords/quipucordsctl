@@ -34,7 +34,13 @@ def check_password(new_password, confirm_password):
         return False
     if len(new_password) < PASSWORD_MIN_LENGTH:
         # mimic MinimumLengthValidator on the server
-        logger.error(_("Your password must be at least 10 characters long."))
+        logger.error(
+            _(
+                "Your password must be at least "
+                "%(PASSWORD_MIN_LENGTH)s characters long."
+            ),
+            {"PASSWORD_MIN_LENGTH": PASSWORD_MIN_LENGTH},
+        )
         return False
     if new_password.isdigit():
         # mimic NumericPasswordValidator on the server
