@@ -1,7 +1,23 @@
-"""Utilities for interacting with external programs."""
+"""Utilities for interacting with user's shell and external programs."""
 
 import subprocess
 import sys
+from gettext import gettext as _
+
+
+def confirm(prompt: str | None = None) -> bool:
+    """Present a typical [y/n] confirmation prompt."""
+    user_input = None
+    if not prompt:
+        prompt = _("Do you want to continue? [y/n] ")
+    while user_input is None:
+        user_input = input(prompt).lower()
+        if user_input == "y":
+            return True
+        elif user_input != "n":
+            print(_("Please answer with 'y' or 'n'."))
+            user_input = None
+    return False
 
 
 def run_command(command: list[str]) -> tuple[str, str, int]:
