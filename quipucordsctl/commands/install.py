@@ -100,7 +100,7 @@ def run(args: argparse.Namespace) -> None:
     if args.override_conf_dir:
         raise NotImplementedError
 
-    if not reset_admin_password.server_password_is_set():
+    if not reset_admin_password.admin_password_is_set():
         reset_admin_password.run(args)
     if not reset_application_secret.application_secret_is_set():
         reset_application_secret.run(args)

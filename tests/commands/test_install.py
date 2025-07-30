@@ -45,7 +45,7 @@ def test_install_run(temp_config_directories: dict[str, pathlib.Path]):
         mock.patch.object(install, "systemctl_reload") as systemctl_reload,
     ):
         reset_application_secret.application_secret_is_set.return_value = False
-        reset_admin_password.server_password_is_set.return_value = False
+        reset_admin_password.admin_password_is_set.return_value = False
 
         install.run(mock_args)
 
