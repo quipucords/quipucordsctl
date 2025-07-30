@@ -17,7 +17,9 @@ authors = [
 # https://spdx.org/licenses/
 license = {text = "GPL-3.0-or-later"}
 readme = "README.md"
-dependencies = []
+dependencies = [
+    "podman==4.9.0",
+]
 
 [dependency-groups]
 dev = [
