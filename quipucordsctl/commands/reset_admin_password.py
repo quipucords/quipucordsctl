@@ -1,11 +1,11 @@
 """Reset the server's login password."""
 
 import argparse
-import difflib
-import getpass
 import logging
 import subprocess
 from gettext import gettext as _
+
+from quipucordsctl import secrets
 
 logger = logging.getLogger(__name__)
 PODMAN_SECRET_NAME = "quipucords-server-password"  # noqa: S105
@@ -27,54 +27,22 @@ def admin_password_is_set() -> bool:
     return False
 
 
-def check_password(new_password, confirm_password):
-    """Check if the new password inputs are sufficient to set."""
-    if new_password != confirm_password:
-        logger.error(_("Your password inputs do not match."))
-        return False
-    if len(new_password) < PASSWORD_MIN_LENGTH:
-        # mimic MinimumLengthValidator on the server
-        logger.error(
-            _(
-                "Your password must be at least "
-                "%(PASSWORD_MIN_LENGTH)s characters long."
-            ),
-            {"PASSWORD_MIN_LENGTH": PASSWORD_MIN_LENGTH},
-        )
-        return False
-    if new_password.isdigit():
-        # mimic NumericPasswordValidator on the server
-        logger.error(_("Your password cannot be entirely numeric."))
-        return False
-    if new_password in PASSWORD_BLOCKLIST:
-        # mimic CommonPasswordValidator on the server
-        logger.error(_("Your password cannot be used because it is blocked."))
-        return False
-    if (
-        difflib.SequenceMatcher(a=new_password, b=DEFAULT_USERNAME).quick_ratio()
-        >= PASSWORD_USERNAME_MAX_SIMILARITY
-    ):
-        # mimic UserAttributeSimilarityValidator on the server
-        # TODO Refactor this when we allow the user to set a custom login username.
-        logger.error(_("Your password is too similar to your login username."))
-        return False
-
-    return True
-
-
-def prompt_password() -> str | None:
-    """Prompt the user to enter a new password."""
-    new_password = getpass.getpass(_("Enter new server login password: "))
-    confirm_password = getpass.getpass(_("Confirm new server login password: "))
-    if not check_password(new_password, confirm_password):
-        logger.error(_("Password was not updated."))
-        return None
-    return new_password
-
-
 def run(args: argparse.Namespace) -> bool:  # noqa: PLR0911
     """Reset the server password."""
-    if not (new_password := prompt_password()):
+    check_kwargs = {
+        "min_length": PASSWORD_MIN_LENGTH,
+        "blocklist": PASSWORD_BLOCKLIST,
+        "check_similar": secrets.SimilarValueCheck(
+            value=DEFAULT_USERNAME,
+            name=_("server login username"),
+            max_similarity=PASSWORD_USERNAME_MAX_SIMILARITY,
+        ),
+    }
+    if not (
+        new_password := secrets.prompt_secret(
+            _("server login password"), **check_kwargs
+        )
+    ):
         return False
 
     command = [
