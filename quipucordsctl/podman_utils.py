@@ -1,6 +1,5 @@
 """Functions to simplify interfacing with podman."""
 
-import functools
 import logging
 import sys
 from gettext import gettext as _
@@ -11,7 +10,6 @@ logger = logging.getLogger(__name__)
 MACOS_DEFAULT_PODMAN_URL = "unix:///var/run/docker.sock"
 
 
-@functools.cache
 def get_podman_client(base_url=None) -> podman.PodmanClient:
     """Get a podman client."""
     # podman on macOS/darwin requires a different default base_url,
