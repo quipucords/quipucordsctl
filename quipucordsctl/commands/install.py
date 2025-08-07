@@ -6,8 +6,8 @@ import logging
 import shutil
 from gettext import gettext as _
 
-from .. import settings, shell_utils
-from . import reset_admin_password, reset_application_secret
+from quipucordsctl import settings, shell_utils
+from quipucordsctl.commands import reset_admin_password, reset_application_secret
 
 DATA_DIRS = ("data", "db", "log", "sshkeys")
 SYSTEMCTL_USER_RESET_FAILED_CMD = ["systemctl", "--user", "reset-failed"]

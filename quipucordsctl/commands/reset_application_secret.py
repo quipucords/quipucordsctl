@@ -5,7 +5,7 @@ import argparse
 import logging
 from gettext import gettext as _
 
-from .. import podman_utils, secrets, settings, shell_utils
+from quipucordsctl import podman_utils, secrets, settings, shell_utils
 
 logger = logging.getLogger(__name__)
 PODMAN_SECRET_NAME = "quipucords-server-password"  # noqa: S105
