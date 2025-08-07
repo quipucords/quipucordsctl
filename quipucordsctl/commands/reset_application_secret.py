@@ -99,10 +99,18 @@ def run(args: argparse.Namespace) -> bool:
                 {"PODMAN_SECRET_NAME": PODMAN_SECRET_NAME},
             )
         if remove:
+            logger.debug(
+                _("A podman secret %(PODMAN_SECRET_NAME)s already exists."),
+                {"PODMAN_SECRET_NAME": PODMAN_SECRET_NAME},
+            )
             podman_client.secrets.remove(PODMAN_SECRET_NAME)
             logger.info(
                 _("Old podman secret %(PODMAN_SECRET_NAME)s was removed."),
                 {"PODMAN_SECRET_NAME": PODMAN_SECRET_NAME},
             )
         podman_client.secrets.create(PODMAN_SECRET_NAME, new_secret)
+        logger.info(
+            _("New podman secret %(PODMAN_SECRET_NAME)s was set."),
+            {"PODMAN_SECRET_NAME": PODMAN_SECRET_NAME},
+        )
     return True
