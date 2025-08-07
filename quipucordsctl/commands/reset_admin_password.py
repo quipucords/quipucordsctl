@@ -1,11 +1,11 @@
 """Reset the server's login password."""
+# TODO Should this command also conditionally restart the server?
 
 import argparse
 import logging
-import subprocess
 from gettext import gettext as _
 
-from quipucordsctl import secrets
+from quipucordsctl import secrets, shell_utils
 
 logger = logging.getLogger(__name__)
 PODMAN_SECRET_NAME = "quipucords-server-password"  # noqa: S105
@@ -45,57 +45,20 @@ def run(args: argparse.Namespace) -> bool:  # noqa: PLR0911
     ):
         return False
 
-    command = [
-        "podman",
-        "secret",
-        "create",
-        "--replace",
-        PODMAN_SECRET_NAME,
-        "-",
-    ]
-
-    try:
-        process = subprocess.Popen(  # noqa: S603
-            command,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
-        stdout, stderr = process.communicate(input=new_password)
-
-        if process.returncode == 0:
+    with shell_utils.get_podman_client() as podman_client:
+        if podman_client.secrets.exists(PODMAN_SECRET_NAME):
+            logger.debug(
+                _("A podman secret %(PODMAN_SECRET_NAME)s already exists."),
+                {"PODMAN_SECRET_NAME": PODMAN_SECRET_NAME},
+            )
+            podman_client.secrets.remove(PODMAN_SECRET_NAME)
             logger.info(
-                _(
-                    "podman secret '%(PODMAN_SECRET_NAME)s' "
-                    "created/replaced successfully."
-                ),
+                _("Old podman secret %(PODMAN_SECRET_NAME)s was removed."),
                 {"PODMAN_SECRET_NAME": PODMAN_SECRET_NAME},
             )
-            logger.debug("podman stdout:")
-            logger.debug(stdout)
-            return True
-        else:
-            logger.error(
-                _("Failed to create podman secret '%(PODMAN_SECRET_NAME)s'."),
-                {"PODMAN_SECRET_NAME": PODMAN_SECRET_NAME},
-            )
-            # TODO Should we *always* show podman's stderr, or gate it behind -vv?
-            logger.debug("podman stderr:")
-            logger.debug(stderr)
-            return False
-
-    except FileNotFoundError:
-        logger.error(
-            _(
-                "'%(command_name)s' command not found. "
-                "Please ensure %(command_name)s is installed and in your PATH."
-            ),
-            {"command_name": "podman"},
+        podman_client.secrets.create(PODMAN_SECRET_NAME, new_password)
+        logger.info(
+            _("New podman secret %(PODMAN_SECRET_NAME)s was set."),
+            {"PODMAN_SECRET_NAME": PODMAN_SECRET_NAME},
         )
-        return False
-    except Exception as e:  # noqa: BLE001
-        logger.error(_("An unexpected error occurred: %(error)s"), {"error": e})
-        return False
-
-    # TODO Should this command also conditionally restart the server?
+    return True

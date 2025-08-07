@@ -4,6 +4,8 @@ import logging
 import uuid
 from unittest import mock
 
+import pytest
+
 from quipucordsctl.commands import reset_admin_password
 
 
@@ -20,7 +22,7 @@ def test_admin_password_is_set():
     assert not reset_admin_password.admin_password_is_set()
 
 
-@mock.patch.object(reset_admin_password.subprocess, "Popen")
+@mock.patch.object(reset_admin_password.shell_utils, "get_podman_client")
 @mock.patch.object(reset_admin_password.secrets, "prompt_secret")
 def test_reset_admin_password_run_success(mock_prompt_secret, mock_popen, caplog):
     """Test reset_admin_password.run is successful."""
@@ -36,10 +38,10 @@ def test_reset_admin_password_run_success(mock_prompt_secret, mock_popen, caplog
     assert len(caplog.messages) == 0
 
 
-@mock.patch.object(reset_admin_password.subprocess, "Popen")
+@mock.patch.object(reset_admin_password.shell_utils, "get_podman_client")
 @mock.patch.object(reset_admin_password.secrets, "prompt_secret")
 def test_reset_admin_password_run_success_verbose_verbose(
-    mock_prompt_secret, mock_popen, caplog, faker
+    mock_prompt_secret, mock_get_podman_client, caplog, faker
 ):
     """Test reset_admin_password.run logs details with 2 --verbose flags."""
     caplog.set_level(logging.DEBUG)
@@ -47,14 +49,23 @@ def test_reset_admin_password_run_success_verbose_verbose(
     mock_args.verbosity = 2
     password = str(uuid.uuid4())
     mock_prompt_secret.return_value = password
-    process_stdout = faker.sentence()  # act like oc process succeeded
-    mock_process = mock_popen.return_value
-    mock_process.communicate.return_value = (process_stdout, None)
-    mock_process.returncode = 0
+
+    mock_podman_client = mock_get_podman_client.return_value.__enter__.return_value
+    mock_podman_client.secrets.exists.return_value = True
+
     assert reset_admin_password.run(mock_args)
-    assert "created/replaced successfully" in caplog.messages[0]
-    assert "stdout" in caplog.messages[1]
-    assert process_stdout in caplog.messages[2]
+    assert (
+        f"A podman secret {reset_admin_password.PODMAN_SECRET_NAME} already exists."
+        == caplog.messages[0]
+    )
+    assert (
+        f"Old podman secret {reset_admin_password.PODMAN_SECRET_NAME} was removed."
+        == caplog.messages[1]
+    )
+    assert (
+        f"New podman secret {reset_admin_password.PODMAN_SECRET_NAME} was set."
+        == caplog.messages[2]
+    )
 
 
 @mock.patch.object(reset_admin_password.secrets, "prompt_secret")
@@ -65,52 +76,28 @@ def test_reset_admin_password_run_bad_password(mock_prompt_secret):
     assert not reset_admin_password.run(mock_args)
 
 
-@mock.patch.object(reset_admin_password.subprocess, "Popen")
+@mock.patch.object(reset_admin_password.shell_utils, "get_podman_client")
 @mock.patch.object(reset_admin_password.secrets, "prompt_secret")
-def test_reset_admin_password_run_oc_fails(mock_prompt_secret, mock_popen, caplog):
-    """Test reset_admin_password.run when the `oc` command fails."""
-    caplog.set_level(logging.ERROR)
-    mock_args = mock.Mock()
-    mock_args.verbosity = 0
-    password = str(uuid.uuid4())
-    mock_prompt_secret.return_value = password
-    mock_process = mock_popen.return_value  # act like oc process failed
-    mock_process.communicate.return_value = (None, None)
-    mock_process.returncode = 1
-    assert not reset_admin_password.run(mock_args)
-    assert "Failed to create podman secret" in caplog.messages[0]
-
-
-@mock.patch.object(reset_admin_password.subprocess, "Popen")
-@mock.patch.object(reset_admin_password.secrets, "prompt_secret")
-def test_reset_admin_password_run_oc_not_installed(
-    mock_prompt_secret, mock_popen, caplog
-):
-    """Test reset_admin_password.run when the `oc` program is not found in the PATH."""
-    caplog.set_level(logging.ERROR)
-    mock_args = mock.Mock()
-    mock_args.verbosity = 0
-    password = str(uuid.uuid4())
-    mock_prompt_secret.return_value = password
-    mock_process = mock_popen.return_value  # act like oc program could not be found
-    mock_process.communicate.side_effect = FileNotFoundError
-    assert not reset_admin_password.run(mock_args)
-    assert "command not found" in caplog.messages[0]
-
-
-@mock.patch.object(reset_admin_password.subprocess, "Popen")
-@mock.patch.object(reset_admin_password.secrets, "prompt_secret")
-def test_reset_admin_password_run_truly_unexpected_error(
-    mock_prompt_secret, mock_popen, caplog
+def test_reset_admin_password_run_podman_unexpected_error(
+    mock_prompt_secret, mock_get_podman_client
 ):
     """Test reset_admin_password.run when a truly unexpected error occurs."""
-    caplog.set_level(logging.ERROR)
     mock_args = mock.Mock()
     mock_args.verbosity = 0
     password = str(uuid.uuid4())
     mock_prompt_secret.return_value = password
-    mock_process = mock_popen.return_value
-    mock_process.communicate.side_effect = MysteryError
-    assert not reset_admin_password.run(mock_args)
-    assert "An unexpected error occurred" in caplog.messages[0]
-    assert MysteryError.__doc__ in caplog.messages[0]
+    mock_podman_client = mock_get_podman_client.return_value.__enter__.return_value
+    mock_podman_client.secrets.exists.return_value = True
+    mock_podman_client.secrets.create.side_effect = MysteryError
+    with pytest.raises(MysteryError):
+        # OK to raise here because main.main handles exceptions.
+        reset_admin_password.run(mock_args)
+    mock_podman_client.secrets.exists.assert_called_once_with(
+        reset_admin_password.PODMAN_SECRET_NAME
+    )
+    mock_podman_client.secrets.remove.assert_called_once_with(
+        reset_admin_password.PODMAN_SECRET_NAME
+    )
+    mock_podman_client.secrets.create.assert_called_once_with(
+        reset_admin_password.PODMAN_SECRET_NAME, password
+    )
