@@ -63,10 +63,10 @@ def test_reset_application_secret_run_success(  # noqa: PLR0913
 
     assert reset_application_secret.run(mock_args)
     mock_secret_exists.assert_called_once_with(
-        reset_application_secret.PODMAN_SECRET_NAME
+        reset_application_secret.SESSION_SECRET_PODMAN_SECRET_NAME
     )
     mock_set_secret.assert_called_once_with(
-        reset_application_secret.PODMAN_SECRET_NAME, good_secret, False
+        reset_application_secret.SESSION_SECRET_PODMAN_SECRET_NAME, good_secret, False
     )
     mock_prompt_secret.assert_not_called()  # no prompts for default first-time setup
     mock_confirm.assert_not_called()  # no prompts for default first-time setup
@@ -95,7 +95,7 @@ def test_reset_application_secret_run_with_prompts_success(  # noqa: PLR0913
     mock_secret_exists.assert_called_once()
     mock_prompt_password.assert_called_once()
     mock_set_secret.assert_called_once_with(
-        reset_application_secret.PODMAN_SECRET_NAME, good_secret, True
+        reset_application_secret.SESSION_SECRET_PODMAN_SECRET_NAME, good_secret, True
     )
     assert len(mock_confirm.call_args_list) == 2
 

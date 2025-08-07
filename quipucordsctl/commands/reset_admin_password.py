@@ -8,7 +8,7 @@ from gettext import gettext as _
 from quipucordsctl import podman_utils, secrets
 
 logger = logging.getLogger(__name__)
-PODMAN_SECRET_NAME = "quipucords-server-password"  # noqa: S105
+ADMIN_PASSWORD_PODMAN_SECRET_NAME = "quipucords-server-password"  # noqa: S105
 PASSWORD_MIN_LENGTH = 10
 PASSWORD_BLOCKLIST = ["dscpassw0rd", "qpcpassw0rd"]
 DEFAULT_USERNAME = "admin"
@@ -44,7 +44,7 @@ def run(args: argparse.Namespace) -> bool:  # noqa: PLR0911
         )
     ):
         return False
-    if not podman_utils.set_secret(PODMAN_SECRET_NAME, new_password):
+    if not podman_utils.set_secret(ADMIN_PASSWORD_PODMAN_SECRET_NAME, new_password):
         logger.error(_("The server login password was not updated."))
         return False
     return True
