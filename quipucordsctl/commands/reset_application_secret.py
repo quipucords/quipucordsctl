@@ -8,7 +8,7 @@ from gettext import gettext as _
 from quipucordsctl import podman_utils, secrets, settings, shell_utils
 
 logger = logging.getLogger(__name__)
-PODMAN_SECRET_NAME = "quipucords-server-password"  # noqa: S105
+SESSION_SECRET_PODMAN_SECRET_NAME = "quipucords-django-secret-key"  # noqa: S105
 SECRET_MIN_LENGTH = 64
 
 
@@ -46,7 +46,7 @@ def run(args: argparse.Namespace) -> bool:
     * Create new secret.
     * Return True if everything succeeds, or False if user declines any prompt.
     """
-    if remove := podman_utils.secret_exists(PODMAN_SECRET_NAME):
+    if should_replace := podman_utils.secret_exists(SESSION_SECRET_PODMAN_SECRET_NAME):
         logger.warning(
             _(
                 "The application secret key already exists. "
@@ -95,9 +95,11 @@ def run(args: argparse.Namespace) -> bool:
                 "New value for podman secret %(PODMAN_SECRET_NAME)s "
                 "was randomly generated."
             ),
-            {"PODMAN_SECRET_NAME": PODMAN_SECRET_NAME},
+            {"PODMAN_SECRET_NAME": SESSION_SECRET_PODMAN_SECRET_NAME},
         )
-    if not podman_utils.set_secret(PODMAN_SECRET_NAME, new_secret, remove):
+    if not podman_utils.set_secret(
+        SESSION_SECRET_PODMAN_SECRET_NAME, new_secret, should_replace
+    ):
         logger.error(_("The application secret key was not updated."))
         return False
     return True
