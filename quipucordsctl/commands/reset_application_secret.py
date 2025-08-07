@@ -5,7 +5,7 @@ import argparse
 import logging
 from gettext import gettext as _
 
-from .. import secrets, settings, shell_utils
+from .. import podman_utils, secrets, settings, shell_utils
 
 logger = logging.getLogger(__name__)
 PODMAN_SECRET_NAME = "quipucords-server-password"  # noqa: S105
@@ -46,71 +46,58 @@ def run(args: argparse.Namespace) -> bool:
     * Create new secret.
     * Return True if everything succeeds, or False if user declines any prompt.
     """
-    with shell_utils.get_podman_client() as podman_client:
-        if remove := podman_client.secrets.exists(PODMAN_SECRET_NAME):
-            logger.warning(
-                _(
-                    "The application secret key already exists. "
-                    "Resetting the application secret key to a new value "
-                    "may result in data loss if you have already installed "
-                    "and run %(SERVER_SOFTWARE_NAME)s on this system."
-                ),
-                {"SERVER_SOFTWARE_NAME": settings.SERVER_SOFTWARE_NAME},
+    if remove := podman_utils.secret_exists(PODMAN_SECRET_NAME):
+        logger.warning(
+            _(
+                "The application secret key already exists. "
+                "Resetting the application secret key to a new value "
+                "may result in data loss if you have already installed "
+                "and run %(SERVER_SOFTWARE_NAME)s on this system."
+            ),
+            {"SERVER_SOFTWARE_NAME": settings.SERVER_SOFTWARE_NAME},
+        )
+        if not shell_utils.confirm(
+            _(
+                "Are you sure you want to replace "
+                "the existing application secret key? [y/n] "
             )
-            if not shell_utils.confirm(
-                _(
-                    "Are you sure you want to replace "
-                    "the existing application secret key? [y/n] "
-                )
-            ):
-                return False
-        if args.prompt:
-            logger.warning(
-                _(
-                    "You should only manually reset the application secret key "
-                    "if you understand how it it used and you are addressing a "
-                    "specific issue. We strongly recommend using the automatically "
-                    "generated application secret key instead of manually entering "
-                    "one."
-                ),
-                {"SERVER_SOFTWARE_NAME": settings.SERVER_SOFTWARE_NAME},
+        ):
+            return False
+    if args.prompt:
+        logger.warning(
+            _(
+                "You should only manually reset the application secret key "
+                "if you understand how it it used and you are addressing a "
+                "specific issue. We strongly recommend using the automatically "
+                "generated application secret key instead of manually entering "
+                "one."
+            ),
+            {"SERVER_SOFTWARE_NAME": settings.SERVER_SOFTWARE_NAME},
+        )
+        if not shell_utils.confirm(
+            _(
+                "Are you sure you want to manually reset "
+                "the application secret key? [y/n] "
             )
-            if not shell_utils.confirm(
-                _(
-                    "Are you sure you want to manually reset "
-                    "the application secret key? [y/n] "
-                )
-            ):
-                return False
-            if not (
-                new_secret := secrets.prompt_secret(
-                    _("application secret key"), min_length=SECRET_MIN_LENGTH
-                )
-            ):
-                logger.error(_("The application secret key was not updated."))
-                return False
-        else:
-            new_secret = secrets.generate_random_secret(SECRET_MIN_LENGTH)
-            logger.info(
-                _(
-                    "New value for podman secret %(PODMAN_SECRET_NAME)s "
-                    "was randomly generated."
-                ),
-                {"PODMAN_SECRET_NAME": PODMAN_SECRET_NAME},
+        ):
+            return False
+        if not (
+            new_secret := secrets.prompt_secret(
+                _("application secret key"), min_length=SECRET_MIN_LENGTH
             )
-        if remove:
-            logger.debug(
-                _("A podman secret %(PODMAN_SECRET_NAME)s already exists."),
-                {"PODMAN_SECRET_NAME": PODMAN_SECRET_NAME},
-            )
-            podman_client.secrets.remove(PODMAN_SECRET_NAME)
-            logger.info(
-                _("Old podman secret %(PODMAN_SECRET_NAME)s was removed."),
-                {"PODMAN_SECRET_NAME": PODMAN_SECRET_NAME},
-            )
-        podman_client.secrets.create(PODMAN_SECRET_NAME, new_secret)
+        ):
+            logger.error(_("The application secret key was not updated."))
+            return False
+    else:
+        new_secret = secrets.generate_random_secret(SECRET_MIN_LENGTH)
         logger.info(
-            _("New podman secret %(PODMAN_SECRET_NAME)s was set."),
+            _(
+                "New value for podman secret %(PODMAN_SECRET_NAME)s "
+                "was randomly generated."
+            ),
             {"PODMAN_SECRET_NAME": PODMAN_SECRET_NAME},
         )
+    if not podman_utils.set_secret(PODMAN_SECRET_NAME, new_secret, remove):
+        logger.error(_("The application secret key was not updated."))
+        return False
     return True
