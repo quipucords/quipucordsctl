@@ -2,8 +2,20 @@
 requires = ["setuptools >= 70"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = ["quipucordsctl"]
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+quipucordsctl = [
+    "locale/**/*.mo",
+    "templates/**/*.container",
+    "templates/**/*.network",
+    "templates/**/*.worker",
+    "templates/**/*.env"
+]
+
+[project.scripts]
+quipucordsctl = "quipucordsctl.__main__:main"
 
 [project]
 name = "quipucordsctl"

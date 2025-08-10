@@ -83,7 +83,7 @@ def configure_logging(verbosity: int = 0, quiet: bool = False) -> int:
     return log_level
 
 
-def main():
+def run():
     """Run the program with arguments from the CLI."""
     commands = load_commands()
     parser = create_parser(commands)
@@ -119,4 +119,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    run()

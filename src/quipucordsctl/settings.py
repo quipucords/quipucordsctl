@@ -1,5 +1,6 @@
 """Global configuration settings for quipucordsctl."""
 
+import importlib.resources as pkg_resources
 import logging
 import pathlib
 
@@ -16,7 +17,6 @@ SERVER_ENV_DIR = _home / f".config/{SERVER_SOFTWARE_PACKAGE}/env"
 SERVER_DATA_DIR = _home / f".local/share/{SERVER_SOFTWARE_PACKAGE}"
 SYSTEMD_UNITS_DIR = _home / ".config/containers/systemd"
 
-# TODO maybe use pkg_resources.resource_filename when packaging
-_templates = pathlib.Path(__file__).parent.parent.resolve() / "templates"
+_templates = pathlib.Path(str(pkg_resources.files("quipucordsctl"))) / "templates"
 SYSTEMD_UNITS_TEMPLATES_DIR = _templates / "config"
 ENV_TEMPLATES_DIR = _templates / "env"
