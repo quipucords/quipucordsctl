@@ -17,7 +17,7 @@ PASSWORD_USERNAME_MAX_SIMILARITY = 0.7
 
 def get_help() -> str:
     """Get the help/docstring for this command."""
-    return _("Reset the server's login password.")
+    return _("Reset the admin login password.")
 
 
 def admin_password_is_set() -> bool:
@@ -28,23 +28,21 @@ def admin_password_is_set() -> bool:
 
 
 def run(args: argparse.Namespace) -> bool:  # noqa: PLR0911
-    """Reset the server password."""
+    """Reset the admin login password."""
     check_kwargs = {
         "min_length": PASSWORD_MIN_LENGTH,
         "blocklist": PASSWORD_BLOCKLIST,
         "check_similar": secrets.SimilarValueCheck(
             value=DEFAULT_USERNAME,
-            name=_("server login username"),
+            name=_("admin login username"),
             max_similarity=PASSWORD_USERNAME_MAX_SIMILARITY,
         ),
     }
     if not (
-        new_password := secrets.prompt_secret(
-            _("server login password"), **check_kwargs
-        )
+        new_password := secrets.prompt_secret(_("admin login password"), **check_kwargs)
     ):
         return False
     if not podman_utils.set_secret(ADMIN_PASSWORD_PODMAN_SECRET_NAME, new_password):
-        logger.error(_("The server login password was not updated."))
+        logger.error(_("The admin login password was not updated."))
         return False
     return True

@@ -56,7 +56,7 @@ def test_reset_admin_password_run_podman_unexpected_failure(
     mock_prompt_secret.return_value = good_secret
     mock_set_secret.return_value = False
     assert not reset_admin_password.run(mock_args)
-    assert "The server login password was not updated." == caplog.messages[0]
+    assert "The admin login password was not updated." == caplog.messages[0]
 
 
 @mock.patch.object(reset_admin_password.podman_utils, "set_secret")
