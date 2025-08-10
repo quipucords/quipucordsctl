@@ -7,7 +7,11 @@ import shutil
 from gettext import gettext as _
 
 from quipucordsctl import settings, shell_utils
-from quipucordsctl.commands import reset_admin_password, reset_session_secret
+from quipucordsctl.commands import (
+    reset_admin_password,
+    reset_encryption_secret,
+    reset_session_secret,
+)
 
 DATA_DIRS = ("data", "db", "log", "sshkeys")
 SYSTEMCTL_USER_RESET_FAILED_CMD = ["systemctl", "--user", "reset-failed"]
@@ -100,10 +104,12 @@ def run(args: argparse.Namespace) -> None:
     if args.override_conf_dir:
         raise NotImplementedError
 
+    if not reset_encryption_secret.encryption_secret_is_set():
+        reset_encryption_secret.run(args)
+    if not reset_session_secret.session_secret_is_set():
+        reset_session_secret.run(args)
     if not reset_admin_password.admin_password_is_set():
         reset_admin_password.run(args)
-    if not reset_session_secret.application_secret_is_set():
-        reset_session_secret.run(args)
 
     write_config_files()
     systemctl_reload()
