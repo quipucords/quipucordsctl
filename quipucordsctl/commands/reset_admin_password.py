@@ -1,4 +1,4 @@
-"""Reset the server's login password."""
+"""Reset the login password."""
 # TODO Should this command also conditionally restart the server?
 
 import argparse
