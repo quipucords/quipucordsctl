@@ -41,7 +41,7 @@ test-case:
 	$(MAKE) test -e TEST_OPTS="${TEST_OPTS} $(pattern)"
 
 test-coverage:
-	$(MAKE) test TEST_OPTS="${TEST_OPTS} --cov=quipucordsctl --cov-report=xml"
+	$(MAKE) test TEST_OPTS="${TEST_OPTS} --cov=src/quipucordsctl --cov-report=xml"
 	uv run coverage report --show-missing
 
 lint: lint-ruff
