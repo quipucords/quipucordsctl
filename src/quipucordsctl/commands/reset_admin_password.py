@@ -22,9 +22,7 @@ def get_help() -> str:
 
 def admin_password_is_set() -> bool:
     """Check if the admin password is already set."""
-    # TODO `podman secret exists PODMAN_SECRET_NAME`
-    # TODO Implement or delete this if we don't actually need it.
-    return False
+    return podman_utils.secret_exists(ADMIN_PASSWORD_PODMAN_SECRET_NAME)
 
 
 def run(args: argparse.Namespace) -> bool:  # noqa: PLR0911
