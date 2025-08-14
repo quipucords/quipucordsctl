@@ -49,7 +49,7 @@ def run(args: argparse.Namespace) -> bool:
     * Create new secret.
     * Return True if everything succeeds, or False if user declines any prompt.
     """
-    if args.prompt:
+    if getattr(args, "prompt", False):
         logger.warning(
             _(
                 "You should only manually reset the session secret key if you "

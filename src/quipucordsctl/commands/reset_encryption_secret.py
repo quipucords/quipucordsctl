@@ -69,7 +69,7 @@ def run(args: argparse.Namespace) -> bool:
             )
         ):
             return False
-    if args.prompt:
+    if getattr(args, "prompt", False):
         logger.warning(
             _(
                 "You should only manually reset the encryption secret key "
