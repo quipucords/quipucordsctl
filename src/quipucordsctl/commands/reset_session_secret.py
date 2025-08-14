@@ -37,8 +37,7 @@ def setup_parser(parser: argparse.ArgumentParser) -> None:
 
 def session_secret_is_set() -> bool:
     """Check if the session secret key is already set."""
-    # TODO `podman secret exists quipucords-session-secret-key`
-    return False
+    return podman_utils.secret_exists(SESSION_SECRET_PODMAN_SECRET_NAME)
 
 
 def run(args: argparse.Namespace) -> bool:
