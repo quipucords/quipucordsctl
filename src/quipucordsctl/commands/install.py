@@ -98,18 +98,31 @@ def systemctl_reload():
     shell_utils.run_command(SYSTEMCTL_USER_DAEMON_RELOAD_CMD)
 
 
-def run(args: argparse.Namespace) -> None:
+def run(args: argparse.Namespace) -> bool:
     """Install the server, ensuring requirements are met."""
     logger.info("Starting install command")
     if args.override_conf_dir:
         raise NotImplementedError
 
-    if not reset_encryption_secret.encryption_secret_is_set():
-        reset_encryption_secret.run(args)
-    if not reset_session_secret.session_secret_is_set():
-        reset_session_secret.run(args)
-    if not reset_admin_password.admin_password_is_set():
-        reset_admin_password.run(args)
+    if (
+        not reset_encryption_secret.encryption_secret_is_set()
+        and not reset_encryption_secret.run(args)
+    ):
+        logger.error(_("The install command failed to reset encryption secret."))
+        return False
+    if (
+        not reset_session_secret.session_secret_is_set()
+        and not reset_session_secret.run(args)
+    ):
+        logger.error(_("The install command failed to reset session secret."))
+        return False
+    if (
+        not reset_admin_password.admin_password_is_set()
+        and not reset_admin_password.run(args)
+    ):
+        logger.error(_("The install command failed to reset admin password."))
+        return False
 
     write_config_files()
     systemctl_reload()
+    return True
