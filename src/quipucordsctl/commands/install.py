@@ -13,7 +13,6 @@ from quipucordsctl.commands import (
     reset_session_secret,
 )
 
-DATA_DIRS = ("data", "db", "log", "sshkeys")
 SYSTEMCTL_USER_RESET_FAILED_CMD = ["systemctl", "--user", "reset-failed"]
 SYSTEMCTL_USER_DAEMON_RELOAD_CMD = ["systemctl", "--user", "daemon-reload"]
 
@@ -29,9 +28,10 @@ def get_help() -> str:
 
 def mkdirs():
     """Ensure required data and config directories exist."""
-    dir_paths = [settings.SERVER_ENV_DIR, settings.SYSTEMD_UNITS_DIR] + [
-        settings.SERVER_DATA_DIR / data_dir for data_dir in DATA_DIRS
-    ]
+    dir_paths = [
+        settings.SERVER_ENV_DIR,
+        settings.SYSTEMD_UNITS_DIR,
+    ] + list(settings.SERVER_DATA_SUBDIRS.values())
     for dir_path in dir_paths:
         logger.debug(
             _("Ensuring directory exists: %(dir_path)s"),
