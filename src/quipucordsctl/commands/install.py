@@ -29,28 +29,18 @@ def get_help() -> str:
 
 def mkdirs():
     """Ensure required data and config directories exist."""
-    for data_dir in DATA_DIRS:
-        dir_path = settings.SERVER_DATA_DIR / data_dir
+    dir_paths = [settings.SERVER_ENV_DIR, settings.SYSTEMD_UNITS_DIR] + [
+        settings.SERVER_DATA_DIR / data_dir for data_dir in DATA_DIRS
+    ]
+    for dir_path in dir_paths:
         logger.debug(
-            _("Ensuring data directory exists: %(dir_path)s"),
+            _("Ensuring directory exists: %(dir_path)s"),
             {"dir_path": dir_path},
         )
         dir_path.mkdir(parents=True, exist_ok=True)
         if not dir_path.is_dir():
             raise NotADirectoryError(
                 _("%(dir_path)s exists but is not a directory."), {"dir_path": dir_path}
-            )
-
-    for config_dir in (settings.SERVER_ENV_DIR, settings.SYSTEMD_UNITS_DIR):
-        logger.debug(
-            _("Ensuring config directory exists: %(config_dir)s"),
-            {"config_dir": config_dir},
-        )
-        config_dir.mkdir(parents=True, exist_ok=True)
-        if not config_dir.is_dir():
-            raise NotADirectoryError(
-                _("%(config_dir)s exists but is not a directory."),
-                {"config_dir": config_dir},
             )
 
 
