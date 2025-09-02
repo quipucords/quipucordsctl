@@ -16,6 +16,10 @@ _home = pathlib.Path.home()
 SERVER_ENV_DIR = _home / f".config/{SERVER_SOFTWARE_PACKAGE}/env"
 SERVER_DATA_DIR = _home / f".local/share/{SERVER_SOFTWARE_PACKAGE}"
 SYSTEMD_UNITS_DIR = _home / ".config/containers/systemd"
+SERVER_DATA_SUBDIRS = {
+    data_dir: SERVER_DATA_DIR / data_dir
+    for data_dir in ("data", "db", "log", "sshkeys")
+}
 
 _templates = pathlib.Path(str(pkg_resources.files("quipucordsctl"))) / "templates"
 SYSTEMD_UNITS_TEMPLATES_DIR = _templates / "config"

@@ -1,6 +1,8 @@
 """Test the "install" command."""
 
 import pathlib
+from collections.abc import Generator
+from typing import Any
 from unittest import mock
 
 import pytest
@@ -11,8 +13,8 @@ from quipucordsctl.commands import install
 @pytest.fixture
 def temp_config_directories(
     tmp_path: pathlib.Path, monkeypatch
-) -> dict[str, pathlib.Path]:
-    """Temporarily swap any directories the install command would touch."""
+) -> Generator[dict[str, pathlib.Path], Any, None]:
+    """Temporarily swap any directories the "install" command would touch."""
     temp_settings_dirs = {}
     for settings_dir in ("SERVER_DATA_DIR", "SERVER_ENV_DIR", "SYSTEMD_UNITS_DIR"):
         new_path = tmp_path / settings_dir
@@ -20,6 +22,13 @@ def temp_config_directories(
             f"quipucordsctl.commands.install.settings.{settings_dir}", new_path
         )
         temp_settings_dirs[settings_dir] = new_path
+    tmp_data_dirs = {
+        data_dir: temp_settings_dirs["SERVER_DATA_DIR"] / data_dir
+        for data_dir in ("data", "db", "log", "sshkeys")
+    }
+    monkeypatch.setattr(
+        "quipucordsctl.commands.install.settings.SERVER_DATA_SUBDIRS", tmp_data_dirs
+    )
     yield temp_settings_dirs
 
 
@@ -31,7 +40,7 @@ def mock_shell_utils():
 
 
 def test_install_run(temp_config_directories: dict[str, pathlib.Path]):
-    """Test the install command happy path."""
+    """Test the "install" command happy path."""
     mock_args = mock.Mock()
     mock_args.override_conf_dir = None
     data_dir = temp_config_directories["SERVER_DATA_DIR"]
