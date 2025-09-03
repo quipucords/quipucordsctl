@@ -61,11 +61,22 @@ uv run bin/translations.py update
 uv run bin/translations.py compile
 ```
 
-## running
+## running directly from source
 
 ```sh
 uv run python -m quipucordsctl --help
 
 # override the locale using LC_MESSAGES, LC_ALL, LANGUAGE, or LANG 
 LANG=pt uv run python -m quipucordsctl --help
+```
+
+## running installed from source
+
+```sh
+uv tool uninstall quipucordsctl
+uv tool install --no-cache --from . quipucordsctl
+
+quipucordsctl --help
+
+LANG=pt quipucordsctl --help
 ```
