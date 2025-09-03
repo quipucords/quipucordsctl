@@ -65,9 +65,6 @@ uv run bin/translations.py compile
 
 ```sh
 uv run python -m quipucordsctl --help
-
-# override the locale using LC_MESSAGES, LC_ALL, LANGUAGE, or LANG 
-LANG=pt uv run python -m quipucordsctl --help
 ```
 
 ## running installed from source
@@ -77,6 +74,16 @@ uv tool uninstall quipucordsctl
 uv tool install --no-cache --from . quipucordsctl
 
 quipucordsctl --help
+```
 
+## running with custom locale
+
+You can override the locale using `LC_MESSAGES`, `LC_ALL`, `LANGUAGE`, or `LANG`.
+
+```sh
+# when running directly from source
+LANG=pt uv run python -m quipucordsctl --help
+
+# when running installed
 LANG=pt quipucordsctl --help
 ```
