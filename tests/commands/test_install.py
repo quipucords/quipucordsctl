@@ -8,6 +8,7 @@ from unittest import mock
 import pytest
 
 from quipucordsctl.commands import install
+from quipucordsctl.systemdunitparser import SystemdUnitParser
 
 
 @pytest.fixture
@@ -39,10 +40,34 @@ def mock_shell_utils():
         yield mock_shell_utils
 
 
-def test_install_run(temp_config_directories: dict[str, pathlib.Path]):
-    """Test the "install" command happy path."""
+def test_install_run(
+    temp_config_directories: dict[str, pathlib.Path], tmp_path: pathlib.Path, faker
+):
+    """
+    Test the "install" command happy path.
+
+    This test also includes two file overrides to ensure they are used correctly.
+    """
+    override_conf_dir = pathlib.Path(tmp_path / "override_conf_dir")
+    override_conf_dir.mkdir(parents=True, exist_ok=False)
+
+    # Define an override to exercise the path for systemd files.
+    unit_override_section = "Unit"
+    unit_override_key = "Description"
+    unit_override_value = faker.sentence()
+    with (override_conf_dir / "quipucords-app.container").open("w") as fp:
+        fp.write(
+            f"[{unit_override_section}]\n{unit_override_key}={unit_override_value}\n"
+        )
+
+    # Define an override to exercise the path for plain env files.
+    env_override_key = "QUIPUCORDS_NETWORK_INSPECT_JOB_TIMEOUT"
+    env_override_value = faker.pyint(min_value=100, max_value=1000)
+    with (override_conf_dir / "env-server.env").open("w") as fp:
+        fp.write(f"{env_override_key}={env_override_value}\n")
+
     mock_args = mock.Mock()
-    mock_args.override_conf_dir = None
+    mock_args.override_conf_dir = override_conf_dir
     data_dir = temp_config_directories["SERVER_DATA_DIR"]
     env_dir = temp_config_directories["SERVER_ENV_DIR"]
     systemd_dir = temp_config_directories["SYSTEMD_UNITS_DIR"]
@@ -64,6 +89,20 @@ def test_install_run(temp_config_directories: dict[str, pathlib.Path]):
         assert (data_dir / "data").is_dir()
         assert (env_dir / "env-app.env").is_file()
         assert (systemd_dir / "quipucords-app.container").is_file()
+
+        # Verify the env file override was read and written.
+        matching_lines = [
+            line
+            for line in (env_dir / "env-server.env").read_text().splitlines()
+            if line.startswith(f"{env_override_key}=")
+        ]
+        # Check the last matching line because we simply append to env files.
+        assert matching_lines[-1] == f"{env_override_key}={env_override_value}"
+
+        # Verify the systemd unit file override was read and written.
+        parser = SystemdUnitParser()
+        parser.read(str((systemd_dir / "quipucords-app.container")))
+        assert parser[unit_override_section][unit_override_key] == unit_override_value
 
         systemctl_reload.assert_called_once()
         reset_session_secret.run.assert_called_once()

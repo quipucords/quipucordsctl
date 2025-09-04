@@ -1,6 +1,5 @@
 """Global configuration settings for quipucordsctl."""
 
-import importlib.resources as pkg_resources
 import logging
 import pathlib
 
@@ -21,6 +20,23 @@ SERVER_DATA_SUBDIRS = {
     for data_dir in ("data", "db", "log", "sshkeys")
 }
 
-_templates = pathlib.Path(str(pkg_resources.files("quipucordsctl"))) / "templates"
-SYSTEMD_UNITS_TEMPLATES_DIR = _templates / "config"
-ENV_TEMPLATES_DIR = _templates / "env"
+# "Explicit is better than implicit." - PEP 20
+# Do not glob the template directories. Use these definitions.
+TEMPLATE_SYSTEMD_UNITS_RESOURCE_PATH = "templates/config"
+TEMPLATE_SYSTEMD_UNITS_FILENAMES = (
+    "quipucords.network",
+    "quipucords-app.container",
+    "quipucords-celery-worker.container",
+    "quipucords-db.container",
+    "quipucords-redis.container",
+    "quipucords-server.container",
+)
+TEMPLATE_SERVER_ENV_RESOURCE_PATH = "templates/env"
+TEMPLATE_SERVER_ENV_FILENAMES = (
+    "env-ansible.env",
+    "env-app.env",
+    "env-celery-worker.env",
+    "env-db.env",
+    "env-redis.env",
+    "env-server.env",
+)
