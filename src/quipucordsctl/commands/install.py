@@ -1,10 +1,12 @@
 """Install the server."""
 
 import argparse
-import itertools
 import logging
-import shutil
+import pathlib
+import stat
+from datetime import datetime
 from gettext import gettext as _
+from importlib import resources
 
 from quipucordsctl import settings, shell_utils
 from quipucordsctl.commands import (
@@ -12,6 +14,7 @@ from quipucordsctl.commands import (
     reset_encryption_secret,
     reset_session_secret,
 )
+from quipucordsctl.systemdunitparser import SystemdUnitParser
 
 SYSTEMCTL_USER_RESET_FAILED_CMD = ["systemctl", "--user", "reset-failed"]
 SYSTEMCTL_USER_DAEMON_RELOAD_CMD = ["systemctl", "--user", "daemon-reload"]
@@ -44,38 +47,169 @@ def mkdirs():
             )
 
 
-def write_config_files(override_conf_dir: str | None = None):
+def get_override_conf_path(
+    override_conf_dir: pathlib.Path | None, filename: str
+) -> pathlib.Path | None:
+    """Get the override configuration directory."""
+    if not override_conf_dir:
+        return None
+    override_conf_path = override_conf_dir / filename
+    if not override_conf_path.is_file():
+        logger.debug(
+            _("No override file found at: %(override_conf_path)s"),
+            {"override_conf_path": override_conf_path},
+        )
+        return None
+    try:
+        if not override_conf_path.stat().st_mode & stat.S_IRUSR:
+            logger.warning(
+                _(
+                    "Please check file permissions. "
+                    "Cannot read override file at: %(override_conf_path)s"
+                ),
+                {"override_conf_path": override_conf_path},
+            )
+            return None
+    except PermissionError:
+        logger.warning(
+            _(
+                "Please check file permissions. "
+                "Cannot access override file at: %(override_conf_path)s"
+            ),
+            {"override_conf_path": override_conf_path},
+        )
+        return None
+    logger.debug(
+        _("Override file found at: %(override_conf_path)s"),
+        {"override_conf_path": override_conf_path},
+    )
+    return override_conf_path
+
+
+def write_systemd_unit(
+    template_filename: str,
+    override_conf_dir: pathlib.Path | None,
+    destination_dir: pathlib.Path,
+):
+    """Write a systemd unit file by merging a template and optional override file."""
+    template_traversable = resources.files("quipucordsctl").joinpath(
+        f"{settings.TEMPLATE_SYSTEMD_UNITS_RESOURCE_PATH}/{template_filename}"
+    )
+    with resources.as_file(template_traversable) as template_path:
+        template_config = SystemdUnitParser()
+        template_config.read(template_path)
+
+    if override_conf_path := get_override_conf_path(
+        override_conf_dir, template_filename
+    ):
+        # Important note! Even though we could simply pass BOTH files
+        # to SystemdUnitParser and expect it to merge them automatically,
+        # when presented with list-like configs, SystemdUnitParser extends
+        # the template's list with the override's list instead of replacing
+        # it. In the old installer, we replace, and this somewhat complex
+        # logic exists to mimic that "only replace" behavior.
+        override_config = SystemdUnitParser()
+        override_config.read(override_conf_path)
+        for section in override_config.sections():
+            for option in override_config.options(section):
+                value = override_config.get(section, option)
+                old_value = (
+                    template_config[section][option]
+                    if (
+                        section in template_config.sections()
+                        and option in template_config[section]
+                    )
+                    else None
+                )
+                logger.debug(
+                    _(
+                        "Overriding %(template_filename)s %(section)s.%(option)s "
+                        "from %(old_value)s to %(value)s"
+                    ),
+                    {
+                        "template_filename": template_filename,
+                        "section": section,
+                        "option": option,
+                        "old_value": old_value,
+                        "value": value,
+                    },
+                )
+                template_config[section][option] = value
+
+    destination = destination_dir / template_filename
+    with destination.open("w") as destination_file:
+        logger.info(
+            _("Writing config to %(destination)s"),
+            {"destination": destination.resolve()},
+        )
+        template_config.write(destination_file)
+
+
+def write_env_file(
+    template_filename: str,
+    override_conf_dir: pathlib.Path | None,
+    destination_dir: pathlib.Path,
+):
+    """Write an env file by merging a template and optional override file."""
+    template_traversable = resources.files("quipucordsctl").joinpath(
+        f"{settings.TEMPLATE_SERVER_ENV_RESOURCE_PATH}/{template_filename}"
+    )
+    with resources.as_file(template_traversable) as template_path:
+        template_text = template_path.read_text(encoding="utf-8")
+
+    if override_conf_path := get_override_conf_path(
+        override_conf_dir, template_filename
+    ):
+        if override_text := override_conf_path.read_text(encoding="utf-8").strip():
+            logger.debug(
+                _(
+                    "Appending overrides (%(line_count)s lines) "
+                    "to template for %(template_filename)s before writing."
+                ),
+                {
+                    "template_filename": template_filename,
+                    "line_count": len(override_text.splitlines()),
+                },
+            )
+            comment = _(
+                "The following 'override' content was added "
+                "by the user during installation at %(now)s"
+            ) % {"now": datetime.now().isoformat()}
+            template_text = f"{template_text}\n\n# {comment}\n\n{override_text}"
+        else:
+            logger.debug(
+                _(
+                    "Override file for %(template_filename)s "
+                    "appears to be empty and will be skipped."
+                ),
+                {"template_filename": template_filename},
+            )
+
+    destination = destination_dir / template_filename
+    logger.info(
+        _("Writing config to %(destination)s"),
+        {"destination": destination.resolve()},
+    )
+    destination.write_text(template_text)
+
+
+def write_config_files(override_conf_dir: pathlib.Path | None = None):
     """Generate and write to disk all systemd unit and env files for the server."""
     logger.info("Generating config files")
     mkdirs()
 
-    if override_conf_dir:
-        # TODO support override files
-        raise NotImplementedError
-    systemd_templates = list(
-        itertools.chain(
-            settings.SYSTEMD_UNITS_TEMPLATES_DIR.glob("*.network"),
-            settings.SYSTEMD_UNITS_TEMPLATES_DIR.glob("*.container"),
+    for filename in settings.TEMPLATE_SYSTEMD_UNITS_FILENAMES:
+        write_systemd_unit(
+            filename,
+            override_conf_dir=override_conf_dir,
+            destination_dir=settings.SYSTEMD_UNITS_DIR,
         )
-    )
-    for template_path in systemd_templates:
-        # TODO merge with override files, maybe using configparser.
-        destination = settings.SYSTEMD_UNITS_DIR / template_path.name
-        logger.debug(
-            _("Copying %(template_path)s to %(destination)s"),
-            {"template_path": template_path, "destination": destination},
+    for filename in settings.TEMPLATE_SERVER_ENV_FILENAMES:
+        write_env_file(
+            filename,
+            override_conf_dir=override_conf_dir,
+            destination_dir=settings.SERVER_ENV_DIR,
         )
-        shutil.copy(template_path, destination)
-
-    env_templates = settings.ENV_TEMPLATES_DIR.glob("*.env")
-    for template_path in env_templates:
-        # TODO merge with override files, maybe using configparser.
-        destination = settings.SERVER_ENV_DIR / template_path.name
-        logger.debug(
-            _("Copying %(template_path)s to %(destination)s"),
-            {"template_path": template_path, "destination": destination},
-        )
-        shutil.copy(template_path, destination)
 
 
 def systemctl_reload():
@@ -90,9 +224,7 @@ def systemctl_reload():
 
 def run(args: argparse.Namespace) -> bool:
     """Install the server, ensuring requirements are met."""
-    logger.info("Starting install command")
-    if args.override_conf_dir:
-        raise NotImplementedError
+    logger.debug("Starting install command")
 
     if (
         not reset_encryption_secret.encryption_secret_is_set()
@@ -113,6 +245,19 @@ def run(args: argparse.Namespace) -> bool:
         logger.error(_("The install command failed to reset admin password."))
         return False
 
-    write_config_files()
+    override_conf_dir_path = None
+    if args.override_conf_dir:
+        if pathlib.Path(args.override_conf_dir).is_dir():
+            override_conf_dir_path = pathlib.Path(args.override_conf_dir)
+        else:
+            logger.warning(
+                _(
+                    "The specified override configuration directory "
+                    "('%(override_conf_dir)s') does not exist."
+                ),
+                {"override_conf_dir": args.override_conf_dir},
+            )
+    write_config_files(override_conf_dir_path)
     systemctl_reload()
+    logger.debug("Finished install command")
     return True
