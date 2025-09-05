@@ -1,8 +1,10 @@
 """Utilities for interacting with user's shell and external programs."""
 
+import logging
 import subprocess
-import sys
 from gettext import gettext as _
+
+logger = logging.getLogger(__name__)
 
 
 def confirm(prompt: str | None = None) -> bool:
@@ -37,9 +39,9 @@ def run_command(command: list[str]) -> tuple[str, str, int]:
 
     stdout, stderr = stdout.strip(), stderr.strip()
     if stdout:
-        print(f"stdout: {stdout}")
+        logger.info(stdout)
     if stderr:
-        print(stderr, file=sys.stderr)
+        logger.error(stderr)
     if exit_code != 0:
         raise subprocess.CalledProcessError(exit_code, command)
 
