@@ -13,6 +13,7 @@ from importlib import resources
 from quipucordsctl import podman_utils, settings, shell_utils
 from quipucordsctl.commands import (
     reset_admin_password,
+    reset_database_password,
     reset_encryption_secret,
     reset_session_secret,
 )
@@ -257,6 +258,12 @@ def run(args: argparse.Namespace) -> bool:
         and not reset_admin_password.run(args)
     ):
         logger.error(_("The install command failed to reset admin password."))
+        return False
+    if (
+        not reset_database_password.database_password_is_set()
+        and not reset_database_password.run(args)
+    ):
+        logger.error(_("The install command failed to reset database password."))
         return False
 
     override_conf_dir_path = None
