@@ -75,10 +75,16 @@ def configure_logging(verbosity: int = 0, quiet: bool = False) -> int:
         if quiet
         else max(logging.DEBUG, settings.DEFAULT_LOG_LEVEL - (verbosity * 10))
     )
+    log_format = (
+        "%(asctime)s %(levelname)s: %(message)s"
+        if verbosity > 2  # noqa: PLR2004
+        else "%(levelname)s: %(message)s"
+    )
     logging.basicConfig(
-        format="%(levelname)s: %(message)s",
+        format=log_format,
         level=log_level,
         encoding="utf-8",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
     return log_level
 
