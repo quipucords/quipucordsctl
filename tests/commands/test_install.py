@@ -77,11 +77,13 @@ def test_install_run(
             install, "reset_encryption_secret"
         ) as reset_encryption_secret,
         mock.patch.object(install, "reset_admin_password") as reset_admin_password,
+        mock.patch.object(install, "reset_redis_password") as reset_redis_password,
         mock.patch.object(install, "systemctl_reload") as systemctl_reload,
     ):
         reset_session_secret.session_secret_is_set.return_value = False
         reset_encryption_secret.encryption_secret_is_set.return_value = False
         reset_admin_password.admin_password_is_set.return_value = False
+        reset_redis_password.admin_password_is_set.return_value = False
 
         install.run(mock_args)
 
