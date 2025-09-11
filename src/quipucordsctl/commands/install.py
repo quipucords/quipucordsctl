@@ -5,6 +5,7 @@ import logging
 import pathlib
 import stat
 import subprocess
+import textwrap
 from datetime import datetime
 from gettext import gettext as _
 from importlib import resources
@@ -19,6 +20,17 @@ from quipucordsctl.systemdunitparser import SystemdUnitParser
 
 SYSTEMCTL_USER_RESET_FAILED_CMD = ["systemctl", "--user", "reset-failed"]
 SYSTEMCTL_USER_DAEMON_RELOAD_CMD = ["systemctl", "--user", "daemon-reload"]
+
+INSTALL_SUCCESS_LONG_MESSAGE = _(
+    textwrap.dedent(
+        """
+        Installation completed successfully. Please run the following commands to start the %(server_software_name)s server:
+
+            podman login registry.redhat.io
+            systemctl --user restart %(server_software_package)s-app
+        """  # noqa: E501
+    )
+)
 
 logger = logging.getLogger(__name__)
 
@@ -266,5 +278,12 @@ def run(args: argparse.Namespace) -> bool:
         logger.error(_("systemctl reload failed unexpectedly. Please check logs."))
         return False
 
-    logger.debug("Finished install command")
+    if not args.quiet:
+        print(
+            INSTALL_SUCCESS_LONG_MESSAGE
+            % {
+                "server_software_name": settings.SERVER_SOFTWARE_NAME,
+                "server_software_package": settings.SERVER_SOFTWARE_PACKAGE,
+            },
+        )
     return True
