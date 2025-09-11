@@ -24,6 +24,9 @@ def confirm(prompt: str | None = None) -> bool:
 
 def run_command(command: list[str]) -> tuple[str, str, int]:
     """Run an external program."""
+    logger.debug(
+        _("Invoking subprocess with arguments %(command)s"), {"command": command}
+    )
     process = subprocess.Popen(
         args=command,  # a list like ["systemctl", "--user", "reset-failed"]
         stdout=subprocess.PIPE,
@@ -43,6 +46,13 @@ def run_command(command: list[str]) -> tuple[str, str, int]:
     if stderr:
         logger.error(stderr)
     if exit_code != 0:
+        logger.error(
+            _(
+                "Subprocess with arguments %(command)s failed "
+                "with exit code %(exit_code)s"
+            ),
+            {"command": command, "exit_code": exit_code},
+        )
         raise subprocess.CalledProcessError(exit_code, command)
 
     return stdout, stderr, exit_code
