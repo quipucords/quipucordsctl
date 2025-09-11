@@ -115,7 +115,7 @@ def test_systemctl_reload(mock_shell_utils):
     install.systemctl_reload()
     mock_shell_utils.run_command.assert_has_calls(
         (
-            mock.call(install.SYSTEMCTL_USER_RESET_FAILED_CMD),
-            mock.call(install.SYSTEMCTL_USER_DAEMON_RELOAD_CMD),
+            mock.call(install.SYSTEMCTL_USER_RESET_FAILED_CMD, quiet=True),
+            mock.call(install.SYSTEMCTL_USER_DAEMON_RELOAD_CMD, quiet=True),
         )
     )

@@ -1,12 +1,109 @@
 """Test the quipucordsctl.podman_utils module."""
 
 import logging
+import pathlib
 from unittest import mock
 
 import pytest
 from podman import errors as podman_errors
 
 from quipucordsctl import podman_utils
+
+
+@mock.patch.object(podman_utils, "sys")
+@mock.patch.object(podman_utils, "shell_utils")
+@mock.patch.object(podman_utils, "xdg")
+def test_ensure_podman_socket(mock_xdg, mock_shell_utils, mock_sys, tmp_path):
+    """Test ensure_podman_socket does nothing when podman socket is default path."""
+    mock_sys.platform = "linux"
+    socket_path = pathlib.Path(tmp_path / "podman" / "podman.sock")
+    socket_path.parent.mkdir(parents=True, exist_ok=True)
+    socket_path.touch()
+    mock_shell_utils.run_command.side_effect = [("", "", 0), ("", "", 0)]
+    mock_xdg.BaseDirectory.get_runtime_dir.return_value = str(tmp_path)
+
+    podman_utils.ensure_podman_socket()
+    assert len(mock_shell_utils.run_command.call_args_list) == 2
+
+
+@mock.patch.object(podman_utils, "sys")
+@mock.patch.object(podman_utils, "shell_utils")
+def test_ensure_podman_socket_custom_path(mock_shell_utils, mock_sys, tmp_path):
+    """Test ensure_podman_socket does nothing when podman socket has custom path."""
+    mock_sys.platform = "linux"
+    socket_path = pathlib.Path(tmp_path / "podman.sock")
+    socket_path.touch()
+    mock_shell_utils.run_command.side_effect = [("", "", 0), ("", "", 0)]
+
+    podman_utils.ensure_podman_socket(str(socket_path))
+    assert len(mock_shell_utils.run_command.call_args_list) == 2
+
+
+@mock.patch.object(podman_utils, "sys")
+@mock.patch.object(podman_utils, "shell_utils")
+def test_ensure_podman_socket_macos(mock_shell_utils, mock_sys, tmp_path):
+    """Test ensure_podman_socket does nothing when podman is enabled on macOS/darwin."""
+    mock_sys.platform = "darwin"
+    mock_shell_utils.run_command.side_effect = [("running", "", 0)]
+    mock_path = pathlib.Path(tmp_path / "podman.sock")
+    mock_path.touch()
+
+    with mock.patch.object(
+        podman_utils, "MACOS_DEFAULT_PODMAN_URL", new=str(mock_path)
+    ):
+        podman_utils.ensure_podman_socket()
+
+    mock_shell_utils.run_command.assert_called_once_with(
+        podman_utils.PODMAN_MACHINE_STATE_CMD, quiet=True
+    )
+
+
+@mock.patch.object(podman_utils, "sys")
+@mock.patch.object(podman_utils, "shell_utils")
+def test_ensure_podman_socket_macos_not_running(mock_shell_utils, mock_sys, tmp_path):
+    """Test ensure_podman_socket when podman machine is not running on macOS/darwin."""
+    mock_sys.platform = "darwin"
+    mock_shell_utils.run_command.side_effect = [("stopped", "", 0)]
+    mock_path = pathlib.Path(tmp_path / "podman.sock")
+    mock_path.touch()
+
+    with (
+        mock.patch.object(podman_utils, "MACOS_DEFAULT_PODMAN_URL", new=str(mock_path)),
+        pytest.raises(podman_utils.PodmanIsNotReadyError),
+    ):
+        try:
+            podman_utils.ensure_podman_socket()
+        except podman_utils.PodmanIsNotReadyError as e:
+            assert "machine is not running" in e.args[0]
+            raise e
+
+    mock_shell_utils.run_command.assert_called_once_with(
+        podman_utils.PODMAN_MACHINE_STATE_CMD, quiet=True
+    )
+
+
+@mock.patch.object(podman_utils, "sys")
+@mock.patch.object(podman_utils, "shell_utils")
+def test_ensure_podman_socket_macos_broken(mock_shell_utils, mock_sys, tmp_path):
+    """Test ensure_podman_socket when podman command is broken on macOS/darwin."""
+    mock_sys.platform = "darwin"
+    mock_shell_utils.run_command.side_effect = [Exception]
+    mock_path = pathlib.Path(tmp_path / "podman.sock")
+    mock_path.touch()
+
+    with (
+        mock.patch.object(podman_utils, "MACOS_DEFAULT_PODMAN_URL", new=str(mock_path)),
+        pytest.raises(podman_utils.PodmanIsNotReadyError),
+    ):
+        try:
+            podman_utils.ensure_podman_socket()
+        except podman_utils.PodmanIsNotReadyError as e:
+            assert "failed unexpectedly" in e.args[0]
+            raise e
+
+    mock_shell_utils.run_command.assert_called_once_with(
+        podman_utils.PODMAN_MACHINE_STATE_CMD, quiet=True
+    )
 
 
 @mock.patch.object(podman_utils, "get_podman_client")
