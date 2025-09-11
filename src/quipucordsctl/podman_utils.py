@@ -1,19 +1,93 @@
 """Functions to simplify interfacing with podman."""
 
 import logging
+import pathlib
 import sys
 from gettext import gettext as _
+from urllib import parse
 
 import podman
+import xdg
+
+from quipucordsctl import shell_utils
 
 logger = logging.getLogger(__name__)
 MACOS_DEFAULT_PODMAN_URL = "unix:///var/run/docker.sock"
+
+SYSTEMCTL_ENABLE_CMD = ["systemctl", "--user", "enable", "--now", "podman.socket"]
+SYSTEMCTL_STATUS_CMD = ["systemctl", "--user", "status", "podman.socket"]
+PODMAN_MACHINE_STATE_CMD = ["podman", "machine", "inspect", "--format", "{{.State}}"]
+
+
+class PodmanIsNotReadyError(Exception):
+    """Exception raised when podman is not ready."""
+
+
+def ensure_podman_socket(base_url=None):
+    """Ensure podman socket is available, as required by the Podman client."""
+    logger.debug(_("Ensuring Podman socket is available."))
+
+    if sys.platform == "darwin":
+        try:
+            stdout, __, __ = shell_utils.run_command(
+                PODMAN_MACHINE_STATE_CMD, quiet=True
+            )
+        except Exception:  # noqa: BLE001
+            raise PodmanIsNotReadyError(
+                _(
+                    "Podman command failed unexpectedly. Please install Podman and "
+                    "run `podman machine start` before using this command."
+                )
+            )
+        if stdout.strip() != "running":
+            raise PodmanIsNotReadyError(
+                _(
+                    "Podman machine is not running. Please install Podman and "
+                    "run `podman machine start` before using this command."
+                )
+            )
+    else:
+        try:
+            shell_utils.run_command(SYSTEMCTL_ENABLE_CMD)
+            shell_utils.run_command(SYSTEMCTL_STATUS_CMD)
+        except Exception as e:
+            logger.error(
+                _(
+                    "The 'podman.socket' service failed to start. "
+                    "Please check logs and ensure that Podman is correctly installed."
+                )
+            )
+            raise e
+
+    socket_path = pathlib.Path(
+        parse.urlparse(
+            base_url
+            or (
+                MACOS_DEFAULT_PODMAN_URL
+                if sys.platform == "darwin"
+                else str(
+                    pathlib.Path(xdg.BaseDirectory.get_runtime_dir(strict=False))
+                    / "podman"
+                    / "podman.sock"
+                )
+            )
+        ).path
+    )
+    if not socket_path.exists():
+        raise PodmanIsNotReadyError(
+            _(
+                "Podman socket does not exist at expected path (%(socket_path)s). "
+                "Please check logs and ensure that Podman is correctly installed."
+                % {"socket_path": socket_path}
+            )
+        )
 
 
 def get_podman_client(base_url=None) -> podman.PodmanClient:
     """Get a podman client."""
     # podman on macOS/darwin requires a different default base_url,
     # and we should also allow the caller to specify their own.
+    ensure_podman_socket(base_url)
     kwargs = (
         {"base_url": base_url}
         if base_url
