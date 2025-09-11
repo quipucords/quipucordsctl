@@ -14,9 +14,9 @@ def confirm(prompt: str | None = None) -> bool:
         prompt = _("Do you want to continue? [y/n] ")
     while user_input is None:
         user_input = input(prompt).lower()
-        if user_input == "y":
+        if user_input == _("y"):
             return True
-        elif user_input != "n":
+        elif user_input != _("n"):
             print(_("Please answer with 'y' or 'n'."))
             user_input = None
     return False
