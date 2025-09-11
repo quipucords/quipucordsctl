@@ -15,6 +15,7 @@ from quipucordsctl.commands import (
     reset_admin_password,
     reset_database_password,
     reset_encryption_secret,
+    reset_redis_password,
     reset_session_secret,
 )
 from quipucordsctl.systemdunitparser import SystemdUnitParser
@@ -236,7 +237,7 @@ def systemctl_reload():
     shell_utils.run_command(SYSTEMCTL_USER_DAEMON_RELOAD_CMD, quiet=True)
 
 
-def run(args: argparse.Namespace) -> bool:
+def run(args: argparse.Namespace) -> bool:  # noqa: PLR0911
     """Install the server, ensuring requirements are met."""
     logger.debug("Starting install command")
     podman_utils.ensure_podman_socket()
@@ -264,6 +265,12 @@ def run(args: argparse.Namespace) -> bool:
         and not reset_database_password.run(args)
     ):
         logger.error(_("The install command failed to reset database password."))
+        return False
+    if (
+        not reset_redis_password.redis_password_is_set()
+        and not reset_redis_password.run(args)
+    ):
+        logger.error(_("The install command failed to reset Redis password."))
         return False
 
     override_conf_dir_path = None
