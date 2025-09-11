@@ -4,6 +4,7 @@ import argparse
 import logging
 import pathlib
 import stat
+import subprocess
 from datetime import datetime
 from gettext import gettext as _
 from importlib import resources
@@ -258,6 +259,11 @@ def run(args: argparse.Namespace) -> bool:
                 {"override_conf_dir": args.override_conf_dir},
             )
     write_config_files(override_conf_dir_path)
-    systemctl_reload()
+    try:
+        systemctl_reload()
+    except subprocess.CalledProcessError:
+        logger.error(_("systemctl reload failed unexpectedly. Please check logs."))
+        return False
+
     logger.debug("Finished install command")
     return True
