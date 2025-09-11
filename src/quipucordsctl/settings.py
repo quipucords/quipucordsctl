@@ -17,7 +17,7 @@ SERVER_DATA_DIR = _home / f".local/share/{SERVER_SOFTWARE_PACKAGE}"
 SYSTEMD_UNITS_DIR = _home / ".config/containers/systemd"
 SERVER_DATA_SUBDIRS = {
     data_dir: SERVER_DATA_DIR / data_dir
-    for data_dir in ("data", "db", "log", "sshkeys")
+    for data_dir in ("certs", "data", "db", "log", "sshkeys")
 }
 
 # "Explicit is better than implicit." - PEP 20
