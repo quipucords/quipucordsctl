@@ -1,3 +1,10 @@
+"""
+SystemdUnitParser is originally from https://github.com/sgallagher/systemdunitparser.
+
+quipucords devs modified this code to fix lint issues identified by ruff and to better
+adhere the quipucords project style conventions.
+"""
+
 import configparser
 import sys
 
@@ -37,7 +44,7 @@ class SystemdUnitParser(configparser.RawConfigParser):
             return self._prefixes.full or ()
         return ()
 
-    def _read(self, fp, fpname):
+    def _read(self, fp, fpname):  # noqa: C901, PLR0912, PLR0915
         """Parse a sectioned configuration file.
 
         Each section in a configuration file contains a header, indicated by
@@ -68,12 +75,14 @@ class SystemdUnitParser(configparser.RawConfigParser):
             while comment_start == sys.maxsize and inline_prefixes:
                 next_prefixes = {}
                 for prefix, index in inline_prefixes.items():
-                    index = line.find(prefix, index + 1)
-                    if index == -1:
+                    next_index = line.find(prefix, index + 1)
+                    if next_index == -1:
                         continue
-                    next_prefixes[prefix] = index
-                    if index == 0 or (index > 0 and line[index - 1].isspace()):
-                        comment_start = min(comment_start, index)
+                    next_prefixes[prefix] = next_index
+                    if next_index == 0 or (
+                        next_index > 0 and line[next_index - 1].isspace()
+                    ):
+                        comment_start = min(comment_start, next_index)
                 inline_prefixes = next_prefixes
             # strip full line comments
             for prefix in self._get_comment_prefixes():
@@ -142,7 +151,7 @@ class SystemdUnitParser(configparser.RawConfigParser):
                             optval = optval.strip()
                             # Check if this optname already exists
                             if (optname in cursect) and (cursect[optname] is not None):
-                                # If it does, convert it to a tuple if it isn't already one
+                                # If it does, convert it to a tuple if it isn't already
                                 if not isinstance(cursect[optname], tuple):
                                     cursect[optname] = tuple(cursect[optname])
                                 cursect[optname] = cursect[optname] + tuple([optval])
@@ -163,18 +172,18 @@ class SystemdUnitParser(configparser.RawConfigParser):
         self._join_multiline_values()
 
     def _validate_value_types(self, *, section="", option="", value=""):
-        """Raises a TypeError for non-string values.
+        """Raise a TypeError for non-string values.
 
         The only legal non-string value if we allow valueless
         options is None, so we need to check if the value is a
         string if:
         - we do not allow valueless options, or
-        - we allow valueless options but the value is not Noneconfigparser.RawConfigParser
+        - we allow valueless options but the value is not None
 
         For compatibility reasons this method is not used in classic set()
         for RawConfigParsers. It is invoked in every case for mapping protocol
         access and in ConfigParser.set().
-        """
+        """  # noqa: E501
         if not isinstance(section, str):
             raise TypeError("section names must be strings")
         if not isinstance(option, str):
@@ -185,20 +194,21 @@ class SystemdUnitParser(configparser.RawConfigParser):
 
     # Write out duplicate keys with their values
     def _write_section(self, fp, section_name, section_items, delimiter):
-        """Write a single section to the specified `fp'."""
+        """Write a single section to the specified `fp`."""
         fp.write("[{}]\n".format(section_name))
-        for key, vals in section_items:
-            vals = self._interpolation.before_write(self, section_name, key, vals)
+        for key, _vals in section_items:
+            vals = self._interpolation.before_write(self, section_name, key, _vals)
             if not isinstance(vals, tuple):
                 vals = tuple([vals])
             for value in vals:
                 if value is not None or not self._allow_no_value:
-                    value = delimiter + str(value).replace("\n", "\n\t")
+                    new_value = delimiter + str(value).replace("\n", "\n\t")
                 else:
-                    value = ""
-                fp.write("{}{}\n".format(key, value))
+                    new_value = ""
+                fp.write("{}{}\n".format(key, new_value))
         fp.write("\n")
 
     # Default to not creating spaces around the delimiter
     def write(self, fp, space_around_delimiters=False):
+        """Write a systemd-format representation of the configuration state."""
         configparser.RawConfigParser.write(self, fp, space_around_delimiters)
