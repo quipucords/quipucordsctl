@@ -1,7 +1,7 @@
 import configparser
 import sys
 
-__author__ = 'sgallagh'
+__author__ = "sgallagh"
 
 """
 Sections of this parser are adapted from:
@@ -13,27 +13,27 @@ Original Author: Praetorian on StackExchange
 
 
 class SystemdUnitParser(configparser.RawConfigParser):
-    """ConfigParser allowing duplicate keys. Values are stored in a list"""
+    """ConfigParser allowing duplicate keys. Values are stored in a list."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, empty_lines_in_values=False, strict=False, **kwargs)
         self.optionxform = lambda option: option
 
-        self._inline_comment_prefixes = kwargs.get('inline_comment_prefixes', None)
-        self._comment_prefixes = kwargs.get('comment_prefixes', ('#', ';'))
+        self._inline_comment_prefixes = kwargs.get("inline_comment_prefixes", None)
+        self._comment_prefixes = kwargs.get("comment_prefixes", ("#", ";"))
 
     def _get_inline_prefixes(self):
         # Fix for newer cython
-        if hasattr(self, '_inline_comment_prefixes'):
+        if hasattr(self, "_inline_comment_prefixes"):
             return self._inline_comment_prefixes or ()
-        elif hasattr(self, '_prefixes'):
+        elif hasattr(self, "_prefixes"):
             return self._prefixes.inline or ()
         return ()
-        
+
     def _get_comment_prefixes(self):
-        if hasattr(self, '_comment_prefixes'):
+        if hasattr(self, "_comment_prefixes"):
             return self._comment_prefixes or ()
-        elif hasattr(self, '_prefixes'):
+        elif hasattr(self, "_prefixes"):
             return self._prefixes.full or ()
         return ()
 
@@ -87,11 +87,13 @@ class SystemdUnitParser(configparser.RawConfigParser):
                 if self._empty_lines_in_values:
                     # add empty line to the value, but only if there was no
                     # comment on the line
-                    if (comment_start is None and
-                                cursect is not None and
-                            optname and
-                                cursect[optname] is not None):
-                        cursect[optname].append('')  # newlines added at join
+                    if (
+                        comment_start is None
+                        and cursect is not None
+                        and optname
+                        and cursect[optname] is not None
+                    ):
+                        cursect[optname].append("")  # newlines added at join
                 else:
                     # empty line marks end of value
                     indent_level = sys.maxsize
@@ -99,8 +101,7 @@ class SystemdUnitParser(configparser.RawConfigParser):
             # continuation line?
             first_nonspace = self.NONSPACECRE.search(line)
             cur_indent_level = first_nonspace.start() if first_nonspace else 0
-            if (cursect is not None and optname and
-                        cur_indent_level > indent_level):
+            if cursect is not None and optname and cur_indent_level > indent_level:
                 cursect[optname].append(value)
             # a section header or option header?
             else:
@@ -108,7 +109,7 @@ class SystemdUnitParser(configparser.RawConfigParser):
                 # is it a section header?
                 mo = self.SECTCRE.match(value)
                 if mo:
-                    sectname = mo.group('header')
+                    sectname = mo.group("header")
                     if sectname in self._sections:
                         cursect = self._sections[sectname]
                         elements_added.add(sectname)
@@ -117,7 +118,9 @@ class SystemdUnitParser(configparser.RawConfigParser):
                     else:
                         cursect = self._dict()
                         self._sections[sectname] = cursect
-                        self._proxies[sectname] = configparser.SectionProxy(self, sectname)
+                        self._proxies[sectname] = configparser.SectionProxy(
+                            self, sectname
+                        )
                         elements_added.add(sectname)
                     # So sections can't start with a continuation line
                     optname = None
@@ -128,7 +131,7 @@ class SystemdUnitParser(configparser.RawConfigParser):
                 else:
                     mo = self._optcre.match(value)
                     if mo:
-                        optname, vi, optval = mo.group('option', 'vi', 'value')
+                        optname, vi, optval = mo.group("option", "vi", "value")
                         if not optname:
                             e = self._handle_error(e, fpname, lineno, line)
                         optname = self.optionxform(optname.rstrip())
@@ -185,13 +188,12 @@ class SystemdUnitParser(configparser.RawConfigParser):
         """Write a single section to the specified `fp'."""
         fp.write("[{}]\n".format(section_name))
         for key, vals in section_items:
-            vals = self._interpolation.before_write(self, section_name, key,
-                                                    vals)
+            vals = self._interpolation.before_write(self, section_name, key, vals)
             if not isinstance(vals, tuple):
                 vals = tuple([vals])
             for value in vals:
                 if value is not None or not self._allow_no_value:
-                    value = delimiter + str(value).replace('\n', '\n\t')
+                    value = delimiter + str(value).replace("\n", "\n\t")
                 else:
                     value = ""
                 fp.write("{}{}\n".format(key, value))
