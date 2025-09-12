@@ -25,7 +25,7 @@ PYBABEL_BIN = pathlib.Path(sys.prefix) / "bin" / "pybabel"
 SOURCE_CODE_DIR = pathlib.Path(__file__).parent.parent / "src" / "quipucordsctl"
 LOCALES_DIR = SOURCE_CODE_DIR / "locale"
 PYTHON_STDLIB_FILES = ["argparse.py"]
-LOCALES = []
+LOCALES = ["en"]
 
 
 def get_code_paths() -> list:
