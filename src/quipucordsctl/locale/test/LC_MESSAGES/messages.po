@@ -1,0 +1,445 @@
+# English translations for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr "TEST "
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-09-12 12:26-0400\n"
+"PO-Revision-Date: 2025-09-12 12:28-0400\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/cli.py:37
+msgid "Increase verbose output"
+msgstr "TEST Increase verbose output"
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/cli.py:45
+msgid "Quiet output (overrides `-v`/`--verbose`)"
+msgstr "TEST Quiet output (overrides `-v`/`--verbose`)"
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/cli.py:52
+msgid "Override configuration directory"
+msgstr "TEST Override configuration directory"
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/cli.py:101
+msgid "Exiting due to keyboard interrupt."
+msgstr "TEST Exiting due to keyboard interrupt."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/cli.py:105
+msgid "Input closed unexpectedly."
+msgstr "TEST Input closed unexpectedly."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/cli.py:110
+msgid "Communication with podman failed unexpectedly."
+msgstr "TEST Communication with podman failed unexpectedly."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/podman_utils.py:39
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/podman_utils.py:44
+#, python-format
+msgid "A podman secret %(secret_name)s already exists."
+msgstr "TEST A podman secret %(secret_name)s already exists."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/podman_utils.py:50
+#, python-format
+msgid "Old podman secret %(secret_name)s was removed."
+msgstr "TEST Old podman secret %(secret_name)s was removed."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/podman_utils.py:55
+#, python-format
+msgid "New podman secret %(secret_name)s was set."
+msgstr "TEST New podman secret %(secret_name)s was set."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/secrets.py:28
+#, python-format
+msgid "Enter new %(secret_name)s: "
+msgstr "TEST Enter new %(secret_name)s: "
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/secrets.py:31
+#, python-format
+msgid "Confirm new %(secret_name)s: "
+msgstr "TEST Confirm new %(secret_name)s: "
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/secrets.py:35
+#, python-format
+msgid "Your %(secret_name)s inputs do not match."
+msgstr "TEST Your %(secret_name)s inputs do not match."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/secrets.py:64
+msgid "secret"
+msgstr "TEST secret"
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/secrets.py:78
+#, python-format
+msgid "Your %(secret_name)s must be at least %(min_length)s characters long."
+msgstr "TEST Your %(secret_name)s must be at least %(min_length)s characters long."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/secrets.py:84
+#, python-format
+msgid "Your %(secret_name)s must contain a number."
+msgstr "TEST Your %(secret_name)s must contain a number."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/secrets.py:90
+#, python-format
+msgid "Your %(secret_name)s must contain a letter."
+msgstr "TEST Your %(secret_name)s must contain a letter."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/secrets.py:97
+#, python-format
+msgid "Your %(secret_name)s cannot be entirely numeric."
+msgstr "TEST Your %(secret_name)s cannot be entirely numeric."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/secrets.py:104
+#, python-format
+msgid "Your %(secret_name)s cannot be used because it is blocked."
+msgstr "TEST Your %(secret_name)s cannot be used because it is blocked."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/secrets.py:114
+#, python-format
+msgid "Your %(secret_name)s is too similar to your %(similar_name)s."
+msgstr "TEST Your %(secret_name)s is too similar to your %(similar_name)s."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/shell_utils.py:12
+msgid "Do you want to continue? [y/n] "
+msgstr "TEST Do you want to continue? [y/n] "
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/shell_utils.py:18
+msgid "Please answer with 'y' or 'n'."
+msgstr "TEST Please answer with 'y' or 'n'."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/install.py:25
+#, python-format
+msgid "Install the %(server_software_name)s server."
+msgstr "TEST Install the %(server_software_name)s server."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/install.py:35
+#, python-format
+msgid "Ensuring data directory exists: %(dir_path)s"
+msgstr "TEST Ensuring data directory exists: %(dir_path)s"
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/install.py:41
+#, python-format
+msgid "%(dir_path)s exists but is not a directory."
+msgstr "TEST %(dir_path)s exists but is not a directory."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/install.py:46
+#, python-format
+msgid "Ensuring config directory exists: %(config_dir)s"
+msgstr "TEST Ensuring config directory exists: %(config_dir)s"
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/install.py:52
+#, python-format
+msgid "%(config_dir)s exists but is not a directory."
+msgstr "TEST %(config_dir)s exists but is not a directory."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/install.py:75
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/install.py:85
+#, python-format
+msgid "Copying %(template_path)s to %(destination)s"
+msgstr "TEST Copying %(template_path)s to %(destination)s"
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/install.py:94
+#, python-format
+msgid "Reloading systemctl to recognize %(server_software_name)s units"
+msgstr "TEST Reloading systemctl to recognize %(server_software_name)s units"
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_admin_password.py:20
+msgid "Reset the admin login password."
+msgstr "TEST Reset the admin login password."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_admin_password.py:37
+msgid "admin login username"
+msgstr "TEST admin login username"
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_admin_password.py:42
+msgid "admin login password"
+msgstr "TEST admin login password"
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_admin_password.py:46
+msgid "The admin login password was not updated."
+msgstr "TEST The admin login password was not updated."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:21
+msgid "Reset the encryption secret key."
+msgstr "TEST Reset the encryption secret key."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:31
+msgid ""
+"Prompt for custom encryption secret key (default: no prompt, generate a "
+"random value)"
+msgstr "TEST alue)"
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:59
+#, python-format
+msgid ""
+"The encryption secret key already exists. Resetting the encryption secret"
+" key to a new value may result in data loss if you have already installed"
+" and run %(SERVER_SOFTWARE_NAME)s on this system."
+msgstr "TEST nd run %(SERVER_SOFTWARE_NAME)s on this system."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:68
+msgid ""
+"Are you sure you want to replace the existing encryption secret key? "
+"[y/n] "
+msgstr "TEST n] "
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:76
+msgid ""
+"You should only manually reset the encryption secret key if you "
+"understand how it it used and you are addressing a specific issue. We "
+"strongly recommend using the automatically generated encryption secret "
+"key instead of manually entering one."
+msgstr "TEST nstead of manually entering one."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:85
+msgid "Are you sure you want to manually reset the encryption secret key? [y/n] "
+msgstr "TEST Are you sure you want to manually reset the encryption secret key? [y/n] "
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:92
+msgid "encryption secret key"
+msgstr "TEST encryption secret key"
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:96
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:110
+msgid "The encryption secret key was not updated."
+msgstr "TEST The encryption secret key was not updated."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:102
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_session_secret.py:77
+#, python-format
+msgid "New value for podman secret %(PODMAN_SECRET_NAME)s was randomly generated."
+msgstr "TEST New value for podman secret %(PODMAN_SECRET_NAME)s was randomly generated."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_session_secret.py:22
+msgid "Reset the session secret key."
+msgstr "TEST Reset the session secret key."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_session_secret.py:32
+msgid ""
+"Prompt for custom session secret key (default: no prompt, generate a "
+"random value)"
+msgstr "TEST alue)"
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_session_secret.py:56
+msgid ""
+"You should only manually reset the session secret key if you understand "
+"how it it used and you are addressing a specific issue. We strongly "
+"recommend using the automatically generated session secret key instead of"
+" manually entering one."
+msgstr "TEST anually entering one."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_session_secret.py:63
+msgid "Are you sure you want to manually reset the session secret key? [y/n] "
+msgstr "TEST Are you sure you want to manually reset the session secret key? [y/n] "
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_session_secret.py:68
+msgid "session secret key"
+msgstr "TEST session secret key"
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_session_secret.py:71
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_session_secret.py:83
+msgid "The session secret key was not updated."
+msgstr "TEST The session secret key was not updated."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_session_secret.py:85
+msgid "The session secret key was successfully updated."
+msgstr "TEST The session secret key was successfully updated."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/uninstall.py:15
+#, python-format
+msgid "Uninstall the %(server_software_name)s server."
+msgstr "TEST Uninstall the %(server_software_name)s server."
+
+#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/uninstall.py:22
+#, python-format
+msgid "%(command)s is not yet implemented."
+msgstr "TEST %(command)s is not yet implemented."
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:228
+#, python-format
+msgid "%(heading)s:"
+msgstr "TEST %(heading)s:"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:300
+msgid "usage: "
+msgstr "TEST usage: "
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:726
+#, python-format
+msgid " (default: %(default)s)"
+msgstr "TEST  (default: %(default)s)"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:780
+#, python-format
+msgid "argument %(argument_name)s: %(message)s"
+msgstr "TEST argument %(argument_name)s: %(message)s"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:886
+msgid ".__call__() not defined"
+msgstr "TEST .__call__() not defined"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1157
+msgid "show program's version number and exit"
+msgstr "TEST show program's version number and exit"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1219
+#, python-format
+msgid "conflicting subparser: %s"
+msgstr "TEST conflicting subparser: %s"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1223
+#, python-format
+msgid "conflicting subparser alias: %s"
+msgstr "TEST conflicting subparser alias: %s"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1258
+#, python-format
+msgid "unknown parser %(parser_name)r (choices: %(choices)s)"
+msgstr "TEST unknown parser %(parser_name)r (choices: %(choices)s)"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1318
+#, python-format
+msgid "argument \"-\" with mode %r"
+msgstr "TEST argument \"-\" with mode %r"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1327
+#, python-format
+msgid "can't open '%(filename)s': %(error)s"
+msgstr "TEST can't open '%(filename)s': %(error)s"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1536
+#, python-format
+msgid "cannot merge actions - two groups are named %r"
+msgstr "TEST cannot merge actions - two groups are named %r"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1574
+msgid "'required' is an invalid argument for positionals"
+msgstr "TEST 'required' is an invalid argument for positionals"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1596
+#, python-format
+msgid ""
+"invalid option string %(option)r: must start with a character "
+"%(prefix_chars)r"
+msgstr "TEST efix_chars)r"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1614
+#, python-format
+msgid "dest= is required for options like %r"
+msgstr "TEST dest= is required for options like %r"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1631
+#, python-format
+msgid "invalid conflict_resolution value: %r"
+msgstr "TEST invalid conflict_resolution value: %r"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1649
+#, python-format
+msgid "conflicting option string: %s"
+msgid_plural "conflicting option strings: %s"
+msgstr[0] "TEST conflicting option string: %s"
+msgstr[1] "TEST conflicting option strings: %s"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1723
+msgid "mutually exclusive arguments must be optional"
+msgstr "TEST mutually exclusive arguments must be optional"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1799
+msgid "positional arguments"
+msgstr "TEST positional arguments"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1800
+msgid "options"
+msgstr "TEST options"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1815
+msgid "show this help message and exit"
+msgstr "TEST show this help message and exit"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1846
+msgid "cannot have multiple subparser arguments"
+msgstr "TEST cannot have multiple subparser arguments"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1898
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2421
+#, python-format
+msgid "unrecognized arguments: %s"
+msgstr "TEST unrecognized arguments: %s"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2001
+#, python-format
+msgid "not allowed with argument %s"
+msgstr "TEST not allowed with argument %s"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2043
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2074
+#, python-format
+msgid "ignored explicit argument %r"
+msgstr "TEST ignored explicit argument %r"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2181
+#, python-format
+msgid "the following arguments are required: %s"
+msgstr "TEST the following arguments are required: %s"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2196
+#, python-format
+msgid "one of the arguments %s is required"
+msgstr "TEST one of the arguments %s is required"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2240
+msgid "expected one argument"
+msgstr "TEST expected one argument"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2241
+msgid "expected at most one argument"
+msgstr "TEST expected at most one argument"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2242
+msgid "expected at least one argument"
+msgstr "TEST expected at least one argument"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2246
+#, python-format
+msgid "expected %s argument"
+msgid_plural "expected %s arguments"
+msgstr[0] "TEST expected %s argument"
+msgstr[1] "TEST expected %s arguments"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2303
+#, python-format
+msgid "ambiguous option: %(option)s could match %(matches)s"
+msgstr "TEST ambiguous option: %(option)s could match %(matches)s"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2364
+#, python-format
+msgid "unexpected option string: %s"
+msgstr "TEST unexpected option string: %s"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2566
+#, python-format
+msgid "%r is not callable"
+msgstr "TEST %r is not callable"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2582
+#, python-format
+msgid "invalid %(type)s value: %(value)r"
+msgstr "TEST invalid %(type)s value: %(value)r"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2593
+#, python-format
+msgid "invalid choice: %(value)r (choose from %(choices)s)"
+msgstr "TEST invalid choice: %(value)r (choose from %(choices)s)"
+
+#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2671
+#, python-format
+msgid "%(prog)s: error: %(message)s\n"
+msgstr "TEST %(prog)s: error: %(message)s\n"
