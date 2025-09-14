@@ -4,8 +4,14 @@
 %global server_image quay.io/quipucords/quipucords:2.1
 %global ui_image quay.io/quipucords/quipucords-ui:2.1
 %global templates_dir src/quipucordsctl/templates
-%global python3_pkgversion  3.12
-%global __python3 /usr/bin/python3.12
+
+%if 0%{?fedora} >= 41
+    %global python3_pkgversion  3.13
+    %global __python3 /usr/bin/python3.13
+%else
+    %global python3_pkgversion  3.12
+    %global __python3 /usr/bin/python3.12
+%endif
 
 
 Name:           %{product_name_lower}ctl
@@ -21,16 +27,16 @@ Source0:        %{url}/archive/%{version}.tar.gz
 
 BuildArch:      noarch
 BuildRequires:  sed
+BuildRequires:  pyproject-rpm-macros
 BuildRequires:  python%{python3_pkgversion}-devel
 BuildRequires:  python%{python3_pkgversion}-setuptools
-BuildRequires:  pyproject-rpm-macros
 
 Requires:       bash
 Requires:       coreutils
 Requires:       podman >= 4.9.4
 Requires:       python3-podman
 Requires:       python%{python3_pkgversion}
-Requires:       python%{python3_pkgversion}-setuptools
+
 
 %description
 %{name} installs and manages the %{product_name_title} server
@@ -38,16 +44,15 @@ via systemd using Podman Quadlet services.
 
 %prep
 # Note: this must match the GitHub repo name. Do not substitute variables.
-%autosetup -p1 -n quipucordsctl-%{version}
+%autosetup -n quipucordsctl-%{version}
 
 %build
 sed -i \
   -e 's/^quipucordsctl = "quipucordsctl.__main__:main"$/%{name} = "quipucordsctl.__main__:main"/' \
   -e 's/^version = "0.1.0"$/version = "%{version}"/' \
   %{_builddir}/quipucordsctl-%{version}/pyproject.toml
-%{python3} -m ensurepip 
-%{python3} -m pip install wheel
-%{python3} -m pip install --prefix=%{buildroot}%{python3_sitelib} .
+python%{python3_pkgversion} -m ensurepip
+python%{python3_pkgversion} -m pip install wheel
 %pyproject_wheel
 
 %install
