@@ -30,6 +30,7 @@ BuildRequires:  sed
 BuildRequires:  pyproject-rpm-macros
 BuildRequires:  python%{python3_pkgversion}-devel
 BuildRequires:  python%{python3_pkgversion}-setuptools
+BuildRequires:  python%{python3_pkgversion}-babel
 
 Requires:       bash
 Requires:       coreutils
@@ -53,6 +54,14 @@ sed -i \
   %{_builddir}/quipucordsctl-%{version}/pyproject.toml
 python%{python3_pkgversion} -m ensurepip
 python%{python3_pkgversion} -m pip install wheel
+
+# Let's compile the message catalogs
+python%{python3_pkgversion} -m venv translations-env
+source translations-env/bin/activate
+python%{python3_pkgversion} -m pip install babel
+python%{python3_pkgversion} scripts/translations.py compile
+rm -rf translations-env
+
 %pyproject_wheel
 
 %install
