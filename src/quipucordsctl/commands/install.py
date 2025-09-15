@@ -6,6 +6,7 @@ import pathlib
 import stat
 import subprocess
 import textwrap
+import types
 from datetime import datetime
 from gettext import gettext as _
 from importlib import resources
@@ -58,23 +59,29 @@ def mkdirs():
         dir_path.mkdir(parents=True, exist_ok=True)
 
 
+# Each of the "reset secret" commands/modules implements a similar enough interface
+# that allows the "install" command simply to iterate over each with the same calls.
+# Note that we list the specific "reset" commands that the "install" command requires;
+# we do not find them dynamically. Explicit is better than implicit, in this case.
+_RESET_SECRETS_MODULE_ERROR_MESSAGE: dict[types.ModuleType, str] = {
+    reset_encryption_secret: _(
+        "The install command failed to reset encryption secret."
+    ),
+    reset_session_secret: _("The install command failed to reset session secret."),
+    reset_admin_password: _("The install command failed to reset admin password."),
+    reset_database_password: _(
+        "The install command failed to reset database password."
+    ),
+    reset_redis_password: _("The install command failed to reset redis password."),
+}
+
+
 def reset_secrets(args: argparse.Namespace) -> bool:
     """Reset various secrets as part of the 'install' process."""
-    if not reset_encryption_secret.is_set() and not reset_encryption_secret.run(args):
-        logger.error(_("The install command failed to reset encryption secret."))
-        return False
-    if not reset_session_secret.is_set() and not reset_session_secret.run(args):
-        logger.error(_("The install command failed to reset session secret."))
-        return False
-    if not reset_admin_password.is_set() and not reset_admin_password.run(args):
-        logger.error(_("The install command failed to reset admin password."))
-        return False
-    if not reset_database_password.is_set() and not reset_database_password.run(args):
-        logger.error(_("The install command failed to reset database password."))
-        return False
-    if not reset_redis_password.is_set() and not reset_redis_password.run(args):
-        logger.error(_("The install command failed to reset Redis password."))
-        return False
+    for reset_secret_module, error in _RESET_SECRETS_MODULE_ERROR_MESSAGE.items():
+        if not reset_secret_module.is_set() and not reset_secret_module.run(args):
+            logger.error(error)
+            return False
     return True
 
 

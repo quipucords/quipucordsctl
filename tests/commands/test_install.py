@@ -1,5 +1,6 @@
 """Test the "install" command."""
 
+import logging
 import pathlib
 from collections.abc import Generator
 from typing import Any
@@ -102,34 +103,54 @@ def test_install_run(
         assert parser[unit_override_section][unit_override_key] == unit_override_value
 
 
-def test_reset_secrets():
+def test_reset_secrets_happy_path(caplog):
     """Test the installer.reset_secrets helper function."""
+    caplog.set_level(logging.ERROR)
     mock_args = mock.Mock()
 
-    with (
-        mock.patch.object(
-            install, "reset_encryption_secret"
-        ) as reset_encryption_secret,
-        mock.patch.object(install, "reset_session_secret") as reset_session_secret,
-        mock.patch.object(install, "reset_admin_password") as reset_admin_password,
-        mock.patch.object(
-            install, "reset_database_password"
-        ) as reset_database_password,
-        mock.patch.object(install, "reset_redis_password") as reset_redis_password,
-    ):
-        reset_encryption_secret.is_set.return_value = False
-        reset_session_secret.is_set.return_value = False
-        reset_admin_password.is_set.return_value = False
-        reset_database_password.is_set.return_value = False
-        reset_redis_password.is_set.return_value = False
+    with mock.patch.object(
+        install, "_RESET_SECRETS_MODULE_ERROR_MESSAGE"
+    ) as module_error_mapping:
+        mock_reset_module_a = mock.Mock()
+        mock_reset_module_a.is_set.return_value = False
+        mock_reset_module_a.run.return_value = True
 
-        install.reset_secrets(mock_args)
+        mock_reset_module_b = mock.Mock()
+        mock_reset_module_b.is_set.return_value = False
+        mock_reset_module_b.run.return_value = True
 
-        reset_encryption_secret.run.assert_called_once_with(mock_args)
-        reset_session_secret.run.assert_called_once_with(mock_args)
-        reset_admin_password.run.assert_called_once_with(mock_args)
-        reset_database_password.run.assert_called_once_with(mock_args)
-        reset_redis_password.run.assert_called_once_with(mock_args)
+        module_error_mapping.items.return_value = [
+            (mock_reset_module_a, mock.Mock()),
+            (mock_reset_module_b, mock.Mock()),
+        ]
+
+        assert install.reset_secrets(mock_args)
+        assert len(caplog.messages) == 0
+
+        mock_reset_module_a.is_set.assert_called_once()
+        mock_reset_module_a.run.assert_called_once_with(mock_args)
+        mock_reset_module_b.is_set.assert_called_once()
+        mock_reset_module_b.run.assert_called_once_with(mock_args)
+
+
+def test_reset_secrets_failure(caplog):
+    """Test installer.reset_secrets when a secret reset command fails."""
+    caplog.set_level(logging.ERROR)
+    mock_args = mock.Mock()
+
+    with mock.patch.object(
+        install, "_RESET_SECRETS_MODULE_ERROR_MESSAGE"
+    ) as module_error_mapping:
+        mock_reset_module = mock.Mock()
+        error_message = "uh oh!"
+        module_error_mapping.items.return_value = [(mock_reset_module, error_message)]
+        mock_reset_module.is_set.return_value = False
+        mock_reset_module.run.return_value = False  # this is the failure
+
+        assert not install.reset_secrets(mock_args)
+        assert error_message == caplog.messages[0]
+        mock_reset_module.is_set.assert_called_once()
+        mock_reset_module.run.assert_called_once_with(mock_args)
 
 
 def test_systemctl_reload(mock_shell_utils):
