@@ -58,6 +58,26 @@ def mkdirs():
         dir_path.mkdir(parents=True, exist_ok=True)
 
 
+def reset_secrets(args: argparse.Namespace) -> bool:
+    """Reset various secrets as part of the 'install' process."""
+    if not reset_encryption_secret.is_set() and not reset_encryption_secret.run(args):
+        logger.error(_("The install command failed to reset encryption secret."))
+        return False
+    if not reset_session_secret.is_set() and not reset_session_secret.run(args):
+        logger.error(_("The install command failed to reset session secret."))
+        return False
+    if not reset_admin_password.is_set() and not reset_admin_password.run(args):
+        logger.error(_("The install command failed to reset admin password."))
+        return False
+    if not reset_database_password.is_set() and not reset_database_password.run(args):
+        logger.error(_("The install command failed to reset database password."))
+        return False
+    if not reset_redis_password.is_set() and not reset_redis_password.run(args):
+        logger.error(_("The install command failed to reset Redis password."))
+        return False
+    return True
+
+
 def get_override_conf_path(
     override_conf_dir: pathlib.Path | None, filename: str
 ) -> pathlib.Path | None:
@@ -233,25 +253,11 @@ def systemctl_reload():
     shell_utils.run_command(SYSTEMCTL_USER_DAEMON_RELOAD_CMD, quiet=True)
 
 
-def run(args: argparse.Namespace) -> bool:  # noqa: PLR0911
+def run(args: argparse.Namespace) -> bool:
     """Install the server, ensuring requirements are met."""
     logger.debug("Starting install command")
     podman_utils.ensure_podman_socket()
-
-    if not reset_encryption_secret.is_set() and not reset_encryption_secret.run(args):
-        logger.error(_("The install command failed to reset encryption secret."))
-        return False
-    if not reset_session_secret.is_set() and not reset_session_secret.run(args):
-        logger.error(_("The install command failed to reset session secret."))
-        return False
-    if not reset_admin_password.is_set() and not reset_admin_password.run(args):
-        logger.error(_("The install command failed to reset admin password."))
-        return False
-    if not reset_database_password.is_set() and not reset_database_password.run(args):
-        logger.error(_("The install command failed to reset database password."))
-        return False
-    if not reset_redis_password.is_set() and not reset_redis_password.run(args):
-        logger.error(_("The install command failed to reset Redis password."))
+    if not reset_secrets(args):
         return False
 
     override_conf_dir_path = None
