@@ -9,10 +9,7 @@ from quipucordsctl.commands import reset_database_password
 @mock.patch.object(reset_database_password.podman_utils, "secret_exists")
 def test_database_password_is_set(mock_secret_exists):
     """Test database_password_is_set just wraps secret_exists."""
-    assert (
-        reset_database_password.database_password_is_set()
-        == mock_secret_exists.return_value
-    )
+    assert reset_database_password.is_set() == mock_secret_exists.return_value
     mock_secret_exists.assert_called_once_with(
         reset_database_password.DATABASE_PASSWORD_PODMAN_SECRET_NAME
     )

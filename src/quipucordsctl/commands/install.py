@@ -238,34 +238,19 @@ def run(args: argparse.Namespace) -> bool:  # noqa: PLR0911
     logger.debug("Starting install command")
     podman_utils.ensure_podman_socket()
 
-    if (
-        not reset_encryption_secret.encryption_secret_is_set()
-        and not reset_encryption_secret.run(args)
-    ):
+    if not reset_encryption_secret.is_set() and not reset_encryption_secret.run(args):
         logger.error(_("The install command failed to reset encryption secret."))
         return False
-    if (
-        not reset_session_secret.session_secret_is_set()
-        and not reset_session_secret.run(args)
-    ):
+    if not reset_session_secret.is_set() and not reset_session_secret.run(args):
         logger.error(_("The install command failed to reset session secret."))
         return False
-    if (
-        not reset_admin_password.admin_password_is_set()
-        and not reset_admin_password.run(args)
-    ):
+    if not reset_admin_password.is_set() and not reset_admin_password.run(args):
         logger.error(_("The install command failed to reset admin password."))
         return False
-    if (
-        not reset_database_password.database_password_is_set()
-        and not reset_database_password.run(args)
-    ):
+    if not reset_database_password.is_set() and not reset_database_password.run(args):
         logger.error(_("The install command failed to reset database password."))
         return False
-    if (
-        not reset_redis_password.redis_password_is_set()
-        and not reset_redis_password.run(args)
-    ):
+    if not reset_redis_password.is_set() and not reset_redis_password.run(args):
         logger.error(_("The install command failed to reset Redis password."))
         return False
 

@@ -9,9 +9,7 @@ from quipucordsctl.commands import reset_redis_password
 @mock.patch.object(reset_redis_password.podman_utils, "secret_exists")
 def test_redis_password_is_set(mock_secret_exists):
     """Test redis_password_is_set just wraps secret_exists."""
-    assert (
-        reset_redis_password.redis_password_is_set() == mock_secret_exists.return_value
-    )
+    assert reset_redis_password.is_set() == mock_secret_exists.return_value
     mock_secret_exists.assert_called_once_with(
         reset_redis_password.REDIS_PASSWORD_PODMAN_SECRET_NAME
     )
