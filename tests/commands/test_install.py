@@ -121,3 +121,29 @@ def test_systemctl_reload(mock_shell_utils):
             mock.call(install.SYSTEMCTL_USER_DAEMON_RELOAD_CMD, quiet=True),
         )
     )
+
+
+def test_mkdirs_happy_path(temp_config_directories):
+    """Test mkdirs creates directories as defined in the settings."""
+    # Make at least one exist already to verify that's okay.
+    assert not install.settings.SERVER_DATA_DIR.exists()
+    install.settings.SERVER_DATA_DIR.mkdir(parents=True)
+    install.mkdirs()
+    assert install.settings.SERVER_ENV_DIR.is_dir()
+    assert install.settings.SYSTEMD_UNITS_DIR.is_dir()
+    assert len(install.settings.SERVER_DATA_SUBDIRS) > 0
+    for subdir in install.settings.SERVER_DATA_SUBDIRS.values():
+        assert subdir.is_dir()
+
+
+def test_mkdirs_fails_because_expected_dir_is_a_file(temp_config_directories):
+    """
+    Test mkdirs fails if an expected path already exists and is not a directory.
+
+    We do not have any special handling here. We just expect pathlib to raise OSError.
+    """
+    assert not install.settings.SERVER_DATA_DIR.exists()
+    install.settings.SERVER_ENV_DIR.touch()
+    assert not install.settings.SERVER_DATA_DIR.is_dir()
+    with pytest.raises(OSError):
+        install.mkdirs()
