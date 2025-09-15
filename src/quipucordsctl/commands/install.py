@@ -56,10 +56,6 @@ def mkdirs():
             {"dir_path": dir_path},
         )
         dir_path.mkdir(parents=True, exist_ok=True)
-        if not dir_path.is_dir():
-            raise NotADirectoryError(
-                _("%(dir_path)s exists but is not a directory."), {"dir_path": dir_path}
-            )
 
 
 def get_override_conf_path(
