@@ -20,7 +20,7 @@ def get_help() -> str:
     return _("Reset the admin login password.")
 
 
-def admin_password_is_set() -> bool:
+def is_set() -> bool:
     """Check if the admin password is already set."""
     return podman_utils.secret_exists(ADMIN_PASSWORD_PODMAN_SECRET_NAME)
 

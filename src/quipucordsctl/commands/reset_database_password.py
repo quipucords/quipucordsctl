@@ -30,7 +30,7 @@ def setup_parser(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def database_password_is_set() -> bool:
+def is_set() -> bool:
     """Check if the database password is already set."""
     return podman_utils.secret_exists(DATABASE_PASSWORD_PODMAN_SECRET_NAME)
 

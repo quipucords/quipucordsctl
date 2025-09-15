@@ -9,9 +9,7 @@ from quipucordsctl.commands import reset_session_secret
 @mock.patch.object(reset_session_secret.podman_utils, "secret_exists")
 def test_session_secret_is_set(mock_secret_exists):
     """Test session_secret_is_set just wraps secret_exists."""
-    assert (
-        reset_session_secret.session_secret_is_set() == mock_secret_exists.return_value
-    )
+    assert reset_session_secret.is_set() == mock_secret_exists.return_value
     mock_secret_exists.assert_called_once_with(
         reset_session_secret.SESSION_SECRET_PODMAN_SECRET_NAME
     )

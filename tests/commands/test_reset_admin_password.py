@@ -19,9 +19,7 @@ class MysteryError(Exception):
 @mock.patch.object(reset_admin_password.podman_utils, "secret_exists")
 def test_admin_password_is_set(mock_secret_exists):
     """Test admin_password_is_set just wraps secret_exists."""
-    assert (
-        reset_admin_password.admin_password_is_set() == mock_secret_exists.return_value
-    )
+    assert reset_admin_password.is_set() == mock_secret_exists.return_value
     mock_secret_exists.assert_called_once_with(
         reset_admin_password.ADMIN_PASSWORD_PODMAN_SECRET_NAME
     )

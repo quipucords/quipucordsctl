@@ -34,7 +34,7 @@ def setup_parser(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def encryption_secret_is_set() -> bool:
+def is_set() -> bool:
     """Check if the encryption secret key is already set."""
     return podman_utils.secret_exists(ENCRYPTION_SECRET_KEY_PODMAN_SECRET_NAME)
 

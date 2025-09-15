@@ -9,10 +9,7 @@ from quipucordsctl.commands import reset_encryption_secret
 @mock.patch.object(reset_encryption_secret.podman_utils, "secret_exists")
 def test_encryption_secret_is_set(mock_secret_exists):
     """Test encryption_secret_is_set just wraps secret_exists."""
-    assert (
-        reset_encryption_secret.encryption_secret_is_set()
-        == mock_secret_exists.return_value
-    )
+    assert reset_encryption_secret.is_set() == mock_secret_exists.return_value
     mock_secret_exists.assert_called_once_with(
         reset_encryption_secret.ENCRYPTION_SECRET_KEY_PODMAN_SECRET_NAME
     )
