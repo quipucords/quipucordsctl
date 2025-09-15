@@ -35,7 +35,7 @@ def setup_parser(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def redis_password_is_set() -> bool:
+def is_set() -> bool:
     """Check if the Redis password is already set."""
     return podman_utils.secret_exists(REDIS_PASSWORD_PODMAN_SECRET_NAME)
 

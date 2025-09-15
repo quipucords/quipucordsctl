@@ -35,7 +35,7 @@ def setup_parser(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def session_secret_is_set() -> bool:
+def is_set() -> bool:
     """Check if the session secret key is already set."""
     return podman_utils.secret_exists(SESSION_SECRET_PODMAN_SECRET_NAME)
 
