@@ -72,24 +72,15 @@ def test_install_run(
     env_dir = temp_config_directories["SERVER_ENV_DIR"]
     systemd_dir = temp_config_directories["SYSTEMD_UNITS_DIR"]
     with (
-        mock.patch.object(
-            install, "reset_encryption_secret"
-        ) as reset_encryption_secret,
-        mock.patch.object(install, "reset_session_secret") as reset_session_secret,
-        mock.patch.object(install, "reset_admin_password") as reset_admin_password,
-        mock.patch.object(
-            install, "reset_database_password"
-        ) as reset_database_password,
-        mock.patch.object(install, "reset_redis_password") as reset_redis_password,
+        mock.patch.object(install, "reset_secrets") as reset_secrets,
         mock.patch.object(install, "systemctl_reload") as systemctl_reload,
     ):
-        reset_encryption_secret.is_set.return_value = False
-        reset_session_secret.is_set.return_value = False
-        reset_admin_password.is_set.return_value = False
-        reset_database_password.is_set.return_value = False
-        reset_redis_password.is_set.return_value = False
+        reset_secrets.return_value = True
 
         install.run(mock_args)
+
+        reset_secrets.assert_called_once_with(mock_args)
+        systemctl_reload.assert_called_once()
 
         # Spot-check only a few paths that should now exist.
         assert (data_dir / "data").is_dir()
@@ -110,12 +101,35 @@ def test_install_run(
         parser.read(str((systemd_dir / "quipucords-app.container")))
         assert parser[unit_override_section][unit_override_key] == unit_override_value
 
-        reset_encryption_secret.run.assert_called_once()
-        reset_session_secret.run.assert_called_once()
-        reset_admin_password.run.assert_called_once()
-        reset_database_password.run.assert_called_once()
-        reset_redis_password.run.assert_called_once()
-        systemctl_reload.assert_called_once()
+
+def test_reset_secrets():
+    """Test the installer.reset_secrets helper function."""
+    mock_args = mock.Mock()
+
+    with (
+        mock.patch.object(
+            install, "reset_encryption_secret"
+        ) as reset_encryption_secret,
+        mock.patch.object(install, "reset_session_secret") as reset_session_secret,
+        mock.patch.object(install, "reset_admin_password") as reset_admin_password,
+        mock.patch.object(
+            install, "reset_database_password"
+        ) as reset_database_password,
+        mock.patch.object(install, "reset_redis_password") as reset_redis_password,
+    ):
+        reset_encryption_secret.is_set.return_value = False
+        reset_session_secret.is_set.return_value = False
+        reset_admin_password.is_set.return_value = False
+        reset_database_password.is_set.return_value = False
+        reset_redis_password.is_set.return_value = False
+
+        install.reset_secrets(mock_args)
+
+        reset_encryption_secret.run.assert_called_once_with(mock_args)
+        reset_session_secret.run.assert_called_once_with(mock_args)
+        reset_admin_password.run.assert_called_once_with(mock_args)
+        reset_database_password.run.assert_called_once_with(mock_args)
+        reset_redis_password.run.assert_called_once_with(mock_args)
 
 
 def test_systemctl_reload(mock_shell_utils):
