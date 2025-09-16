@@ -5,6 +5,22 @@
 %global ui_image quay.io/quipucords/quipucords-ui:2.1
 %global templates_dir src/quipucordsctl/templates
 
+###############################################################
+# Build notes:
+# - We officially support RHEL 8 and RHEL 9 downstream but we
+#   also build on RHEL 10.
+# - The pyproject-rpm-macros is not provided on RHEL 8
+#   by default so we leverage the older py3_build and
+#   py3_install. For this, we provide a skeleton setup.py that
+#   pulls in all that it needs from the pyproject.toml file via
+#   setuptools.
+# - We also build on Fedora 41 and Fedora 42 with Python 3.13
+# - We can also build on Fedora 43, which runs with Python 3.14
+#   but that requires bumping the Python requirements for
+#   quipucords, cli and installer to include Python 3.14 as we
+#   only currently support up through 3.13.
+###############################################################
+
 %if 0%{?fedora} >= 43
     %global python3_pkgversion  3.14
     %global __python3 /usr/bin/python3.14
@@ -32,12 +48,12 @@ Source0:        %{url}/archive/%{version}.tar.gz
 
 BuildArch:      noarch
 BuildRequires:  sed
+%if 0%{?fedora} >= 41 || 0%{?rhel} >= 9
 BuildRequires:  pyproject-rpm-macros
+%endif
 BuildRequires:  python%{python3_pkgversion}-devel
 BuildRequires:  python%{python3_pkgversion}-wheel
 BuildRequires:  python%{python3_pkgversion}-setuptools
-BuildRequires:  python3-babel
-BuildRequires:  babel
 
 Requires:       bash
 Requires:       coreutils
@@ -61,12 +77,20 @@ sed -i \
   %{_builddir}/quipucordsctl-%{version}/pyproject.toml
 python%{python3_pkgversion} -m ensurepip
 python%{python3_pkgversion} -m pip install wheel setuptools
-python%{python3_pkgversion} scripts/translations.py compile    # Compile the message catalogs
 
-%pyproject_wheel
+%if 0%{?rhel} == 8
+    %py3_build
+%else
+    %pyproject_wheel
+%endif
 
 %install
-%pyproject_install
+%if 0%{?rhel} == 8
+    %py3_install
+%else
+    %pyproject_install
+%endif
+
 mkdir -p %{buildroot}/%{_bindir}
 mkdir -p %{buildroot}/%{_datadir}/%{name}/env
 cp %{templates_dir}/env/*.env %{buildroot}/%{_datadir}/%{name}/env/
@@ -106,8 +130,12 @@ sed -i 's#^Image=.*#Image=%{ui_image}#g' %{buildroot}/%{_datadir}/%{name}/config
 %{_datadir}/%{name}/env/env-redis.env
 %{_datadir}/%{name}/env/env-server.env
 %{python3_sitelib}/%{name}/
-%{python3_sitelib}/%{name}-*.dist-info/
+%if 0%{?rhel} == 8
+  %{python3_sitelib}/%{name}-*.egg-info/
+%else
+  %{python3_sitelib}/%{name}-*.dist-info/
+%endif
 
 %changelog
-* Fri Sep 12 2025 Alberto Bellotti <abellott@redhat.com> - 0:2.1.0-1
+* Wed Sep 17 2025 Alberto Bellotti <abellott@redhat.com> - 0:2.1.0-1
 - Initial version
