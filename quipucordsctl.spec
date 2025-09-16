@@ -5,12 +5,17 @@
 %global ui_image quay.io/quipucords/quipucords-ui:2.1
 %global templates_dir src/quipucordsctl/templates
 
-%if 0%{?fedora} >= 41
-    %global python3_pkgversion  3.13
-    %global __python3 /usr/bin/python3.13
+%if 0%{?fedora} >= 43
+    %global python3_pkgversion  3.14
+    %global __python3 /usr/bin/python3.14
 %else
-    %global python3_pkgversion  3.12
-    %global __python3 /usr/bin/python3.12
+    %if 0%{?fedora} >= 41
+        %global python3_pkgversion  3.13
+        %global __python3 /usr/bin/python3.13
+    %else
+        %global python3_pkgversion  3.12
+        %global __python3 /usr/bin/python3.12
+    %endif
 %endif
 
 
@@ -29,8 +34,10 @@ BuildArch:      noarch
 BuildRequires:  sed
 BuildRequires:  pyproject-rpm-macros
 BuildRequires:  python%{python3_pkgversion}-devel
+BuildRequires:  python%{python3_pkgversion}-wheel
 BuildRequires:  python%{python3_pkgversion}-setuptools
-BuildRequires:  python%{python3_pkgversion}-babel
+BuildRequires:  python3-babel
+BuildRequires:  babel
 
 Requires:       bash
 Requires:       coreutils
@@ -53,14 +60,8 @@ sed -i \
   -e 's/^version = "0.1.0"$/version = "%{version}"/' \
   %{_builddir}/quipucordsctl-%{version}/pyproject.toml
 python%{python3_pkgversion} -m ensurepip
-python%{python3_pkgversion} -m pip install wheel
-
-# Let's compile the message catalogs
-python%{python3_pkgversion} -m venv translations-env
-source translations-env/bin/activate
-python%{python3_pkgversion} -m pip install babel
-python%{python3_pkgversion} scripts/translations.py compile
-rm -rf translations-env
+python%{python3_pkgversion} -m pip install wheel setuptools
+python%{python3_pkgversion} scripts/translations.py compile    # Compile the message catalogs
 
 %pyproject_wheel
 
