@@ -1,12 +1,137 @@
 """Test the quipucordsctl.podman_utils module."""
 
 import logging
+import pathlib
 from unittest import mock
 
 import pytest
 from podman import errors as podman_errors
 
-from quipucordsctl import podman_utils
+from quipucordsctl import podman_utils, settings
+
+
+@mock.patch.object(podman_utils, "get_podman_client")
+def test_ensure_cgroups_v2_happy_path(mock_get_podman_client, capsys):
+    """Test ensure_cgroups_v2 does nothing when cgroups v2 is enabled."""
+    mock_podman_client = mock_get_podman_client.return_value.__enter__.return_value
+    mock_podman_client.info.return_value = {"host": {"cgroupVersion": "v2"}}
+
+    podman_utils.ensure_cgroups_v2()
+    assert capsys.readouterr().out == ""
+    assert capsys.readouterr().err == ""
+    # Nothing else to assert; simply expect no output and no exceptions.
+
+
+@mock.patch.object(podman_utils, "get_podman_client")
+def test_ensure_cgroups_v2_failed(mock_get_podman_client, capsys):
+    """Test ensure_cgroups_v2 when cgroups v2 is not enabled (RHEL8 default)."""
+    mock_podman_client = mock_get_podman_client.return_value.__enter__.return_value
+    mock_podman_client.info.return_value = {"host": {"cgroupVersion": "v1"}}
+
+    with pytest.raises(podman_utils.PodmanIsNotReadyError):
+        podman_utils.ensure_cgroups_v2()
+    assert (
+        podman_utils.ENABLE_CGROUPS_V2_LONG_MESSAGE
+        % {"server_software_name": settings.SERVER_SOFTWARE_NAME}
+        in capsys.readouterr().out
+    )
+    assert capsys.readouterr().err == ""
+
+
+@mock.patch.object(podman_utils, "sys")
+@mock.patch.object(podman_utils, "shell_utils")
+@mock.patch.object(podman_utils, "xdg")
+def test_ensure_podman_socket(mock_xdg, mock_shell_utils, mock_sys, tmp_path):
+    """Test ensure_podman_socket does nothing when podman socket is default path."""
+    mock_sys.platform = "linux"
+    socket_path = pathlib.Path(tmp_path / "podman" / "podman.sock")
+    socket_path.parent.mkdir(parents=True, exist_ok=True)
+    socket_path.touch()
+    mock_shell_utils.run_command.side_effect = [("", "", 0), ("", "", 0)]
+    mock_xdg.BaseDirectory.get_runtime_dir.return_value = str(tmp_path)
+
+    podman_utils.ensure_podman_socket()
+    assert len(mock_shell_utils.run_command.call_args_list) == 2
+
+
+@mock.patch.object(podman_utils, "sys")
+@mock.patch.object(podman_utils, "shell_utils")
+def test_ensure_podman_socket_custom_path(mock_shell_utils, mock_sys, tmp_path):
+    """Test ensure_podman_socket does nothing when podman socket has custom path."""
+    mock_sys.platform = "linux"
+    socket_path = pathlib.Path(tmp_path / "podman.sock")
+    socket_path.touch()
+    mock_shell_utils.run_command.side_effect = [("", "", 0), ("", "", 0)]
+
+    podman_utils.ensure_podman_socket(str(socket_path))
+    assert len(mock_shell_utils.run_command.call_args_list) == 2
+
+
+@mock.patch.object(podman_utils, "sys")
+@mock.patch.object(podman_utils, "shell_utils")
+def test_ensure_podman_socket_macos(mock_shell_utils, mock_sys, tmp_path):
+    """Test ensure_podman_socket does nothing when podman is enabled on macOS/darwin."""
+    mock_sys.platform = "darwin"
+    mock_shell_utils.run_command.side_effect = [("running", "", 0)]
+    mock_path = pathlib.Path(tmp_path / "podman.sock")
+    mock_path.touch()
+
+    with mock.patch.object(
+        podman_utils, "MACOS_DEFAULT_PODMAN_URL", new=str(mock_path)
+    ):
+        podman_utils.ensure_podman_socket()
+
+    mock_shell_utils.run_command.assert_called_once_with(
+        podman_utils.PODMAN_MACHINE_STATE_CMD, quiet=True
+    )
+
+
+@mock.patch.object(podman_utils, "sys")
+@mock.patch.object(podman_utils, "shell_utils")
+def test_ensure_podman_socket_macos_not_running(mock_shell_utils, mock_sys, tmp_path):
+    """Test ensure_podman_socket when podman machine is not running on macOS/darwin."""
+    mock_sys.platform = "darwin"
+    mock_shell_utils.run_command.side_effect = [("stopped", "", 0)]
+    mock_path = pathlib.Path(tmp_path / "podman.sock")
+    mock_path.touch()
+
+    with (
+        mock.patch.object(podman_utils, "MACOS_DEFAULT_PODMAN_URL", new=str(mock_path)),
+        pytest.raises(podman_utils.PodmanIsNotReadyError),
+    ):
+        try:
+            podman_utils.ensure_podman_socket()
+        except podman_utils.PodmanIsNotReadyError as e:
+            assert "machine is not running" in e.args[0]
+            raise e
+
+    mock_shell_utils.run_command.assert_called_once_with(
+        podman_utils.PODMAN_MACHINE_STATE_CMD, quiet=True
+    )
+
+
+@mock.patch.object(podman_utils, "sys")
+@mock.patch.object(podman_utils, "shell_utils")
+def test_ensure_podman_socket_macos_broken(mock_shell_utils, mock_sys, tmp_path):
+    """Test ensure_podman_socket when podman command is broken on macOS/darwin."""
+    mock_sys.platform = "darwin"
+    mock_shell_utils.run_command.side_effect = [Exception]
+    mock_path = pathlib.Path(tmp_path / "podman.sock")
+    mock_path.touch()
+
+    with (
+        mock.patch.object(podman_utils, "MACOS_DEFAULT_PODMAN_URL", new=str(mock_path)),
+        pytest.raises(podman_utils.PodmanIsNotReadyError),
+    ):
+        try:
+            podman_utils.ensure_podman_socket()
+        except podman_utils.PodmanIsNotReadyError as e:
+            assert "failed unexpectedly" in e.args[0]
+            raise e
+
+    mock_shell_utils.run_command.assert_called_once_with(
+        podman_utils.PODMAN_MACHINE_STATE_CMD, quiet=True
+    )
 
 
 @mock.patch.object(podman_utils, "get_podman_client")

@@ -10,7 +10,7 @@ from types import ModuleType
 
 from podman import errors as podman_errors
 
-from . import settings
+from . import podman_utils, settings
 
 logger = logging.getLogger(__name__)
 
@@ -75,10 +75,16 @@ def configure_logging(verbosity: int = 0, quiet: bool = False) -> int:
         if quiet
         else max(logging.DEBUG, settings.DEFAULT_LOG_LEVEL - (verbosity * 10))
     )
+    log_format = (
+        "%(asctime)s %(levelname)s: %(message)s"
+        if verbosity > 2  # noqa: PLR2004
+        else "%(levelname)s: %(message)s"
+    )
     logging.basicConfig(
-        format="%(levelname)s: %(message)s",
+        format=log_format,
         level=log_level,
         encoding="utf-8",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
     return log_level
 
@@ -103,6 +109,11 @@ def run():
         except EOFError:  # can occur via control-d input
             print()  # new line for cleaner output before logger
             logger.error(_("Input closed unexpectedly."))
+            sys.exit(1)
+        except podman_utils.PodmanIsNotReadyError as e:
+            # can occur if podman is not available or running
+            print()
+            logger.error(e)
             sys.exit(1)
         except (podman_errors.APIError, podman_errors.PodmanError):
             # can occur if podman is not available or fails unexpectedly

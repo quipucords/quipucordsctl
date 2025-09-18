@@ -46,7 +46,7 @@ def generate_random_secret(length: int) -> str:
             # It's unlikely but possible for token_urlsafe to generate
             # a value that does not pass our check_secret requirements.
             # Loop and try again just to be safe.
-            if check_secret(new_secret):
+            if check_secret(new_secret, min_length=length):
                 return new_secret
 
 
