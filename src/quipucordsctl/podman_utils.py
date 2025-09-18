@@ -3,13 +3,14 @@
 import logging
 import pathlib
 import sys
+import textwrap
 from gettext import gettext as _
 from urllib import parse
 
 import podman
 import xdg
 
-from quipucordsctl import shell_utils
+from quipucordsctl import settings, shell_utils
 
 logger = logging.getLogger(__name__)
 MACOS_DEFAULT_PODMAN_URL = "unix:///var/run/docker.sock"
@@ -17,6 +18,19 @@ MACOS_DEFAULT_PODMAN_URL = "unix:///var/run/docker.sock"
 SYSTEMCTL_ENABLE_CMD = ["systemctl", "--user", "enable", "--now", "podman.socket"]
 SYSTEMCTL_STATUS_CMD = ["systemctl", "--user", "status", "podman.socket"]
 PODMAN_MACHINE_STATE_CMD = ["podman", "machine", "inspect", "--format", "{{.State}}"]
+
+ENABLE_CGROUPS_V2_LONG_MESSAGE = _(
+    textwrap.dedent(
+        """
+        This system is not configured to use cgroups v2 which is required for %(server_software_name)s.
+        To enable cgroups v2 (a.k.a. cgroup2fs), you may need to update your kernel arguments and reboot.
+        Please run the following commands before using %(server_software_name)s:
+
+            sudo grubby --update-kernel=ALL --args="systemd.unified_cgroup_hierarchy=1"
+            sudo reboot
+        """  # noqa: E501
+    )
+)
 
 
 class PodmanIsNotReadyError(Exception):
@@ -81,6 +95,17 @@ def ensure_podman_socket(base_url=None):
                 % {"socket_path": socket_path}
             )
         )
+
+
+def ensure_cgroups_v2():
+    """Ensure that cgroups v2 is enabled."""
+    with get_podman_client() as podman_client:
+        if not podman_client.info().get("host", {}).get("cgroupVersion", None) == "v2":
+            print(
+                ENABLE_CGROUPS_V2_LONG_MESSAGE
+                % {"server_software_name": settings.SERVER_SOFTWARE_NAME}
+            )
+            raise PodmanIsNotReadyError(_("cgroups v2 is required but not available."))
 
 
 def get_podman_client(base_url=None) -> podman.PodmanClient:

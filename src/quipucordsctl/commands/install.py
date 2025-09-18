@@ -264,6 +264,8 @@ def run(args: argparse.Namespace) -> bool:
     """Install the server, ensuring requirements are met."""
     logger.debug("Starting install command")
     podman_utils.ensure_podman_socket()
+    podman_utils.ensure_cgroups_v2()
+
     if not reset_secrets(args):
         return False
 

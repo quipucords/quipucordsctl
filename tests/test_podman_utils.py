@@ -7,7 +7,35 @@ from unittest import mock
 import pytest
 from podman import errors as podman_errors
 
-from quipucordsctl import podman_utils
+from quipucordsctl import podman_utils, settings
+
+
+@mock.patch.object(podman_utils, "get_podman_client")
+def test_ensure_cgroups_v2_happy_path(mock_get_podman_client, capsys):
+    """Test ensure_cgroups_v2 does nothing when cgroups v2 is enabled."""
+    mock_podman_client = mock_get_podman_client.return_value.__enter__.return_value
+    mock_podman_client.info.return_value = {"host": {"cgroupVersion": "v2"}}
+
+    podman_utils.ensure_cgroups_v2()
+    assert capsys.readouterr().out == ""
+    assert capsys.readouterr().err == ""
+    # Nothing else to assert; simply expect no output and no exceptions.
+
+
+@mock.patch.object(podman_utils, "get_podman_client")
+def test_ensure_cgroups_v2_failed(mock_get_podman_client, capsys):
+    """Test ensure_cgroups_v2 when cgroups v2 is not enabled (RHEL8 default)."""
+    mock_podman_client = mock_get_podman_client.return_value.__enter__.return_value
+    mock_podman_client.info.return_value = {"host": {"cgroupVersion": "v1"}}
+
+    with pytest.raises(podman_utils.PodmanIsNotReadyError):
+        podman_utils.ensure_cgroups_v2()
+    assert (
+        podman_utils.ENABLE_CGROUPS_V2_LONG_MESSAGE
+        % {"server_software_name": settings.SERVER_SOFTWARE_NAME}
+        in capsys.readouterr().out
+    )
+    assert capsys.readouterr().err == ""
 
 
 @mock.patch.object(podman_utils, "sys")
