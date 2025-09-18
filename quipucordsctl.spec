@@ -54,15 +54,17 @@ BuildRequires:  pyproject-rpm-macros
 BuildRequires:  python%{python3_pkgversion}-devel
 BuildRequires:  python%{python3_pkgversion}-wheel
 BuildRequires:  python%{python3_pkgversion}-setuptools
+%if 0%{?rhel} == 8
 BuildRequires:  python3-babel
-BuildRequires:  babel
+%else
+BuildRequires:  python%{python3_pkgversion}-babel
+%endif
 
 Requires:       bash
 Requires:       coreutils
 Requires:       podman >= 4.9.4
 Requires:       python3-podman
 Requires:       python%{python3_pkgversion}
-
 
 %description
 %{name} installs and manages the %{product_name_title} server
@@ -79,8 +81,37 @@ sed -i \
   %{_builddir}/quipucordsctl-%{version}/pyproject.toml
 python%{python3_pkgversion} -m ensurepip
 python%{python3_pkgversion} -m pip install wheel setuptools
-%if 0%{?fedora} >= 41 || 0%{?rhel} >= 9
-    python%{python3_pkgversion} scripts/translations.py compile    # Compile the message catalogs
+# Compile the message catalogs
+%if 0%{?rhel} == 8
+    python%{python3_pkgversion} -m venv --system-site-packages translations-env
+    source translations-env/bin/activate
+    ## python%{python3_pkgversion} -m pip install babel
+    python%{python3_pkgversion} scripts/translations.py compile
+    deactivate
+    rm -rf translations-env
+%else
+    # python%{python3_pkgversion} -m venv --system-site-packages translations-env
+
+    python%{python3_pkgversion} -m venv --system-site-packages translations-env
+    source translations-env/bin/activate
+    python%{python3_pkgversion} -m pip install babel
+    python%{python3_pkgversion} scripts/translations.py compile
+    rm -rf translations-env
+
+    # python%{python3_pkgversion} -m venv --system-site-packages translations-env
+    # source translations-env/bin/activate
+    # python%{python3_pkgversion} -m pip install babel
+    # echo "--------------------------------------------------------------------"
+    # echo "The translations-env directory contains ...."
+    # ls -1R translations-env
+    # echo "--------------------------------------------------------------------"
+    # echo "The /usr/lib/python3.12/site-packages contains ...."
+    # ls -1R /usr/lib/python3.12/site-packages
+    # echo "--------------------------------------------------------------------"
+    # translations-env/bin/pybabel compile -d src/quipucordsctl/locale -D messages
+    # python%{python3_pkgversion} scripts/translations.py compile
+    # deactivate
+    # rm -rf %{_builddir}/quipucordsctl-%{version}/translations-env
 %endif
 
 %if 0%{?rhel} == 8

@@ -21,12 +21,20 @@ import sys
 import sysconfig
 
 DOMAIN = "messages"
-PYBABEL_BIN = pathlib.Path(sys.prefix) / "bin" / "pybabel"
+
+
 SOURCE_CODE_DIR = pathlib.Path(__file__).parent.parent / "src" / "quipucordsctl"
 LOCALES_DIR = SOURCE_CODE_DIR / "locale"
 PYTHON_STDLIB_FILES = ["argparse.py"]
 LOCALES = ["en"]
 
+def pybabel_bin():
+    sys_babel = pathlib.Path(sys.prefix) / "bin" / "pybabel"
+    if sys_babel.exists():
+        return sys_babel
+    return pathlib.Path("/bin/pybabel")
+
+print(f"\n\n====== translations.py ==== want to use: {pybabel_bin()}")
 
 def get_code_paths() -> list:
     """Get a list of paths that contain gettext-wrapped strings to localize."""
@@ -45,7 +53,7 @@ def translations_extract():
     try:
         subprocess.check_call(  # noqa: S603
             [
-                PYBABEL_BIN,
+                pybabel_bin(),
                 "extract",
                 "-o",
                 str(LOCALES_DIR / f"{DOMAIN}.pot"),
@@ -65,7 +73,7 @@ def translations_update():
         try:
             subprocess.check_call(  # noqa: S603
                 [
-                    PYBABEL_BIN,
+                    pybabel_bin(),
                     subcommand,
                     "-i",
                     str(LOCALES_DIR / f"{DOMAIN}.pot"),
@@ -87,7 +95,7 @@ def translations_compile():
     try:
         subprocess.check_call(  # noqa: S603
             [
-                PYBABEL_BIN,
+                pybabel_bin(),
                 "compile",
                 "-d",
                 str(LOCALES_DIR),
