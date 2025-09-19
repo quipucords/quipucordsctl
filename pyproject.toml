@@ -30,7 +30,7 @@ authors = [
 license = {text = "GPL-3.0-or-later"}
 readme = "README.md"
 dependencies = [
-    "podman==4.9.0",
+    "podman>=4.9.0",
 ]
 
 [dependency-groups]
