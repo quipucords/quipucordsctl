@@ -55,7 +55,7 @@ BuildRequires:  python%{python3_pkgversion}-devel
 BuildRequires:  python%{python3_pkgversion}-wheel
 BuildRequires:  python%{python3_pkgversion}-setuptools
 BuildRequires:  python3-babel
-BuildRequires:  uv
+BuildRequires:  babel
 
 Requires:       bash
 Requires:       coreutils
@@ -89,8 +89,8 @@ python%{python3_pkgversion} -m pip install wheel setuptools
 %else
     # python%{python3_pkgversion} -m venv --system-site-packages translations-env
 
-    ## python%{python3_pkgversion} scripts/translations.py compile
-    uv run scripts/translations.py compile
+    python%{python3_pkgversion} scripts/translations.py compile
+    ## uv run scripts/translations.py compile
 
     ## python%{python3_pkgversion} -m venv --system-site-packages translations-env
     ## source translations-env/bin/activate
