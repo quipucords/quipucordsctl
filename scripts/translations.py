@@ -29,9 +29,14 @@ PYTHON_STDLIB_FILES = ["argparse.py"]
 LOCALES = ["en"]
 
 def pybabel_bin():
+    rhel8_babel = pathlib.Path("/usr/bin/pybabel-3.8")
+    if rhel8_babel.exists():
+        return rhel8_babel
+
     sys_babel = pathlib.Path(sys.prefix) / "bin" / "pybabel"
     if sys_babel.exists():
         return sys_babel
+
     return pathlib.Path("/bin/pybabel")
 
 print(f"\n\n====== translations.py ==== want to use: {pybabel_bin()}")

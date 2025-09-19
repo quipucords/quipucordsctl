@@ -88,10 +88,12 @@ python%{python3_pkgversion} -m pip install wheel setuptools
     echo "==================================================================="
     echo "pybabel files:"
     ls -l /usr/bin/pybabel*
-    echo "pybabel version"
-    /usr/bin/pybabel --version
-    echo "pybabel2 version"
-    /usr/bin/pybabel-2 --version
+    echo "pybabel-3.8 version"
+    /usr/bin/pybabel-3.8 --version
+    echo "What provides /usr/bin/pybabel-3.8"
+    rpm -qf /usr/bin/pybabel-3.8
+    echo "==================================================================="
+    echo "-------------------------------------------------------------------"
 
     python%{python3_pkgversion} scripts/translations.py compile
     # python%{python3_pkgversion} -m venv --system-site-packages translations-env
@@ -108,6 +110,10 @@ python%{python3_pkgversion} -m pip install wheel setuptools
     ls -l /usr/bin/pybabel*
     echo "pybabel version"
     /usr/bin/pybabel --version
+    echo "What provides /usr/bin/pybabel-3.8"
+    rpm -qf /usr/bin/pybabel-3.8
+    echo "==================================================================="
+    echo "-------------------------------------------------------------------"
 
     python%{python3_pkgversion} scripts/translations.py compile
     ## uv run scripts/translations.py compile
