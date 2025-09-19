@@ -92,11 +92,13 @@ python%{python3_pkgversion} -m pip install wheel setuptools
 %else
     # python%{python3_pkgversion} -m venv --system-site-packages translations-env
 
-    python%{python3_pkgversion} -m venv --system-site-packages translations-env
-    source translations-env/bin/activate
-    python%{python3_pkgversion} -m pip install babel
     python%{python3_pkgversion} scripts/translations.py compile
-    rm -rf translations-env
+
+    ## python%{python3_pkgversion} -m venv --system-site-packages translations-env
+    ## source translations-env/bin/activate
+    ## python%{python3_pkgversion} -m pip install babel
+    ## python%{python3_pkgversion} scripts/translations.py compile
+    ## rm -rf translations-env
 
     # python%{python3_pkgversion} -m venv --system-site-packages translations-env
     # source translations-env/bin/activate
