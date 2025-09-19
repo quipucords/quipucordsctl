@@ -80,14 +80,27 @@ python%{python3_pkgversion} -m ensurepip
 python%{python3_pkgversion} -m pip install wheel setuptools
 # Compile the message catalogs
 %if 0%{?rhel} == 8
-    python%{python3_pkgversion} -m venv --system-site-packages translations-env
-    source translations-env/bin/activate
+    echo "-------------------------------------------------------------------"
+    echo "==================================================================="
+    echo "pybabel files:"
+    ls -l /usr/bin/pybabel*
+    echo "pybabel version"
+    /usr/bin/pybabel --version
+
+    # python%{python3_pkgversion} -m venv --system-site-packages translations-env
+    # source translations-env/bin/activate
     ## python%{python3_pkgversion} -m pip install babel
-    python%{python3_pkgversion} scripts/translations.py compile
-    deactivate
-    rm -rf translations-env
+    ##  python%{python3_pkgversion} scripts/translations.py compile
+    # deactivate
+    # rm -rf translations-env
 %else
     # python%{python3_pkgversion} -m venv --system-site-packages translations-env
+    echo "-------------------------------------------------------------------"
+    echo "==================================================================="
+    echo "pybabel files:"
+    ls -l /usr/bin/pybabel*
+    echo "pybabel version"
+    /usr/bin/pybabel --version
 
     python%{python3_pkgversion} scripts/translations.py compile
     ## uv run scripts/translations.py compile
