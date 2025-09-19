@@ -12,7 +12,7 @@ jobs:
       # we officially support RHEL 8 and RHEL 9 downstream.
       - rhel-8-x86_64
       ## - rhel-8-aarch64
-      ## - rhel-9-x86_64
+      - rhel-9-x86_64
       ## - rhel-9-aarch64
       # we also build for RHEL 10
       ## - rhel-10-x86_64

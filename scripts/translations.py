@@ -16,30 +16,39 @@ https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes
 
 import argparse
 import pathlib
-import subprocess
 import sys
 import sysconfig
 
+from babel.messages.frontend import (
+    BaseError,
+    CommandLineInterface,
+    ConfigurationError,
+    OptionError,
+    SetupError,
+)
+
 DOMAIN = "messages"
-
-
 SOURCE_CODE_DIR = pathlib.Path(__file__).parent.parent / "src" / "quipucordsctl"
 LOCALES_DIR = SOURCE_CODE_DIR / "locale"
 PYTHON_STDLIB_FILES = ["argparse.py"]
 LOCALES = ["en"]
+BABEL_COMMAND = "pybabel"
 
-def pybabel_bin():
-    rhel8_babel = pathlib.Path("/usr/bin/pybabel-3.8")
-    if rhel8_babel.exists():
-        return rhel8_babel
 
-    sys_babel = pathlib.Path(sys.prefix) / "bin" / "pybabel"
-    if sys_babel.exists():
-        return sys_babel
+def babel_call(args):
+    """Invoke the command via the python3-babel provided command line interface."""
+    try:
+        CommandLineInterface().run(args)
+    except (
+        FileNotFoundError,
+        BaseError,
+        OptionError,
+        SetupError,
+        ConfigurationError,
+    ) as e:
+        print(f"Error invoking {args} error: {e}")
+        sys.exit(1)
 
-    return pathlib.Path("/bin/pybabel")
-
-print(f"\n\n====== translations.py ==== want to use: {pybabel_bin()}")
 
 def get_code_paths() -> list:
     """Get a list of paths that contain gettext-wrapped strings to localize."""
@@ -55,19 +64,15 @@ def get_code_paths() -> list:
 def translations_extract():
     """Extract gettext-wrapped strings to messages.pot template file."""
     paths: list[str] = get_code_paths()
-    try:
-        subprocess.check_call(  # noqa: S603
-            [
-                pybabel_bin(),
-                "extract",
-                "-o",
-                str(LOCALES_DIR / f"{DOMAIN}.pot"),
-                *(str(path) for path in paths),
-            ],
-        )
-    except subprocess.CalledProcessError as e:
-        print(f"Error invoking pybabel extract: {e}")
-        sys.exit(1)
+    babel_call(
+        [
+            BABEL_COMMAND,
+            "extract",
+            "-o",
+            str(LOCALES_DIR / f"{DOMAIN}.pot"),
+            *(str(path) for path in paths),
+        ],
+    )
 
 
 def translations_update():
@@ -75,42 +80,34 @@ def translations_update():
     for locale in LOCALES:
         locale_path = LOCALES_DIR / locale / "LC_MESSAGES" / f"{DOMAIN}.po"
         subcommand = "update" if locale_path.exists() else "init"
-        try:
-            subprocess.check_call(  # noqa: S603
-                [
-                    pybabel_bin(),
-                    subcommand,
-                    "-i",
-                    str(LOCALES_DIR / f"{DOMAIN}.pot"),
-                    "-d",
-                    str(LOCALES_DIR),
-                    "-D",
-                    DOMAIN,
-                    "-l",
-                    locale,
-                ],
-            )
-        except subprocess.CalledProcessError as e:
-            print(f"Error invoking pybabel {subcommand} for locale {locale}: {e}")
-            sys.exit(1)
-
-
-def translations_compile():
-    """Compile locale-specific .mo files from the .po files."""
-    try:
-        subprocess.check_call(  # noqa: S603
+        babel_call(  # noqa: S603
             [
-                pybabel_bin(),
-                "compile",
+                BABEL_COMMAND,
+                subcommand,
+                "-i",
+                str(LOCALES_DIR / f"{DOMAIN}.pot"),
                 "-d",
                 str(LOCALES_DIR),
                 "-D",
                 DOMAIN,
+                "-l",
+                locale,
             ],
         )
-    except subprocess.CalledProcessError as e:
-        print(f"Error invoking pybabel compile: {e}")
-        sys.exit(1)
+
+
+def translations_compile():
+    """Compile locale-specific .mo files from the .po files."""
+    babel_call(  # noqa: S603
+        [
+            BABEL_COMMAND,
+            "compile",
+            "-d",
+            str(LOCALES_DIR),
+            "-D",
+            DOMAIN,
+        ],
+    )
 
 
 def main():

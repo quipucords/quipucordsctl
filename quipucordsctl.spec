@@ -59,7 +59,6 @@ BuildRequires:  python38-babel
 %else
 BuildRequires:  python3-babel
 %endif
-BuildRequires:  babel
 
 Requires:       bash
 Requires:       coreutils
@@ -82,63 +81,17 @@ sed -i \
   %{_builddir}/quipucordsctl-%{version}/pyproject.toml
 python%{python3_pkgversion} -m ensurepip
 python%{python3_pkgversion} -m pip install wheel setuptools
-# Compile the message catalogs
-%if 0%{?rhel} == 8
-    echo "-------------------------------------------------------------------"
-    echo "==================================================================="
-    echo "pybabel files:"
-    ls -l /usr/bin/pybabel*
-    echo "pybabel-3.8 version"
-    /usr/bin/pybabel-3.8 --version
-    echo "What provides /usr/bin/pybabel-3.8"
-    rpm -qf /usr/bin/pybabel-3.8
-    echo "==================================================================="
-    echo "-------------------------------------------------------------------"
+# python%{python3_pkgversion} -m pip install babel
 
-    python%{python3_pkgversion} scripts/translations.py compile
-    # python%{python3_pkgversion} -m venv --system-site-packages translations-env
-    # source translations-env/bin/activate
-    ## python%{python3_pkgversion} -m pip install babel
-    ##  python%{python3_pkgversion} scripts/translations.py compile
-    # deactivate
-    # rm -rf translations-env
-%else
-    # python%{python3_pkgversion} -m venv --system-site-packages translations-env
-    echo "-------------------------------------------------------------------"
-    echo "==================================================================="
-    echo "pybabel files:"
-    ls -l /usr/bin/pybabel*
-    echo "pybabel version"
-    /usr/bin/pybabel --version
-    echo "What provides /usr/bin/pybabel-3.8"
-    rpm -qf /usr/bin/pybabel-3.8
-    echo "==================================================================="
-    echo "-------------------------------------------------------------------"
+# python%{python3_pkgversion} scripts/translations.py compile
+python%{python3_pkgversion} -m venv --system-site-packages translations-env
+source translations-env/bin/activate
+python%{python3_pkgversion} -m pip install babel
+python%{python3_pkgversion} scripts/translations.py compile
+deactivate
+rm -rf translations-env
 
-    python%{python3_pkgversion} scripts/translations.py compile
-    ## uv run scripts/translations.py compile
-
-    ## python%{python3_pkgversion} -m venv --system-site-packages translations-env
-    ## source translations-env/bin/activate
-    ## python%{python3_pkgversion} -m pip install babel
-    ## python%{python3_pkgversion} scripts/translations.py compile
-    ## rm -rf translations-env
-
-    # python%{python3_pkgversion} -m venv --system-site-packages translations-env
-    # source translations-env/bin/activate
-    # python%{python3_pkgversion} -m pip install babel
-    # echo "--------------------------------------------------------------------"
-    # echo "The translations-env directory contains ...."
-    # ls -1R translations-env
-    # echo "--------------------------------------------------------------------"
-    # echo "The /usr/lib/python3.12/site-packages contains ...."
-    # ls -1R /usr/lib/python3.12/site-packages
-    # echo "--------------------------------------------------------------------"
-    # translations-env/bin/pybabel compile -d src/quipucordsctl/locale -D messages
-    # python%{python3_pkgversion} scripts/translations.py compile
-    # deactivate
-    # rm -rf %{_builddir}/quipucordsctl-%{version}/translations-env
-%endif
+# python%{python3_pkgversion} scripts/translations.py compile       # compile the message catalogs
 
 %if 0%{?rhel} == 8
     %py3_build
