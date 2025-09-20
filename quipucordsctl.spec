@@ -52,6 +52,7 @@ BuildRequires:  sed
 BuildRequires:  pyproject-rpm-macros
 %endif
 BuildRequires:  python%{python3_pkgversion}-devel
+BuildRequires:  python%{python3_pkgversion}-pip
 BuildRequires:  python%{python3_pkgversion}-wheel
 BuildRequires:  python%{python3_pkgversion}-setuptools
 ## %if 0%{?rhel} == 8
@@ -81,8 +82,8 @@ sed -i \
   -e 's/^quipucordsctl = "quipucordsctl.__main__:main"$/%{name} = "quipucordsctl.__main__:main"/' \
   -e 's/^version = "0.1.0"$/version = "%{version}"/' \
   %{_builddir}/quipucordsctl-%{version}/pyproject.toml
-python%{python3_pkgversion} -m ensurepip
-python%{python3_pkgversion} -m pip install wheel setuptools babel
+# python%{python3_pkgversion} -m ensurepip
+python%{python3_pkgversion} -m pip install --no-cache-dir --no-index --find-links %{python3_sitelib} wheel setuptools babel
 # python%{python3_pkgversion} -m pip install babel
 
 # python%{python3_pkgversion} scripts/translations.py compile
