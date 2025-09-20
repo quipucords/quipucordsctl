@@ -82,7 +82,7 @@ sed -i \
   -e 's/^version = "0.1.0"$/version = "%{version}"/' \
   %{_builddir}/quipucordsctl-%{version}/pyproject.toml
 python%{python3_pkgversion} -m ensurepip
-python%{python3_pkgversion} -m pip install wheel setuptools
+python%{python3_pkgversion} -m pip install wheel setuptools babel
 # python%{python3_pkgversion} -m pip install babel
 
 # python%{python3_pkgversion} scripts/translations.py compile
