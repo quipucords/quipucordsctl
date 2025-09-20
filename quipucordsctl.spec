@@ -30,7 +30,7 @@
         %global __python3 /usr/bin/python3.13
     %else
         %global python3_pkgversion  3.12
-        %global __python3 /usr/bin/python3.12
+###        %global __python3 /usr/bin/python3.12
     %endif
 %endif
 
@@ -51,10 +51,10 @@ BuildRequires:  sed
 %if 0%{?fedora} >= 41 || 0%{?rhel} >= 9
 BuildRequires:  pyproject-rpm-macros
 %endif
-BuildRequires:  python%{python3_pkgversion}-devel
-BuildRequires:  python%{python3_pkgversion}-pip
-BuildRequires:  python%{python3_pkgversion}-wheel
-BuildRequires:  python%{python3_pkgversion}-setuptools
+BuildRequires:  python3-devel
+BuildRequires:  python3-pip
+BuildRequires:  python3-wheel
+BuildRequires:  python3-setuptools
 ## %if 0%{?rhel} == 8
 ## BuildRequires:  python38-babel
 ## %else
@@ -83,15 +83,15 @@ sed -i \
   -e 's/^version = "0.1.0"$/version = "%{version}"/' \
   %{_builddir}/quipucordsctl-%{version}/pyproject.toml
 # python%{python3_pkgversion} -m ensurepip
-python%{python3_pkgversion} -m pip install --no-cache-dir --no-index --find-links %{python3_sitelib} wheel setuptools babel
+python3 -m pip install --no-cache-dir --no-index --find-links %{python3_sitelib} wheel setuptools babel
 # python%{python3_pkgversion} -m pip install babel
 
 # python%{python3_pkgversion} scripts/translations.py compile
 
-python%{python3_pkgversion} -m venv --system-site-packages translations-env
+python3 -m venv --system-site-packages translations-env
 source translations-env/bin/activate
-python%{python3_pkgversion} -m pip list
-python%{python3_pkgversion} scripts/translations.py compile
+python3 -m pip list
+python3 scripts/translations.py compile
 deactivate
 rm -rf translations-env
 
