@@ -83,7 +83,7 @@ sed -i \
   -e 's/^version = "0.1.0"$/version = "%{version}"/' \
   %{_builddir}/quipucordsctl-%{version}/pyproject.toml
 # python%{python3_pkgversion} -m ensurepip
-python3 -m pip install --no-cache-dir --no-index --find-links %{python3_sitelib} wheel setuptools babel
+# python3 -m pip install --no-cache-dir --no-index --find-links %{python3_sitelib} wheel setuptools babel
 # python%{python3_pkgversion} -m pip install babel
 
 # python%{python3_pkgversion} scripts/translations.py compile
@@ -91,6 +91,7 @@ python3 -m pip install --no-cache-dir --no-index --find-links %{python3_sitelib}
 python3 -m venv --system-site-packages translations-env
 source translations-env/bin/activate
 python3 -m pip list
+python3 -m pip install babel
 python3 scripts/translations.py compile
 deactivate
 rm -rf translations-env
