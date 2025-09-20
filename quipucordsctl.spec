@@ -60,6 +60,7 @@ BuildRequires:  python38-babel
 %else
 BuildRequires:  python3-babel
 %endif
+Requires:       python%{python3_pkgversion}
 
 Requires:       bash
 Requires:       coreutils
