@@ -59,6 +59,7 @@ BuildRequires:  python38-babel
 %else
 BuildRequires:  python3-babel
 %endif
+BuildRequires:  babel
 
 Requires:       bash
 Requires:       coreutils
@@ -81,15 +82,14 @@ sed -i \
   %{_builddir}/quipucordsctl-%{version}/pyproject.toml
 python%{python3_pkgversion} -m ensurepip
 python%{python3_pkgversion} -m pip install wheel setuptools
-# python%{python3_pkgversion} -m pip install babel
-
-# python%{python3_pkgversion} scripts/translations.py compile
-python%{python3_pkgversion} -m venv --system-site-packages translations-env
-source translations-env/bin/activate
 python%{python3_pkgversion} -m pip install babel
 python%{python3_pkgversion} scripts/translations.py compile
-deactivate
-rm -rf translations-env
+# python%{python3_pkgversion} -m venv --system-site-packages translations-env
+# source translations-env/bin/activate
+# python%{python3_pkgversion} -m pip install babel
+# python%{python3_pkgversion} scripts/translations.py compile
+# deactivate
+# rm -rf translations-env
 
 # python%{python3_pkgversion} scripts/translations.py compile       # compile the message catalogs
 
