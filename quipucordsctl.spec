@@ -55,13 +55,11 @@ BuildRequires:  python3-devel
 BuildRequires:  python3-pip
 BuildRequires:  python3-wheel
 BuildRequires:  python3-setuptools
-## %if 0%{?rhel} == 8
-## BuildRequires:  python38-babel
-## %else
-## BuildRequires:  python3-babel
-## %endif
-## BuildRequires:  babel
+%if 0%{?rhel} == 8
+BuildRequires:  python38-babel
+%else
 BuildRequires:  python3-babel
+%endif
 
 Requires:       bash
 Requires:       coreutils
