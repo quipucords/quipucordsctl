@@ -20,7 +20,6 @@ import sys
 import sysconfig
 
 from babel.messages.frontend import (
-    BaseError,
     CommandLineInterface,
     ConfigurationError,
     OptionError,
@@ -41,7 +40,6 @@ def babel_call(args):
         CommandLineInterface().run(args)
     except (
         FileNotFoundError,
-        BaseError,
         OptionError,
         SetupError,
         ConfigurationError,
