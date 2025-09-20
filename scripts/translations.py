@@ -108,7 +108,7 @@ def main():
         description="Translation management script using pybabel."
     )
     subparsers = parser.add_subparsers(
-        dest="command", required=True, help="Available commands"
+        dest="command", help="Available commands"
     )
     subparsers.add_parser("extract", help="Extract strings to .pot file")
     subparsers.add_parser("update", help="Update translation .po files")
