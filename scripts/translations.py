@@ -39,13 +39,13 @@ def get_code_paths() -> list:
     return code_paths
 
 
-def translations_extract():
+def translations_extract(pybabel_bin):
     """Extract gettext-wrapped strings to messages.pot template file."""
     paths: list[str] = get_code_paths()
     try:
         subprocess.check_call(  # noqa: S603
             [
-                PYBABEL_BIN,
+                pybabel_bin,
                 "extract",
                 "-o",
                 str(LOCALES_DIR / f"{DOMAIN}.pot"),
@@ -57,7 +57,7 @@ def translations_extract():
         sys.exit(1)
 
 
-def translations_update():
+def translations_update(pybabel_bin):
     """Update locale-specific .po files from the .pot template file."""
     for locale in LOCALES:
         locale_path = LOCALES_DIR / locale / "LC_MESSAGES" / f"{DOMAIN}.po"
@@ -65,7 +65,7 @@ def translations_update():
         try:
             subprocess.check_call(  # noqa: S603
                 [
-                    PYBABEL_BIN,
+                    pybabel_bin,
                     subcommand,
                     "-i",
                     str(LOCALES_DIR / f"{DOMAIN}.pot"),
@@ -82,12 +82,12 @@ def translations_update():
             sys.exit(1)
 
 
-def translations_compile():
+def translations_compile(pybabel_bin):
     """Compile locale-specific .mo files from the .po files."""
     try:
         subprocess.check_call(  # noqa: S603
             [
-                PYBABEL_BIN,
+                pybabel_bin,
                 "compile",
                 "-d",
                 str(LOCALES_DIR),
@@ -105,6 +105,9 @@ def main():
     parser = argparse.ArgumentParser(
         description="Translation management script using pybabel."
     )
+    parser.add_argument(
+        "--pybabel", type=str, required=False, help="pybabel command to use"
+    )
     subparsers = parser.add_subparsers(
         dest="command", required=True, help="Available commands"
     )
@@ -113,12 +116,13 @@ def main():
     subparsers.add_parser("compile", help="Compile binary .mo files")
     args = parser.parse_args()
 
+    pybabel_bin = pathlib.Path(args.pybabel) if args.pybabel else PYBABEL_BIN
     if args.command == "extract":
-        translations_extract()
+        translations_extract(pybabel_bin)
     elif args.command == "update":
-        translations_update()
+        translations_update(pybabel_bin)
     elif args.command == "compile":
-        translations_compile()
+        translations_compile(pybabel_bin)
 
 
 if __name__ == "__main__":
