@@ -48,12 +48,22 @@ Source0:        %{url}/archive/%{version}.tar.gz
 
 BuildArch:      noarch
 BuildRequires:  sed
+# Note: for RHEL 8, pyproject-rpm-macros is not available
+#       we build using the older py3_build and py3_install.
 %if 0%{?fedora} >= 41 || 0%{?rhel} >= 9
 BuildRequires:  pyproject-rpm-macros
 %endif
 BuildRequires:  python%{python3_pkgversion}-devel
 BuildRequires:  python%{python3_pkgversion}-wheel
 BuildRequires:  python%{python3_pkgversion}-setuptools
+# Note: default python3-babel /usr/bin/pybabel cannot compile uninstalled
+#       locales, so 'test' could not be compiled.
+%if 0%{?rhel} == 8
+BuildRequires:  python38-babel
+%else
+BuildRequires:  python3-babel
+%endif
+BuildRequires:  babel
 
 Requires:       bash
 Requires:       coreutils
@@ -77,6 +87,12 @@ sed -i \
   %{_builddir}/quipucordsctl-%{version}/pyproject.toml
 python%{python3_pkgversion} -m ensurepip
 python%{python3_pkgversion} -m pip install wheel setuptools
+
+%if 0%{?rhel} == 8
+python3 scripts/translations.py --pybabel /usr/bin/pybabel-3.8 compile
+%else
+python3 scripts/translations.py --pybabel /usr/bin/pybabel compile
+%endif
 
 %if 0%{?rhel} == 8
     %py3_build
