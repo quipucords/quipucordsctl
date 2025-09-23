@@ -34,6 +34,12 @@
     %endif
 %endif
 
+# Note: python3-podman is built against earlier python versions.
+# only RHEL 10 and later would provide python3.2dist(podman)
+# python3.13dist(podman), etc.
+%if 0%{?rhel} == 8 || 0%{?rhel} == 9
+%global __requires_exclude ^python3.12dist.*podman.*$
+%endif
 
 Name:           %{product_name_lower}ctl
 Summary:        installer for %{product_name_lower} server
@@ -48,9 +54,9 @@ Source0:        %{url}/archive/%{version}.tar.gz
 
 BuildArch:      noarch
 BuildRequires:  sed
-# Note: for RHEL 8, pyproject-rpm-macros is not available
-#       we build using the older py3_build and py3_install.
-%if 0%{?fedora} >= 41 || 0%{?rhel} >= 9
+# Note: for RHEL 8 pyproject-rpm-macros is not available,
+#       for RHEL 8 and 9 we build using the older py3_build and py3_install.
+%if 0%{?fedora} >= 41 || 0%{?rhel} >= 10
 BuildRequires:  pyproject-rpm-macros
 %endif
 BuildRequires:  python%{python3_pkgversion}-devel
@@ -98,14 +104,14 @@ python3 scripts/translations.py --pybabel /usr/bin/pybabel-3.8 compile
 python3 scripts/translations.py --pybabel /usr/bin/pybabel compile
 %endif
 
-%if 0%{?rhel} == 8
+%if 0%{?rhel} == 8 || 0%{?rhel} == 9
     %py3_build
 %else
     %pyproject_wheel
 %endif
 
 %install
-%if 0%{?rhel} == 8
+%if 0%{?rhel} == 8 || 0%{?rhel} == 9
     %py3_install
 %else
     %pyproject_install
@@ -150,7 +156,7 @@ sed -i 's#^Image=.*#Image=%{ui_image}#g' %{buildroot}/%{_datadir}/%{name}/config
 %{_datadir}/%{name}/env/env-redis.env
 %{_datadir}/%{name}/env/env-server.env
 %{python3_sitelib}/%{name}/
-%if 0%{?rhel} == 8
+%if 0%{?rhel} == 8 || 0%{?rhel} == 9
   %{python3_sitelib}/%{name}-*.egg-info/
 %else
   %{python3_sitelib}/%{name}-*.dist-info/
