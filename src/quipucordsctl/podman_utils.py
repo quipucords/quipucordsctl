@@ -153,3 +153,15 @@ def set_secret(secret_name: str, secret_value: str, allow_replace=True) -> bool:
             {"secret_name": secret_name},
         )
     return True
+
+
+def delete_secret(secret_name: str) -> bool:
+    """Delete a podman secret."""
+    with get_podman_client() as podman_client:
+        if podman_client.secrets.exists(secret_name):
+            podman_client.secrets.remove(secret_name)
+            logger.info(
+                _("podman secret %(secret_name)s was removed."),
+                {"secret_name": secret_name},
+            )
+    return True

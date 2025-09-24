@@ -12,7 +12,7 @@ from datetime import datetime
 from gettext import gettext as _
 from importlib import resources
 
-from quipucordsctl import podman_utils, settings, shell_utils
+from quipucordsctl import constants, podman_utils, settings, shell_utils
 from quipucordsctl.commands import (
     reset_admin_password,
     reset_database_password,
@@ -21,9 +21,6 @@ from quipucordsctl.commands import (
     reset_session_secret,
 )
 from quipucordsctl.systemdunitparser import SystemdUnitParser
-
-SYSTEMCTL_USER_RESET_FAILED_CMD = ["systemctl", "--user", "reset-failed"]
-SYSTEMCTL_USER_DAEMON_RELOAD_CMD = ["systemctl", "--user", "daemon-reload"]
 
 INSTALL_SUCCESS_LONG_MESSAGE = _(
     textwrap.dedent(
@@ -291,8 +288,8 @@ def systemctl_reload():
         _("Reloading systemctl to recognize %(server_software_name)s units"),
         {"server_software_name": settings.SERVER_SOFTWARE_NAME},
     )
-    shell_utils.run_command(SYSTEMCTL_USER_RESET_FAILED_CMD)
-    shell_utils.run_command(SYSTEMCTL_USER_DAEMON_RELOAD_CMD)
+    shell_utils.run_command(constants.SYSTEMCTL_USER_RESET_FAILED_CMD)
+    shell_utils.run_command(constants.SYSTEMCTL_USER_DAEMON_RELOAD_CMD)
 
 
 def run(args: argparse.Namespace) -> bool:

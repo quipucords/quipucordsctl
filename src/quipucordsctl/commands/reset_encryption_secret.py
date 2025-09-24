@@ -9,10 +9,10 @@ import argparse
 import logging
 from gettext import gettext as _
 
-from quipucordsctl import podman_utils, secrets, settings, shell_utils
+from quipucordsctl import constants, podman_utils, secrets, settings, shell_utils
 
 logger = logging.getLogger(__name__)
-ENCRYPTION_SECRET_KEY_PODMAN_SECRET_NAME = "quipucords-encryption-secret-key"  # noqa: S105 E501
+ENCRYPTION_SECRET_KEY_PODMAN_SECRET_NAME = constants.QUIPUCORDS_SECRETS["encryption"]  # noqa: S105 E501
 ENCRYPTION_SECRET_KEY_MIN_LENGTH = 64
 
 
