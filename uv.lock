@@ -248,7 +248,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "podman", specifier = "==4.9.0" }]
+requires-dist = [{ name = "podman", specifier = ">=4.9.0" }]
 
 [package.metadata.requires-dev]
 dev = [
