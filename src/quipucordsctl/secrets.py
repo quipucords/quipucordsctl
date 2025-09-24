@@ -9,6 +9,16 @@ from gettext import gettext as _
 
 logger = logging.getLogger(__name__)
 
+QUIPUCORDS_SECRETS = {
+    "server-password": "quipucords-server-password",
+    "db-password": "quipucords-db-password",
+    "encryption-secret-key": "quipucords-django-secret-key",
+    "redis-password": "quipucords-redis-password",
+    "session-secret-key": "quipucords-session-secret-key",
+}
+
+QUIPUCORDS_SECRET_KEYS = QUIPUCORDS_SECRETS.values()
+
 
 class DisableLogger:
     """Context manager that disables logging messages."""
