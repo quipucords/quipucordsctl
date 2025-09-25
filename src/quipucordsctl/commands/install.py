@@ -1,6 +1,7 @@
 """Install the server."""
 
 import argparse
+import configparser
 import logging
 import pathlib
 import stat
@@ -124,6 +125,70 @@ def get_override_conf_path(
     return override_conf_path
 
 
+def _update_systemd_template_config_with_overrides(
+    template_filename: str,
+    template_config: SystemdUnitParser,
+    override_conf_path: pathlib.Path,
+) -> None:
+    """
+    Update the given template_config with overrides found at override_conf_path.
+
+    Note that this function treats template_config as a "pass by reference" parameter
+    and updates its contents directly. This function returns nothing directly.
+    """
+    # Important note! Even though we could simply pass BOTH files
+    # to SystemdUnitParser and expect it to merge them automatically,
+    # when presented with list-like configs, SystemdUnitParser extends
+    # the template's list with the override's list instead of replacing
+    # it. In the old installer, we replace, and this somewhat complex
+    # logic exists to mimic that "only replace" behavior.
+    override_config = SystemdUnitParser()
+    try:
+        override_config.read(override_conf_path)
+    except configparser.MissingSectionHeaderError:
+        logger.warning(
+            _(
+                "Skipping overrides for %(template_filename)s due to missing section "
+                "headers in your override file. Please check %(override_conf_path)s "
+                "for any typos or errors."
+            ),
+            {
+                "template_filename": template_filename,
+                "override_conf_path": override_conf_path,
+            },
+        )
+
+    for section in override_config.sections():
+        for option in override_config.options(section):
+            value = override_config.get(section, option)
+            # template_config has a dict-like interface but is not a true dict. You
+            # cannot call get() with defaults to find optional contents. The
+            # following assign to old_value is conceptually like calling
+            # "template_config.get(section, {}).get(option, None)" on true dicts.
+            old_value = (
+                template_config[section][option]
+                if (
+                    section in template_config.sections()  # section may not exist
+                    and option in template_config[section]  # option may not exist
+                )
+                else None
+            )
+            logger.debug(
+                _(
+                    "Overriding %(template_filename)s %(section)s.%(option)s "
+                    "from %(old_value)s to %(value)s"
+                ),
+                {
+                    "template_filename": template_filename,
+                    "section": section,
+                    "option": option,
+                    "old_value": old_value,
+                    "value": value,
+                },
+            )
+            template_config[section][option] = value
+
+
 def write_systemd_unit(
     template_filename: str,
     override_conf_dir: pathlib.Path | None,
@@ -140,43 +205,9 @@ def write_systemd_unit(
     if override_conf_path := get_override_conf_path(
         override_conf_dir, template_filename
     ):
-        # Important note! Even though we could simply pass BOTH files
-        # to SystemdUnitParser and expect it to merge them automatically,
-        # when presented with list-like configs, SystemdUnitParser extends
-        # the template's list with the override's list instead of replacing
-        # it. In the old installer, we replace, and this somewhat complex
-        # logic exists to mimic that "only replace" behavior.
-        override_config = SystemdUnitParser()
-        override_config.read(override_conf_path)
-        for section in override_config.sections():
-            for option in override_config.options(section):
-                value = override_config.get(section, option)
-                # template_config has a dict-like interface but is not a true dict. You
-                # cannot call get() with defaults to find optional contents. The
-                # following assign to old_value is conceptually like calling
-                # "template_config.get(section, {}).get(option, None)" on true dicts.
-                old_value = (
-                    template_config[section][option]
-                    if (
-                        section in template_config.sections()  # section may not exist
-                        and option in template_config[section]  # option may not exist
-                    )
-                    else None
-                )
-                logger.debug(
-                    _(
-                        "Overriding %(template_filename)s %(section)s.%(option)s "
-                        "from %(old_value)s to %(value)s"
-                    ),
-                    {
-                        "template_filename": template_filename,
-                        "section": section,
-                        "option": option,
-                        "old_value": old_value,
-                        "value": value,
-                    },
-                )
-                template_config[section][option] = value
+        _update_systemd_template_config_with_overrides(
+            template_filename, template_config, override_conf_path
+        )
 
     destination = destination_dir / template_filename
     with destination.open("w") as destination_file:

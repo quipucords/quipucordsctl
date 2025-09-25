@@ -3,11 +3,13 @@
 import logging
 import pathlib
 from collections.abc import Generator
+from importlib import resources
 from typing import Any
 from unittest import mock
 
 import pytest
 
+from quipucordsctl import settings
 from quipucordsctl.commands import install
 from quipucordsctl.systemdunitparser import SystemdUnitParser
 
@@ -191,3 +193,29 @@ def test_mkdirs_fails_because_expected_dir_is_a_file(temp_config_directories):
     assert not install.settings.SERVER_DATA_DIR.is_dir()
     with pytest.raises(OSError):
         install.mkdirs()
+
+
+def test_update_systemd_template_config_with_overrides_missing_header(
+    tmp_path: pathlib.Path, caplog
+):
+    """Test handling malformed systemd-style override file with no section headers."""
+    caplog.set_level(logging.WARNING)
+
+    template_filename = "quipucords-app.container"
+    override_conf_path = pathlib.Path(tmp_path / template_filename)
+    override_conf_path.write_text("Oops! This file has no section headers.")
+
+    template_config = SystemdUnitParser()
+
+    template_traversable = resources.files("quipucordsctl").joinpath(
+        f"{settings.TEMPLATE_SYSTEMD_UNITS_RESOURCE_PATH}/{template_filename}"
+    )
+    with resources.as_file(template_traversable) as template_path:
+        template_config = SystemdUnitParser()
+        template_config.read(template_path)
+
+    install._update_systemd_template_config_with_overrides(
+        template_filename, template_config, override_conf_path
+    )
+
+    assert caplog.messages[0].startswith(f"Skipping overrides for {template_filename}")
