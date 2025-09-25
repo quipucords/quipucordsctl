@@ -47,14 +47,14 @@ def run_command(command: list[str], *, quiet=False) -> tuple[str, str, int]:
         )
         raise error
 
-    stdout, stderr = stdout.strip(), stderr.strip()
-    # If the command failed, log the output despite quite arg.
-    if stdout and (not quiet or exit_code != 0):
-        for line in stdout.splitlines():
-            logger.debug(line)
-    if stderr and (not quiet or exit_code != 0):
-        for line in stderr.splitlines():
-            logger.warning(line)
+    # make stdout and stderr noisier if the process did not exit cleanly
+    stdout_logger = logger.debug if exit_code == 0 else logger.info
+    stderr_logger = logger.debug if exit_code == 0 else logger.error
+    for line in stdout.strip().splitlines():
+        stdout_logger(line)
+    for line in stderr.strip().splitlines():
+        stderr_logger(line)
+
     if exit_code != 0:
         logger.error(
             _(
