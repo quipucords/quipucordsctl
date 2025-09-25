@@ -151,11 +151,15 @@ def write_systemd_unit(
         for section in override_config.sections():
             for option in override_config.options(section):
                 value = override_config.get(section, option)
+                # template_config has a dict-like interface but is not a true dict. You
+                # cannot call get() with defaults to find optional contents. The
+                # following assign to old_value is conceptually like calling
+                # "template_config.get(section, {}).get(option, None)" on true dicts.
                 old_value = (
                     template_config[section][option]
                     if (
-                        section in template_config.sections()
-                        and option in template_config[section]
+                        section in template_config.sections()  # section may not exist
+                        and option in template_config[section]  # option may not exist
                     )
                     else None
                 )
