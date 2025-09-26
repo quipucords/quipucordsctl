@@ -6,19 +6,9 @@ import shutil
 from gettext import gettext as _
 from pathlib import Path
 
-from quipucordsctl import podman_utils, secrets, settings, shell_utils
+from quipucordsctl import constants, podman_utils, settings, shell_utils
 
 logger = logging.getLogger(__name__)
-
-SYSTEMCTL_USER_RESET_FAILED_CMD = ["systemctl", "--user", "reset-failed"]
-SYSTEMCTL_USER_DAEMON_RELOAD_CMD = ["systemctl", "--user", "daemon-reload"]
-SYSTEMCTL_USER_STOP_QUIPUCORDS_APP = ["systemctl", "--user", "stop", "quipucords-app"]
-SYSTEMCTL_USER_STOP_QUIPUCORDS_NETWORK = [
-    "systemctl",
-    "--user",
-    "stop",
-    "quipucords-network",
-]
 
 
 def get_help() -> str:
@@ -34,8 +24,10 @@ def stop_containers() -> bool:
         _("Stopping the %(server_software_name)s server."),
         {"server_software_name": settings.SERVER_SOFTWARE_NAME},
     )
-    shell_utils.run_command(SYSTEMCTL_USER_STOP_QUIPUCORDS_APP, quiet=True)
-    shell_utils.run_command(SYSTEMCTL_USER_STOP_QUIPUCORDS_NETWORK, quiet=True)
+    shell_utils.run_command(constants.SYSTEMCTL_USER_STOP_QUIPUCORDS_APP, quiet=True)
+    shell_utils.run_command(
+        constants.SYSTEMCTL_USER_STOP_QUIPUCORDS_NETWORK, quiet=True
+    )
     return True
 
 
@@ -103,8 +95,8 @@ def remove_services() -> bool:
 def reload_daemon() -> bool:
     """Reset systemctl failures and reload the daemon."""
     logger.info(_("Reloading the systemctl daemon ..."))
-    shell_utils.run_command(SYSTEMCTL_USER_RESET_FAILED_CMD, quiet=True)
-    shell_utils.run_command(SYSTEMCTL_USER_DAEMON_RELOAD_CMD, quiet=True)
+    shell_utils.run_command(constants.SYSTEMCTL_USER_RESET_FAILED_CMD, quiet=True)
+    shell_utils.run_command(constants.SYSTEMCTL_USER_DAEMON_RELOAD_CMD, quiet=True)
     return True
 
 
@@ -125,7 +117,7 @@ def remove_secrets() -> bool:
         _("Removing the %(server_software_name)s secrets ..."),
         {"server_software_name": settings.SERVER_SOFTWARE_NAME},
     )
-    for key in secrets.QUIPUCORDS_SECRET_KEYS:
+    for key in constants.QUIPUCORDS_SECRET_KEYS:
         if not podman_utils.delete_secret(key):
             return False
     return True

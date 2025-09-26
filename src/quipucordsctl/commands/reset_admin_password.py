@@ -5,10 +5,10 @@ import argparse
 import logging
 from gettext import gettext as _
 
-from quipucordsctl import podman_utils, secrets
+from quipucordsctl import constants, podman_utils, secrets
 
 logger = logging.getLogger(__name__)
-ADMIN_PASSWORD_PODMAN_SECRET_NAME = "quipucords-server-password"  # noqa: S105
+ADMIN_PASSWORD_PODMAN_SECRET_NAME = constants.QUIPUCORDS_SECRETS["server"]  # noqa: S105
 PASSWORD_MIN_LENGTH = 10
 PASSWORD_BLOCKLIST = ["dscpassw0rd", "qpcpassw0rd"]
 DEFAULT_USERNAME = "admin"
