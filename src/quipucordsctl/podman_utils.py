@@ -155,3 +155,39 @@ def set_secret(secret_name: str, secret_value: str, allow_replace=True) -> bool:
             {"secret_name": secret_name},
         )
     return True
+
+
+def delete_secret(secret_name: str) -> bool:
+    """Delete a podman secret."""
+    with get_podman_client() as podman_client:
+        if podman_client.secrets.exists(secret_name):
+            podman_client.secrets.remove(secret_name)
+            logger.info(
+                _("podman secret %(secret_name)s was removed."),
+                {"secret_name": secret_name},
+            )
+    return True
+
+
+def remove_image(image: str) -> bool:
+    """Remove a podman container image."""
+    with get_podman_client() as podman_client:
+        try:
+            logger.info(
+                _("Removing the container image %(image)s"),
+                {"image": image},
+            )
+            podman_client.images.remove(image)
+            return True
+        except podman.errors.ImageNotFound:
+            logger.warning(
+                _("Podman could not remove image %(image)s - Image not found."),
+                {"image": image},
+            )
+            return False
+        except podman.errors.APIError:
+            logger.warning(
+                _("Podman could not remove image %(image)s - Failed Podman API call."),
+                {"image": image},
+            )
+            return False

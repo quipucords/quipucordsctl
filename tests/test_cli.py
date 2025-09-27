@@ -15,14 +15,10 @@ def test_load_commands():
 
     commands = cli.load_commands()
     assert "install" in commands
+    assert "uninstall" in commands
     assert commands["install"] == install_module
 
     assert "__init__" not in commands
-
-    # For now, even thought "uninstall.py" exists, we skip loading it.
-    # This will change/break later when we implement the uninstall logic,
-    # and this test will need to be updated.
-    assert "uninstall" not in commands
 
 
 def test_create_parser_and_parse(faker):
