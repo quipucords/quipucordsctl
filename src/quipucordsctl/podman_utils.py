@@ -9,6 +9,7 @@ from urllib import parse
 
 import podman
 import xdg
+from podman import errors as podman_errors
 
 from quipucordsctl import settings, shell_utils
 
@@ -165,3 +166,27 @@ def delete_secret(secret_name: str) -> bool:
                 {"secret_name": secret_name},
             )
     return True
+
+
+def remove_image(image: str) -> bool:
+    """Remove a podman container image."""
+    with get_podman_client() as podman_client:
+        try:
+            logger.info(
+                _("Removing the container image %(image)s"),
+                {"image": image},
+            )
+            podman_client.images.remove(image)
+            return True
+        except podman_errors.ImageNotFound:
+            logger.warning(
+                _("Podman could not remove image %(image)s - Image not found."),
+                {"image": image},
+            )
+            return True
+        except podman_errors.APIError:
+            logger.warning(
+                _("Podman could not remove image %(image)s - Failed Podman API call."),
+                {"image": image},
+            )
+            return False
