@@ -291,8 +291,8 @@ def systemctl_reload():
         _("Reloading systemctl to recognize %(server_software_name)s units"),
         {"server_software_name": settings.SERVER_SOFTWARE_NAME},
     )
-    shell_utils.run_command(SYSTEMCTL_USER_RESET_FAILED_CMD, quiet=True)
-    shell_utils.run_command(SYSTEMCTL_USER_DAEMON_RELOAD_CMD, quiet=True)
+    shell_utils.run_command(SYSTEMCTL_USER_RESET_FAILED_CMD)
+    shell_utils.run_command(SYSTEMCTL_USER_DAEMON_RELOAD_CMD)
 
 
 def run(args: argparse.Namespace) -> bool:

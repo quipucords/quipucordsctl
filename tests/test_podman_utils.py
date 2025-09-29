@@ -82,7 +82,7 @@ def test_ensure_podman_socket_macos(mock_shell_utils, mock_sys, tmp_path):
         podman_utils.ensure_podman_socket()
 
     mock_shell_utils.run_command.assert_called_once_with(
-        podman_utils.PODMAN_MACHINE_STATE_CMD, quiet=True
+        podman_utils.PODMAN_MACHINE_STATE_CMD
     )
 
 
@@ -106,7 +106,7 @@ def test_ensure_podman_socket_macos_not_running(mock_shell_utils, mock_sys, tmp_
             raise e
 
     mock_shell_utils.run_command.assert_called_once_with(
-        podman_utils.PODMAN_MACHINE_STATE_CMD, quiet=True
+        podman_utils.PODMAN_MACHINE_STATE_CMD
     )
 
 
@@ -130,7 +130,7 @@ def test_ensure_podman_socket_macos_broken(mock_shell_utils, mock_sys, tmp_path)
             raise e
 
     mock_shell_utils.run_command.assert_called_once_with(
-        podman_utils.PODMAN_MACHINE_STATE_CMD, quiet=True
+        podman_utils.PODMAN_MACHINE_STATE_CMD
     )
 
 

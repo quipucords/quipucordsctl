@@ -22,7 +22,7 @@ def confirm(prompt: str | None = None) -> bool:
     return False
 
 
-def run_command(command: list[str], *, quiet=False) -> tuple[str, str, int]:
+def run_command(command: list[str]) -> tuple[str, str, int]:
     """Run an external program."""
     logger.debug(
         _("Invoking subprocess with arguments %(command)s"), {"command": command}
