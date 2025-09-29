@@ -43,9 +43,7 @@ def ensure_podman_socket(base_url=None):
 
     if sys.platform == "darwin":
         try:
-            stdout, __, __ = shell_utils.run_command(
-                PODMAN_MACHINE_STATE_CMD, quiet=True
-            )
+            stdout, __, __ = shell_utils.run_command(PODMAN_MACHINE_STATE_CMD)
         except Exception:  # noqa: BLE001
             raise PodmanIsNotReadyError(
                 _(
