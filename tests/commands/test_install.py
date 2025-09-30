@@ -2,9 +2,7 @@
 
 import logging
 import pathlib
-from collections.abc import Generator
 from importlib import resources
-from typing import Any
 from unittest import mock
 
 import pytest
@@ -12,28 +10,6 @@ import pytest
 from quipucordsctl import settings
 from quipucordsctl.commands import install
 from quipucordsctl.systemdunitparser import SystemdUnitParser
-
-
-@pytest.fixture
-def temp_config_directories(
-    tmp_path: pathlib.Path, monkeypatch
-) -> Generator[dict[str, pathlib.Path], Any, None]:
-    """Temporarily swap any directories the "install" command would touch."""
-    temp_settings_dirs = {}
-    for settings_dir in ("SERVER_DATA_DIR", "SERVER_ENV_DIR", "SYSTEMD_UNITS_DIR"):
-        new_path = tmp_path / settings_dir
-        monkeypatch.setattr(
-            f"quipucordsctl.commands.install.settings.{settings_dir}", new_path
-        )
-        temp_settings_dirs[settings_dir] = new_path
-    tmp_data_dirs = {
-        data_dir: temp_settings_dirs["SERVER_DATA_DIR"] / data_dir
-        for data_dir in ("data", "db", "log", "sshkeys")
-    }
-    monkeypatch.setattr(
-        "quipucordsctl.commands.install.settings.SERVER_DATA_SUBDIRS", tmp_data_dirs
-    )
-    yield temp_settings_dirs
 
 
 @pytest.fixture
