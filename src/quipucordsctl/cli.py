@@ -37,6 +37,14 @@ def create_parser(commands: dict[str, ModuleType]) -> argparse.ArgumentParser:
         help=_("Increase verbose output"),
     )
     parser.add_argument(
+        "-y",
+        "--yes",
+        action="store_true",
+        dest="yes",
+        default=False,
+        help=_("Automatically answer 'y' to all confirmation prompts"),
+    )
+    parser.add_argument(
         "-q",
         "--quiet",
         action="store_true",
@@ -95,6 +103,7 @@ def run():
     parser = create_parser(commands)
     args = parser.parse_args()
     configure_logging(args.verbosity, args.quiet)
+    settings.runtime.update(yes=args.yes, quiet=args.quiet)
 
     if args.command in commands:
         try:
