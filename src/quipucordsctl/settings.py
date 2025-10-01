@@ -88,3 +88,31 @@ QUIPUCORDS_SECRETS = {
 }
 
 QUIPUCORDS_SECRET_KEYS = QUIPUCORDS_SECRETS.values()
+
+
+class RuntimeSettings:
+    """A class to hold and manage global runtime settings."""
+
+    def __init__(self):
+        self._quiet: bool = False
+        self._yes: bool = False
+
+    def update(self, *, quiet: bool | None = None, yes: bool | None = None):
+        """Update the global runtime settings."""
+        if isinstance(quiet, bool):
+            self._quiet = quiet
+        if isinstance(yes, bool):
+            self._yes = yes
+
+    @property
+    def quiet(self) -> bool:
+        """Get the 'quiet' mode."""
+        return self._quiet
+
+    @property
+    def yes(self) -> bool:
+        """Get the 'yes' mode."""
+        return self._yes
+
+
+runtime = RuntimeSettings()

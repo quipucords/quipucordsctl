@@ -4,11 +4,18 @@ import logging
 import subprocess
 from gettext import gettext as _
 
+from quipucordsctl import settings
+
 logger = logging.getLogger(__name__)
 
 
 def confirm(prompt: str | None = None) -> bool:
     """Present a typical [y/n] confirmation prompt."""
+    if settings.runtime.yes:
+        return True
+    if settings.runtime.quiet:
+        return False
+
     user_input = None
     if not prompt:
         prompt = _("Do you want to continue? [y/n] ")

@@ -32,6 +32,43 @@ def test_confirm(mock_input, user_inputs, expected, capsys):
         assert len(stdout.splitlines()) == len(user_inputs) - 1
 
 
+@pytest.mark.parametrize(
+    "yes, quiet, expect_input, expected_result",
+    (
+        # yes/quiet combos that expect input
+        (None, None, True, True),
+        (False, None, True, True),
+        (None, False, True, True),
+        (False, False, True, True),
+        # yes/quiet combos that expect NO input
+        (True, None, False, True),
+        (None, True, False, False),
+        (True, False, False, True),
+        (False, True, False, False),
+        (True, True, False, True),
+    ),
+)
+@mock.patch("builtins.input")
+@mock.patch.object(shell_utils.settings, "runtime")
+def test_confirm_skipped_via_args(  # noqa: PLR0913
+    mock_runtime, mock_input, yes, quiet, expect_input, expected_result, faker, capsys
+):
+    """Test confirm handles various "yes" and "quiet" settings."""
+    mock_runtime.yes = yes
+    mock_runtime.quiet = quiet
+    mock_input.return_value = "y"
+    prompt = faker.sentence()
+
+    result = shell_utils.confirm(prompt)
+
+    if yes or quiet:
+        assert result is expected_result
+        assert mock_input.call_count == 0
+    else:
+        assert mock_input.call_count == 1
+        mock_input.assert_called_once_with(prompt)
+
+
 @mock.patch("builtins.input")
 def test_confirm_custom_prompt(mock_input, faker):
     """Test confirm can use a custom prompt."""

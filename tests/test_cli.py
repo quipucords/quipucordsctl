@@ -137,6 +137,7 @@ def test_cli_without_command():
         mock_args = mock_parser.parse_args.return_value
         mock_args.verbosity = 0  # need any int because MagicMock is not int-like
         mock_args.quiet = True
+        mock_args.yes = False
         mock_args.command = None
 
         cli.run()
@@ -157,6 +158,8 @@ def test_cli_nonzero_exit_when_command_fails():
         mock_args = mock_parser.parse_args.return_value
         mock_args.command = command_name
         mock_args.verbosity = 0  # need any int because MagicMock is not int-like
+        mock_args.yes = False
+        mock_args.quiet = False
 
         mock_command = MagicMock()
         mock_command.run.return_value = False
@@ -190,6 +193,8 @@ def test_cli_nonzero_exit_when_command_raises_exception(
         mock_args = mock_parser.parse_args.return_value
         mock_args.command = command_name
         mock_args.verbosity = 0  # need any int because MagicMock is not int-like
+        mock_args.yes = False
+        mock_args.quiet = False
 
         mock_command = MagicMock()
         mock_command.run.side_effect = exception
