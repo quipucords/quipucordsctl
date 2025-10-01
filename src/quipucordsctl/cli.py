@@ -41,7 +41,7 @@ def create_parser(commands: dict[str, ModuleType]) -> argparse.ArgumentParser:
         "--quiet",
         action="store_true",
         dest="quiet",
-        default=0,
+        default=False,
         help=_("Quiet output (overrides `-v`/`--verbose`)"),
     )
 
