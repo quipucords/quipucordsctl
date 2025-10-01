@@ -7,6 +7,8 @@ import secrets
 from dataclasses import dataclass
 from gettext import gettext as _
 
+from quipucordsctl import settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -24,6 +26,9 @@ class DisableLogger:
 
 def prompt_secret(secret_name: str, **kwargs) -> str | None:
     """Prompt the user to enter a new secret value."""
+    if settings.runtime.quiet:
+        return None
+
     new_secret = getpass.getpass(
         _("Enter new %(secret_name)s: ") % {"secret_name": secret_name},
     )
