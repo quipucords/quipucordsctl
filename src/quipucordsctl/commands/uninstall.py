@@ -31,7 +31,7 @@ def stop_containers() -> bool:
     return True
 
 
-def remove_container_images() -> bool:
+def remove_container_images():
     """Remove container images."""
     logger.info(
         _("Removing the %(server_software_name)s container images."),
@@ -57,15 +57,12 @@ def remove_container_images() -> bool:
             if image := unit_file_config.get("Container", "Image"):
                 unique_images.add(image)
 
-    if not unique_images:
-        return True
-
-    all_removed = all(podman_utils.remove_image(image) for image in unique_images)
-    if not all_removed:
-        logger.warning(
-            _("At least one image failed to be removed"),
-        )
-    return True
+    if unique_images:
+        all_removed = all(podman_utils.remove_image(image) for image in unique_images)
+        if not all_removed:
+            logger.warning(
+                _("At least one image failed to be removed"),
+            )
 
 
 def remove_file(file_path: Path) -> bool:
@@ -138,7 +135,7 @@ def reload_daemon() -> bool:
     return True
 
 
-def remove_data() -> bool:
+def remove_data():
     """Remove the quipucords data."""
     logger.info(
         _("Removing the %(server_software_name)s data ..."),
@@ -146,7 +143,6 @@ def remove_data() -> bool:
     )
     for data_dir in settings.SERVER_DATA_SUBDIRS_EXCLUDING_DB.values():
         shutil.rmtree(data_dir, ignore_errors=True)
-    return True
 
 
 def remove_secrets() -> bool:
@@ -165,14 +161,12 @@ def run(args: argparse.Namespace) -> bool:  # noqa: PLR0911
     """Uninstall the server."""
     if not stop_containers():
         return False
-    if not remove_container_images():
-        return False
+    remove_container_images()
     if not remove_services():
         return False
     if not reload_daemon():
         return False
-    if not remove_data():
-        return False
+    remove_data()
     if not remove_secrets():
         return False
     print(

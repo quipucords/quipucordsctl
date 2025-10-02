@@ -60,7 +60,7 @@ def test_remove_container_images(tmp_path: pathlib.Path, monkeypatch, faker):
             container_images.append(container_image)
 
     with mock.patch.object(uninstall, "podman_utils") as mock_podman_utils:
-        assert uninstall.remove_container_images()
+        uninstall.remove_container_images()
         remove_image_calls = [
             mock.call(container_image) for container_image in container_images
         ]
@@ -105,7 +105,7 @@ def test_reload_daemon(mock_shell_utils):
 @mock.patch("quipucordsctl.commands.uninstall.shutil.rmtree")
 def test_remove_data(mock_rmtree):
     """Test remove data invokes the expected shell utilities commands."""
-    assert uninstall.remove_data()
+    uninstall.remove_data()
     expected_calls = []
     for data_dir in settings.SERVER_DATA_SUBDIRS_EXCLUDING_DB.values():
         expected_calls += [mock.call(data_dir, ignore_errors=True)]
