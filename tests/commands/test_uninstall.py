@@ -5,7 +5,7 @@ from unittest import mock
 
 import pytest
 
-from quipucordsctl import constants, settings
+from quipucordsctl import settings
 from quipucordsctl.commands import uninstall
 
 
@@ -28,8 +28,8 @@ def test_stop_containers(mock_shell_utils):
     assert uninstall.stop_containers()
     mock_shell_utils.run_command.assert_has_calls(
         (
-            mock.call(constants.SYSTEMCTL_USER_STOP_QUIPUCORDS_APP),
-            mock.call(constants.SYSTEMCTL_USER_STOP_QUIPUCORDS_NETWORK),
+            mock.call(settings.SYSTEMCTL_USER_STOP_QUIPUCORDS_APP),
+            mock.call(settings.SYSTEMCTL_USER_STOP_QUIPUCORDS_NETWORK),
         )
     )
 
@@ -96,8 +96,8 @@ def test_reload_daemon(mock_shell_utils):
     assert uninstall.reload_daemon()
     mock_shell_utils.run_command.assert_has_calls(
         (
-            mock.call(constants.SYSTEMCTL_USER_RESET_FAILED_CMD),
-            mock.call(constants.SYSTEMCTL_USER_DAEMON_RELOAD_CMD),
+            mock.call(settings.SYSTEMCTL_USER_RESET_FAILED_CMD),
+            mock.call(settings.SYSTEMCTL_USER_DAEMON_RELOAD_CMD),
         )
     )
 
@@ -119,7 +119,7 @@ def test_remove_secrets():
 
         assert uninstall.remove_secrets()
 
-        for key in constants.QUIPUCORDS_SECRET_KEYS:
+        for key in settings.QUIPUCORDS_SECRET_KEYS:
             mock_podman_utils.delete_secret.assert_any_call(key)
 
 
@@ -130,7 +130,7 @@ def test_remove_secrets_failure():
 
         assert not uninstall.remove_secrets()
 
-        key = list(constants.QUIPUCORDS_SECRET_KEYS)[0]
+        key = list(settings.QUIPUCORDS_SECRET_KEYS)[0]
         mock_podman_utils.delete_secret.assert_any_call(key)
 
 

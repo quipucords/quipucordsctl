@@ -9,7 +9,7 @@ from unittest import mock
 
 import pytest
 
-from quipucordsctl import constants, settings
+from quipucordsctl import settings
 from quipucordsctl.commands import install
 from quipucordsctl.systemdunitparser import SystemdUnitParser
 
@@ -163,8 +163,8 @@ def test_systemctl_reload(mock_shell_utils):
     install.systemctl_reload()
     mock_shell_utils.run_command.assert_has_calls(
         (
-            mock.call(constants.SYSTEMCTL_USER_RESET_FAILED_CMD),
-            mock.call(constants.SYSTEMCTL_USER_DAEMON_RELOAD_CMD),
+            mock.call(settings.SYSTEMCTL_USER_RESET_FAILED_CMD),
+            mock.call(settings.SYSTEMCTL_USER_DAEMON_RELOAD_CMD),
         )
     )
 

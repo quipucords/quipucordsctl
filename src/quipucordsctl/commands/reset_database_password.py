@@ -5,10 +5,10 @@ import argparse
 import logging
 from gettext import gettext as _
 
-from quipucordsctl import constants, podman_utils, secrets, settings, shell_utils
+from quipucordsctl import podman_utils, secrets, settings, shell_utils
 
 logger = logging.getLogger(__name__)
-DATABASE_PASSWORD_PODMAN_SECRET_NAME = constants.QUIPUCORDS_SECRETS["db"]  # noqa: S105
+DATABASE_PASSWORD_PODMAN_SECRET_NAME = settings.QUIPUCORDS_SECRETS["db"]  # noqa: S105
 DATABASE_PASSWORD_MIN_LENGTH = 16
 
 

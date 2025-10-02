@@ -7,7 +7,7 @@ import shutil
 from gettext import gettext as _
 from pathlib import Path
 
-from quipucordsctl import constants, podman_utils, settings, shell_utils
+from quipucordsctl import podman_utils, settings, shell_utils
 from quipucordsctl.systemdunitparser import SystemdUnitParser
 
 logger = logging.getLogger(__name__)
@@ -26,8 +26,8 @@ def stop_containers() -> bool:
         _("Stopping the %(server_software_name)s server."),
         {"server_software_name": settings.SERVER_SOFTWARE_NAME},
     )
-    shell_utils.run_command(constants.SYSTEMCTL_USER_STOP_QUIPUCORDS_APP)
-    shell_utils.run_command(constants.SYSTEMCTL_USER_STOP_QUIPUCORDS_NETWORK)
+    shell_utils.run_command(settings.SYSTEMCTL_USER_STOP_QUIPUCORDS_APP)
+    shell_utils.run_command(settings.SYSTEMCTL_USER_STOP_QUIPUCORDS_NETWORK)
     return True
 
 
@@ -128,8 +128,8 @@ def remove_services() -> bool:
 def reload_daemon() -> bool:
     """Reset systemctl failures and reload the daemon."""
     logger.info(_("Reloading the systemctl daemon ..."))
-    shell_utils.run_command(constants.SYSTEMCTL_USER_RESET_FAILED_CMD)
-    shell_utils.run_command(constants.SYSTEMCTL_USER_DAEMON_RELOAD_CMD)
+    shell_utils.run_command(settings.SYSTEMCTL_USER_RESET_FAILED_CMD)
+    shell_utils.run_command(settings.SYSTEMCTL_USER_DAEMON_RELOAD_CMD)
     return True
 
 
@@ -150,7 +150,7 @@ def remove_secrets() -> bool:
         _("Removing the %(server_software_name)s secrets ..."),
         {"server_software_name": settings.SERVER_SOFTWARE_NAME},
     )
-    for key in constants.QUIPUCORDS_SECRET_KEYS:
+    for key in settings.QUIPUCORDS_SECRET_KEYS:
         if not podman_utils.delete_secret(key):
             return False
     return True

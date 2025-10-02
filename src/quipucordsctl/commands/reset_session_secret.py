@@ -10,10 +10,10 @@ import argparse
 import logging
 from gettext import gettext as _
 
-from quipucordsctl import constants, podman_utils, secrets, shell_utils
+from quipucordsctl import podman_utils, secrets, settings, shell_utils
 
 logger = logging.getLogger(__name__)
-SESSION_SECRET_PODMAN_SECRET_NAME = constants.QUIPUCORDS_SECRETS["session"]  # noqa: S105
+SESSION_SECRET_PODMAN_SECRET_NAME = settings.QUIPUCORDS_SECRETS["session"]  # noqa: S105
 SECRET_MIN_LENGTH = 64
 
 
