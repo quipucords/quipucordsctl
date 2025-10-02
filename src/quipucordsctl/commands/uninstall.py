@@ -70,6 +70,40 @@ def remove_container_images() -> bool:
     return True
 
 
+def remove_file(file_path: Path) -> bool:
+    """Remove a file."""
+    logger.info(
+        _("Removing the %(server_software_name)s file %(file_path)s."),
+        {
+            "server_software_name": settings.SERVER_SOFTWARE_NAME,
+            "file_path": file_path,
+        },
+    )
+    if file_path.exists():
+        try:
+            file_path.unlink()
+        except Exception as error:  # noqa: BLE001
+            # While we can catch specific, PermissionError and others
+            # os.unlink can also return other errors, let's catch them all here.
+            logger.error(
+                _(
+                    "The uninstall command failed to remove"
+                    " the file %(file_path)s - %(error)s."
+                ),
+                {"file_path": file_path, "error": error},
+            )
+            return False
+    else:
+        logger.debug(
+            _(
+                "The uninstall command did not find"
+                " the file %(file_path)s which it expected to remove."
+            ),
+            {"file_path": file_path},
+        )
+    return True
+
+
 def remove_services() -> bool:
     """Remove services."""
     logger.info(
@@ -79,30 +113,13 @@ def remove_services() -> bool:
 
     for env_file in settings.TEMPLATE_SERVER_ENV_FILENAMES:
         env_file_path = Path(settings.SERVER_ENV_DIR) / env_file
-        if env_file_path.exists():
-            logger.info(
-                _("Removing the %(server_software_name)s env file %(env_file_path)s."),
-                {
-                    "server_software_name": settings.SERVER_SOFTWARE_NAME,
-                    "env_file_path": env_file_path,
-                },
-            )
-            env_file_path.unlink()
+        if not remove_file(env_file_path):
+            return False
 
     for unit_file in settings.TEMPLATE_SYSTEMD_UNITS_FILENAMES:
         unit_file_path = Path(settings.SYSTEMD_UNITS_DIR) / unit_file
-        if unit_file_path.exists():
-            logger.info(
-                _(
-                    "Removing the %(server_software_name)s"
-                    " unit file %(unit_file_path)s."
-                ),
-                {
-                    "server_software_name": settings.SERVER_SOFTWARE_NAME,
-                    "unit_file_path": unit_file_path,
-                },
-            )
-            unit_file_path.unlink()
+        if not remove_file(unit_file_path):
+            return False
 
     if (
         settings.SYSTEMD_GENERATED_SERVICES_DIR
@@ -110,18 +127,8 @@ def remove_services() -> bool:
     ):
         for service_file in settings.SYSTEMD_SERVICE_FILENAMES:
             service_file_path = settings.SYSTEMD_GENERATED_SERVICES_DIR / service_file
-            if service_file_path.exists():
-                logger.info(
-                    _(
-                        "Removing the %(server_software_name)s"
-                        " service file %(service_file_path)s."
-                    ),
-                    {
-                        "server_software_name": settings.SERVER_SOFTWARE_NAME,
-                        "service_file_path": service_file_path,
-                    },
-                )
-                service_file_path.unlink()
+            if not remove_file(service_file_path):
+                return False
     return True
 
 
