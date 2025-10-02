@@ -234,7 +234,7 @@ def test_delete_secret(mock_get_podman_client, faker, caplog):
 
     mock_podman_client.secrets.exists.assert_called_once_with(secret_name)
     mock_podman_client.secrets.remove.assert_called_once_with(secret_name)
-    assert f"podman secret {secret_name} was removed." == caplog.messages[0]
+    assert f"Podman secret {secret_name} was removed." == caplog.messages[0]
 
 
 @mock.patch.object(podman_utils, "get_podman_client")
