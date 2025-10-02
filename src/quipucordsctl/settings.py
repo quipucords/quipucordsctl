@@ -7,6 +7,7 @@ import pathlib
 PROGRAM_NAME = "quipucordsctl"  # this program's executable command
 SERVER_SOFTWARE_PACKAGE = "quipucords"  # used for constructing server's file paths
 SERVER_SOFTWARE_NAME = "Quipucords"  # server's user-facing "product" name
+ENV_VAR_PREFIX = "QUIPUCORDS_"  # used to construct env vars to bypass input prompts
 
 COMMANDS_PACKAGE_PATH = str(pathlib.Path(__file__).parent.resolve() / "commands")
 

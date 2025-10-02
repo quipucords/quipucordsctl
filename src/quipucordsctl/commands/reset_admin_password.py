@@ -9,6 +9,7 @@ from quipucordsctl import podman_utils, secrets, settings
 
 logger = logging.getLogger(__name__)
 ADMIN_PASSWORD_PODMAN_SECRET_NAME = settings.QUIPUCORDS_SECRETS["server"]  # noqa: S105
+ADMIN_PASSWORD_ENV_VAR_NAME = f"{settings.ENV_VAR_PREFIX}SERVER_PASSWORD"
 PASSWORD_MIN_LENGTH = 10
 PASSWORD_BLOCKLIST = ["dscpassw0rd", "qpcpassw0rd"]
 DEFAULT_USERNAME = "admin"
@@ -36,7 +37,13 @@ def run(args: argparse.Namespace) -> bool:  # noqa: PLR0911
             max_similarity=PASSWORD_USERNAME_MAX_SIMILARITY,
         ),
     }
-    if not (
+    new_password, invalid = secrets.read_from_env(
+        ADMIN_PASSWORD_ENV_VAR_NAME, _("admin login password"), **check_kwargs
+    )
+    if invalid:
+        # Early return because env var was found but failed checks.
+        return False
+    elif not new_password and not (
         new_password := secrets.prompt_secret(_("admin login password"), **check_kwargs)
     ):
         return False

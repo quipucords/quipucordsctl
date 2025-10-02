@@ -7,7 +7,7 @@ import secrets
 from dataclasses import dataclass
 from gettext import gettext as _
 
-from quipucordsctl import settings
+from quipucordsctl import settings, shell_utils
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +22,32 @@ class DisableLogger:
     def __exit__(self, exc_type, exc_value, traceback):
         """Resume logging messages."""
         logging.disable(logging.NOTSET)
+
+
+def read_from_env(
+    env_var_name: str, secret_name: str, **kwargs
+) -> tuple[str | None, bool]:
+    """Read an environment variable and verify that it can be used for this secret."""
+    new_secret = shell_utils.get_env(env_var_name)
+    if not new_secret:
+        return None, False
+    logger.info(
+        _(
+            "Environment variable '%(env_var_name)s' was found and will be "
+            "used to set %(secret_name)s."
+        ),
+        {"secret_name": secret_name, "env_var_name": env_var_name},
+    )
+    if not check_secret(new_secret, secret_name, **kwargs):
+        logger.error(
+            _(
+                "Environment variable '%(env_var_name)s' failed validation "
+                "checks and cannot be used to set %(secret_name)s."
+            ),
+            {"secret_name": secret_name, "env_var_name": env_var_name},
+        )
+        return None, True
+    return new_secret, False
 
 
 def prompt_secret(secret_name: str, **kwargs) -> str | None:

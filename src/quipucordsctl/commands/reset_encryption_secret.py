@@ -13,6 +13,7 @@ from quipucordsctl import podman_utils, secrets, settings, shell_utils
 
 logger = logging.getLogger(__name__)
 ENCRYPTION_SECRET_KEY_PODMAN_SECRET_NAME = settings.QUIPUCORDS_SECRETS["encryption"]  # noqa: S105 E501
+ENCRYPTION_SECRET_KEY_ENV_VAR_NAME = f"{settings.ENV_VAR_PREFIX}ENCRYPTION_SECRET_KEY"
 ENCRYPTION_SECRET_KEY_MIN_LENGTH = 64
 
 
@@ -39,6 +40,37 @@ def is_set() -> bool:
     return podman_utils.secret_exists(ENCRYPTION_SECRET_KEY_PODMAN_SECRET_NAME)
 
 
+def confirm_replace_existing_secret() -> bool:
+    """Confirm that the user wants to replace an existing secret."""
+    logger.warning(
+        _(
+            "The encryption secret key already exists. "
+            "Resetting the encryption secret key to a new value "
+            "may result in data loss if you have already installed "
+            "and run %(SERVER_SOFTWARE_NAME)s on this system."
+        ),
+        {"SERVER_SOFTWARE_NAME": settings.SERVER_SOFTWARE_NAME},
+    )
+    return shell_utils.confirm(
+        _("Are you sure you want to replace the existing database password? [y/n] ")
+    )
+
+
+def confirm_manual_reset() -> bool:
+    """Confirm that the user wants to manually set a value into this secret."""
+    logger.warning(
+        _(
+            "You should only manually reset the encryption secret key "
+            "if you understand how it it used and you are addressing a specific "
+            "issue. We strongly recommend using the automatically generated "
+            "encryption secret key instead of manually entering one."
+        )
+    )
+    return shell_utils.confirm(
+        _("Are you sure you want to manually reset the encryption secret key? [y/n] ")
+    )
+
+
 def run(args: argparse.Namespace) -> bool:
     """
     Reset the server encryption secret key.
@@ -50,51 +82,34 @@ def run(args: argparse.Namespace) -> bool:
     * Create new secret.
     * Return True if everything succeeds, or False if user declines any prompt.
     """
-    if should_replace := podman_utils.secret_exists(
+    should_replace = podman_utils.secret_exists(
         ENCRYPTION_SECRET_KEY_PODMAN_SECRET_NAME
-    ):
-        logger.warning(
-            _(
-                "The encryption secret key already exists. "
-                "Resetting the encryption secret key to a new value "
-                "may result in data loss if you have already installed "
-                "and run %(SERVER_SOFTWARE_NAME)s on this system."
-            ),
-            {"SERVER_SOFTWARE_NAME": settings.SERVER_SOFTWARE_NAME},
-        )
-        if not shell_utils.confirm(
-            _(
-                "Are you sure you want to replace "
-                "the existing encryption secret key? [y/n] "
-            )
-        ):
-            return False
+    )
+    if should_replace and not confirm_replace_existing_secret():
+        return False
+
     if getattr(args, "prompt", False):
-        logger.warning(
-            _(
-                "You should only manually reset the encryption secret key "
-                "if you understand how it it used and you are addressing a specific "
-                "issue. We strongly recommend using the automatically generated "
-                "encryption secret key instead of manually entering one."
-            ),
-            {"SERVER_SOFTWARE_NAME": settings.SERVER_SOFTWARE_NAME},
-        )
-        if not shell_utils.confirm(
-            _(
-                "Are you sure you want to manually reset "
-                "the encryption secret key? [y/n] "
-            )
-        ):
+        if not confirm_manual_reset():
             return False
         if not (
             new_secret := secrets.prompt_secret(
-                _("encryption secret key"),
-                min_length=ENCRYPTION_SECRET_KEY_MIN_LENGTH,
+                _("encryption secret key"), min_length=ENCRYPTION_SECRET_KEY_MIN_LENGTH
             )
         ):
             logger.error(_("The encryption secret key was not updated."))
             return False
     else:
+        new_secret, invalid = secrets.read_from_env(
+            ENCRYPTION_SECRET_KEY_ENV_VAR_NAME,
+            _("encryption secret key"),
+            min_length=ENCRYPTION_SECRET_KEY_MIN_LENGTH,
+        )
+        if invalid or (new_secret and not confirm_manual_reset()):
+            # Early return because env var was found but failed checks.
+            # Or valid env var found and user declined to use it.
+            return False
+
+    if not new_secret:
         new_secret = secrets.generate_random_secret(ENCRYPTION_SECRET_KEY_MIN_LENGTH)
         logger.info(
             _(
