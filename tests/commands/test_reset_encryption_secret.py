@@ -1,5 +1,6 @@
 """Test the "reset_encryption_secret" command."""
 
+import argparse
 import logging
 from unittest import mock
 
@@ -20,7 +21,9 @@ def test_encryption_secret_is_set(mock_secret_exists):
 @mock.patch.object(reset_encryption_secret.shell_utils, "confirm")
 @mock.patch.object(reset_encryption_secret.secrets, "generate_random_secret")
 @mock.patch.object(reset_encryption_secret.secrets, "prompt_secret")
+@mock.patch.object(reset_encryption_secret.secrets, "read_from_env")
 def test_reset_encryption_secret_run_fails_set_secret(  # noqa: PLR0913
+    mock_read_from_env,
     mock_prompt_secret,
     mock_generate_random_secret,
     mock_confirm,
@@ -31,13 +34,15 @@ def test_reset_encryption_secret_run_fails_set_secret(  # noqa: PLR0913
 ):
     """Test reset_encryption_secret.run when set_secret fails unexpectedly."""
     caplog.set_level(logging.ERROR)
-    mock_args = mock.Mock()
-    mock_args.prompt = False
+    args = argparse.Namespace()
+    args.prompt = False
     mock_secret_exists.return_value = False  # act like first-time setup
+    mock_read_from_env.return_value = None, False
     mock_generate_random_secret.return_value = good_secret
     mock_set_secret.return_value = False  # might happen in a race condition
 
-    assert not reset_encryption_secret.run(mock_args)
+    assert not reset_encryption_secret.run(args)
+    mock_read_from_env.assert_called_once()
     mock_secret_exists.assert_called_once()
     mock_set_secret.assert_called_once()
     mock_prompt_secret.assert_not_called()  # no prompts for default first-time setup
@@ -50,7 +55,9 @@ def test_reset_encryption_secret_run_fails_set_secret(  # noqa: PLR0913
 @mock.patch.object(reset_encryption_secret.shell_utils, "confirm")
 @mock.patch.object(reset_encryption_secret.secrets, "generate_random_secret")
 @mock.patch.object(reset_encryption_secret.secrets, "prompt_secret")
+@mock.patch.object(reset_encryption_secret.secrets, "read_from_env")
 def test_reset_encryption_secret_run_success(  # noqa: PLR0913
+    mock_read_from_env,
     mock_prompt_secret,
     mock_generate_random_secret,
     mock_confirm,
@@ -59,16 +66,18 @@ def test_reset_encryption_secret_run_success(  # noqa: PLR0913
     good_secret,
 ):
     """Test reset_encryption_secret.run is successful with default (no prompt) args."""
-    mock_args = mock.Mock()
-    mock_args.prompt = False
+    args = argparse.Namespace()
+    args.prompt = False
     mock_secret_exists.return_value = False  # act like first-time setup
+    mock_read_from_env.return_value = None, False
     mock_generate_random_secret.return_value = good_secret
     mock_set_secret.return_value = True
 
-    assert reset_encryption_secret.run(mock_args)
+    assert reset_encryption_secret.run(args)
     mock_secret_exists.assert_called_once_with(
         reset_encryption_secret.ENCRYPTION_SECRET_KEY_PODMAN_SECRET_NAME
     )
+    mock_read_from_env.assert_called_once()
     mock_set_secret.assert_called_once_with(
         reset_encryption_secret.ENCRYPTION_SECRET_KEY_PODMAN_SECRET_NAME,
         good_secret,
@@ -82,7 +91,9 @@ def test_reset_encryption_secret_run_success(  # noqa: PLR0913
 @mock.patch.object(reset_encryption_secret.podman_utils, "secret_exists")
 @mock.patch.object(reset_encryption_secret.shell_utils, "confirm")
 @mock.patch.object(reset_encryption_secret.secrets, "prompt_secret")
+@mock.patch.object(reset_encryption_secret.secrets, "read_from_env")
 def test_reset_encryption_secret_run_with_prompts_success(  # noqa: PLR0913
+    mock_read_from_env,
     mock_prompt_password,
     mock_confirm,
     mock_secret_exists,
@@ -90,15 +101,16 @@ def test_reset_encryption_secret_run_with_prompts_success(  # noqa: PLR0913
     good_secret,
 ):
     """Test reset_encryption_secret.run is successful with user input prompts."""
-    mock_args = mock.Mock()
-    mock_args.prompt = True  # require user to confirm
+    args = argparse.Namespace()
+    args.prompt = True  # require user to confirm
     mock_confirm.return_value = True  # act like use always enters 'y'
     mock_secret_exists.return_value = True
     mock_set_secret.return_value = True
     mock_prompt_password.return_value = good_secret
 
-    assert reset_encryption_secret.run(mock_args)
+    assert reset_encryption_secret.run(args)
     mock_secret_exists.assert_called_once()
+    mock_read_from_env.assert_not_called()  # because user asked to be prompted
     mock_prompt_password.assert_called_once()
     mock_set_secret.assert_called_once_with(
         reset_encryption_secret.ENCRYPTION_SECRET_KEY_PODMAN_SECRET_NAME,
@@ -112,19 +124,22 @@ def test_reset_encryption_secret_run_with_prompts_success(  # noqa: PLR0913
 @mock.patch.object(reset_encryption_secret.podman_utils, "secret_exists")
 @mock.patch.object(reset_encryption_secret.shell_utils, "confirm")
 @mock.patch.object(reset_encryption_secret.secrets, "prompt_secret")
+@mock.patch.object(reset_encryption_secret.secrets, "read_from_env")
 def test_reset_encryption_secret_run_decline_replace_existing(  # noqa: PLR0913
+    mock_read_from_env,
     mock_prompt_password,
     mock_confirm,
     mock_secret_exists,
     mock_set_secret,
 ):
     """Test reset_encryption_secret.run if user declines to replace existing secret."""
-    mock_args = mock.Mock()
-    mock_args.prompt = True  # require user to confirm
+    args = argparse.Namespace()
+    args.prompt = True  # require user to confirm
     mock_confirm.return_value = False  # act like use always enters 'n'
 
-    assert not reset_encryption_secret.run(mock_args)
+    assert not reset_encryption_secret.run(args)
     mock_secret_exists.assert_called_once()
+    mock_read_from_env.assert_not_called()  # because user asked to be prompted
     mock_prompt_password.assert_not_called()
     mock_set_secret.assert_not_called()
     assert len(mock_confirm.call_args_list) == 1
@@ -134,19 +149,58 @@ def test_reset_encryption_secret_run_decline_replace_existing(  # noqa: PLR0913
 @mock.patch.object(reset_encryption_secret.podman_utils, "secret_exists")
 @mock.patch.object(reset_encryption_secret.shell_utils, "confirm")
 @mock.patch.object(reset_encryption_secret.secrets, "prompt_secret")
+@mock.patch.object(reset_encryption_secret.secrets, "read_from_env")
 def test_reset_encryption_secret_run_decline_manual_input(  # noqa: PLR0913
+    mock_read_from_env,
     mock_prompt_password,
     mock_confirm,
     mock_secret_exists,
     mock_set_secret,
 ):
     """Test reset_encryption_secret.run if user declines manual input confirmation."""
-    mock_args = mock.Mock()
-    mock_args.prompt = True  # require user to confirm
+    args = argparse.Namespace()
+    args.prompt = True  # require user to confirm
     mock_confirm.side_effect = [True, False]  # act like use enters 'y' then 'n'
 
-    assert not reset_encryption_secret.run(mock_args)
+    assert not reset_encryption_secret.run(args)
     mock_secret_exists.assert_called_once()
+    mock_read_from_env.assert_not_called()  # because user asked to be prompted
     mock_prompt_password.assert_not_called()
     mock_set_secret.assert_not_called()
     assert len(mock_confirm.call_args_list) == 2
+
+
+@mock.patch.object(reset_encryption_secret.podman_utils, "set_secret")
+@mock.patch.object(reset_encryption_secret.podman_utils, "secret_exists")
+@mock.patch.object(reset_encryption_secret.shell_utils, "confirm")
+@mock.patch.object(reset_encryption_secret.shell_utils, "settings")
+@mock.patch.object(reset_encryption_secret.secrets, "prompt_secret")
+@mock.patch.object(reset_encryption_secret.secrets, "read_from_env")
+def test_reset_encryption_secret_headless_mode(  # noqa: PLR0913
+    mock_read_from_env,
+    mock_prompt_password,
+    mock_confirm,
+    mock_settings,
+    mock_secret_exists,
+    mock_set_secret,
+    good_secret,
+):
+    """Test reset_encryption_secret.run using env vars, yes, and quiet."""
+    args = argparse.Namespace()
+    args.prompt = False
+    mock_settings.yes = True
+    mock_settings.quiet = True
+    mock_secret_exists.return_value = True
+    mock_set_secret.return_value = True
+    mock_read_from_env.return_value = good_secret, False
+
+    assert reset_encryption_secret.run(args)
+    mock_read_from_env.assert_called_once()
+    mock_secret_exists.assert_called_once()
+    mock_prompt_password.assert_not_called()
+    mock_confirm.assert_not_called()
+    mock_set_secret.assert_called_once_with(
+        reset_encryption_secret.ENCRYPTION_SECRET_KEY_PODMAN_SECRET_NAME,
+        good_secret,
+        True,
+    )
