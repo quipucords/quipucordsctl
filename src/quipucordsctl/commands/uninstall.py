@@ -54,10 +54,8 @@ def remove_container_images() -> bool:
                     {"unit_file": unit_file},
                 )
 
-            for section in unit_file_config.sections():
-                if section == "Container":
-                    if image := unit_file_config.get(section, "Image"):
-                        unique_images.add(image)
+            if image := unit_file_config.get("Container", "Image"):
+                unique_images.add(image)
 
     if not unique_images:
         return True
