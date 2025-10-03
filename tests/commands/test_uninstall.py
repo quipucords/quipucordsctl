@@ -41,6 +41,24 @@ def test_stop_containers(mock_shell_utils):
     )
 
 
+def test_stop_containers_failed_systemctl(mock_shell_utils):
+    """Test stop_containers to return false if systemctl failed."""
+    mock_shell_utils.run_command.side_effect = [
+        ["", "", 0],
+        ["", "", 1],
+        Exception("systemctl_failed"),
+    ]
+
+    assert not uninstall.stop_containers()
+    mock_shell_utils.run_command.assert_has_calls(
+        (
+            mock.call(settings.SYSTEMCTL_USER_LIST_QUIPUCORDS_APP, raise_error=False),
+            mock.call(settings.SYSTEMCTL_USER_STOP_QUIPUCORDS_APP),
+            mock.call(settings.SYSTEMCTL_USER_STOP_QUIPUCORDS_NETWORK),
+        )
+    )
+
+
 def test_remove_container_images(tmp_path: pathlib.Path, monkeypatch, faker):
     """Test remove_container_images invokes expected Podman commands."""
     systemd_units_dir = tmp_path / "systemd"
@@ -55,16 +73,20 @@ def test_remove_container_images(tmp_path: pathlib.Path, monkeypatch, faker):
         unit_file_path = systemd_units_dir / unit_file
         if unit_file_path.suffix == ".container":
             container_image = f"quay.io/{faker.slug()}/{faker.slug()}:latest"
-            unit_file_content = (
-                "\n"
-                "[Unit]\n"
-                "Requires=podman.socket\n"
-                "\n"
-                "[Container]\n"
-                f"Image={container_image}\n"
-            )
+            # let's create a bad unit file for testing Image skipping logic.
+            if unit_file == "quipucords-redis.container":
+                unit_file_content = f"Requires=podman.socket\nImage={container_image}\n"
+            else:
+                unit_file_content = (
+                    "\n"
+                    "[Unit]\n"
+                    "Requires=podman.socket\n"
+                    "\n"
+                    "[Container]\n"
+                    f"Image={container_image}\n"
+                )
+                container_images.append(container_image)
             unit_file_path.write_text(unit_file_content)
-            container_images.append(container_image)
 
     with mock.patch.object(uninstall, "podman_utils") as mock_podman_utils:
         uninstall.remove_container_images()
@@ -74,6 +96,31 @@ def test_remove_container_images(tmp_path: pathlib.Path, monkeypatch, faker):
         mock_podman_utils.remove_image.assert_has_calls(
             remove_image_calls, any_order=True
         )
+
+
+def test_remove_file(tmp_path: pathlib.Path):
+    """Test successful remove_file."""
+    test_file = tmp_path / "test_file"
+
+    test_file.write_text("test content")
+    assert uninstall.remove_file(test_file)
+
+
+def test_remove_file_does_not_exist(tmp_path: pathlib.Path):
+    """Test successful remove_file if the file does not exist."""
+    test_file = tmp_path / "test_file"
+
+    assert uninstall.remove_file(test_file)
+
+
+@mock.patch("pathlib.Path.unlink")
+def test_remove_file_unlink_error(mock_unlink, tmp_path: pathlib.Path):
+    """Test successful remove_file if the file does not exist."""
+    test_file = tmp_path / "test_file"
+
+    test_file.write_text("test content")
+    mock_unlink.side_effect = Exception("unknown_exception")
+    assert not uninstall.remove_file(test_file)
 
 
 @mock.patch("pathlib.Path.exists")
