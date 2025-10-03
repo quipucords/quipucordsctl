@@ -26,8 +26,26 @@ def stop_containers() -> bool:
         _("Stopping the %(server_software_name)s server."),
         {"server_software_name": settings.SERVER_SOFTWARE_NAME},
     )
-    shell_utils.run_command(settings.SYSTEMCTL_USER_STOP_QUIPUCORDS_APP)
-    shell_utils.run_command(settings.SYSTEMCTL_USER_STOP_QUIPUCORDS_NETWORK)
+    __, __, exit_code = shell_utils.run_command(
+        settings.SYSTEMCTL_USER_LIST_QUIPUCORDS_APP, raise_error=False
+    )
+    if exit_code == 0:
+        try:
+            shell_utils.run_command(settings.SYSTEMCTL_USER_STOP_QUIPUCORDS_APP)
+            shell_utils.run_command(settings.SYSTEMCTL_USER_STOP_QUIPUCORDS_NETWORK)
+        except Exception as error:  # noqa: BLE001
+            logger.error(
+                _("Could not stop the %(server_software_name)s server."),
+                {"server_software_name": settings.SERVER_SOFTWARE_NAME},
+            )
+            logger.debug(
+                _("Error stopping %(server_software_name)s - %(error)s"),
+                {
+                    "server_software_name": settings.SERVER_SOFTWARE_NAME,
+                    "error": error,
+                },
+            )
+            return False
     return True
 
 

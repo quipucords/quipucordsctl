@@ -63,6 +63,13 @@ SYSTEMD_SERVICE_FILENAMES = (
 # System commands commonly run
 SYSTEMCTL_USER_RESET_FAILED_CMD = ["systemctl", "--user", "reset-failed"]
 SYSTEMCTL_USER_DAEMON_RELOAD_CMD = ["systemctl", "--user", "daemon-reload"]
+SYSTEMCTL_USER_LIST_QUIPUCORDS_APP = [
+    "systemctl",
+    "-q",
+    "--user",
+    "list-unit-files",
+    "quipucords-app.service",
+]
 SYSTEMCTL_USER_STOP_QUIPUCORDS_APP = ["systemctl", "--user", "stop", "quipucords-app"]
 SYSTEMCTL_USER_STOP_QUIPUCORDS_NETWORK = [
     "systemctl",

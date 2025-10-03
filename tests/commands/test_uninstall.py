@@ -25,9 +25,16 @@ def test_get_help():
 
 def test_stop_containers(mock_shell_utils):
     """Test stop_containers invokes expected Podman commands."""
+    mock_shell_utils.run_command.side_effect = [
+        ["", "", 0],
+        ["", "", 1],
+        ["", "", 1],
+    ]
+
     assert uninstall.stop_containers()
     mock_shell_utils.run_command.assert_has_calls(
         (
+            mock.call(settings.SYSTEMCTL_USER_LIST_QUIPUCORDS_APP, raise_error=False),
             mock.call(settings.SYSTEMCTL_USER_STOP_QUIPUCORDS_APP),
             mock.call(settings.SYSTEMCTL_USER_STOP_QUIPUCORDS_NETWORK),
         )

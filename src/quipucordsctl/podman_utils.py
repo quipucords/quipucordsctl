@@ -194,9 +194,13 @@ def remove_image(image: str) -> bool:
                 {"image": image},
             )
             return True
-        except podman_errors.APIError:
+        except podman_errors.APIError as error:
             logger.warning(
                 _("Podman could not remove image %(image)s - Failed Podman API call."),
                 {"image": image},
+            )
+            logger.debug(
+                _("Error removing image %(image)s - %(error)s."),
+                {"image": image, "error": error},
             )
             return False
