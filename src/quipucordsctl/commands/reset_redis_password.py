@@ -1,8 +1,7 @@
 """
 Reset the Redis password.
 
-The Redis password is used for short-lived cryptographic signing
-of session data and related tokens.
+The Redis password is only used for communicating with the local Redis server.
 """
 # TODO Should this command also conditionally restart the server?
 
@@ -10,12 +9,13 @@ import argparse
 import logging
 from gettext import gettext as _
 
-from quipucordsctl import podman_utils, secrets, settings, shell_utils
+from quipucordsctl import podman_utils, secrets, settings
 
 logger = logging.getLogger(__name__)
-REDIS_PASSWORD_PODMAN_SECRET_NAME = settings.QUIPUCORDS_SECRETS["redis"]  # noqa: S105
-REDIS_PASSWORD_ENV_VAR_NAME = f"{settings.ENV_VAR_PREFIX}REDIS_PASSWORD"
-SECRET_MIN_LENGTH = 64
+PODMAN_SECRET_NAME = settings.QUIPUCORDS_SECRETS["redis"]  # noqa: S105
+ENV_VAR_NAME = f"{settings.ENV_VAR_PREFIX}REDIS_PASSWORD"
+MIN_LENGTH = 64
+REQUIREMENTS = {"min_length": MIN_LENGTH}
 
 
 def get_help() -> str:
@@ -38,65 +38,48 @@ def setup_parser(parser: argparse.ArgumentParser) -> None:
 
 def is_set() -> bool:
     """Check if the Redis password is already set."""
-    return podman_utils.secret_exists(REDIS_PASSWORD_PODMAN_SECRET_NAME)
+    return podman_utils.secret_exists(PODMAN_SECRET_NAME)
 
 
-def confirm_manual_reset() -> bool:
-    """Confirm that the user wants to manually set a value into this secret."""
-    logger.warning(
-        _(
-            "You should only manually reset the Redis password if you "
-            "understand how it it used and you are addressing a specific issue. "
-            "We strongly recommend using the automatically generated Redis "
-            "password instead of manually entering one."
-        )
-    )
-    return shell_utils.confirm(
-        _("Are you sure you want to manually reset the Redis password? [y/n] ")
-    )
+reset_secret_messages = secrets.ResetSecretMessages(
+    manual_reset_warning=_(
+        "You should only manually reset the Redis password if you "
+        "understand how it is used, and you are addressing a specific issue. "
+        "We strongly recommend using the automatically generated value for "
+        "the Redis password instead of manually entering one."
+    ),
+    manual_reset_question=_(
+        "Are you sure you want to manually set a custom Redis password?"
+    ),
+)
 
 
 def run(args: argparse.Namespace) -> bool:
     """
-    Reset the server Redis password.
+    Reset the Redis password.
 
-    * Prompt for new value or generate a value randomly.
-    * If secret already exists, delete it.
-    * Create new secret.
-    * Return True if everything succeeds, or False if user declines any prompt.
+    Value is random by default, but allow manual input via '--prompt' or env var.
+
+    Returns True if everything succeeded, else False because some input validation
+    failed or the user declined a confirmation prompt.
     """
-    if getattr(args, "prompt", False):
-        if not confirm_manual_reset():
-            return False
-        if not (
-            new_secret := secrets.prompt_secret(
-                _("Redis password"), min_length=SECRET_MIN_LENGTH
-            )
-        ):
-            logger.error(_("The Redis password was not updated."))
-            return False
-    else:
-        new_secret, invalid = secrets.read_from_env(
-            REDIS_PASSWORD_ENV_VAR_NAME,
-            _("Redis password"),
-            min_length=SECRET_MIN_LENGTH,
-        )
-        if invalid or (new_secret and not confirm_manual_reset()):
-            # Early return because env var was found but failed checks.
-            # Or valid env var found and user declined to use it.
-            return False
+    already_exists = podman_utils.secret_exists(PODMAN_SECRET_NAME)
+    new_secret = secrets.get_new_secret_value(
+        podman_secret_name=PODMAN_SECRET_NAME,
+        messages=reset_secret_messages,
+        must_confirm_replace_existing=False,
+        must_confirm_allow_nonrandom=True,
+        must_prompt_interactive_input=getattr(args, "prompt", False),
+        may_prompt_interactive_input=getattr(args, "prompt", False),
+        env_var_name=ENV_VAR_NAME,
+        check_requirements=REQUIREMENTS,
+    )
 
-    if not new_secret:
-        new_secret = secrets.generate_random_secret(SECRET_MIN_LENGTH)
-        logger.info(
-            _(
-                "New value for podman secret %(PODMAN_SECRET_NAME)s "
-                "was randomly generated."
-            ),
-            {"PODMAN_SECRET_NAME": REDIS_PASSWORD_PODMAN_SECRET_NAME},
-        )
-    if not podman_utils.set_secret(REDIS_PASSWORD_PODMAN_SECRET_NAME, new_secret):
-        logger.error(_("The Redis password was not updated."))
-        return False
-    logger.debug(_("The Redis password was successfully updated."))
-    return True
+    if new_secret and podman_utils.set_secret(
+        PODMAN_SECRET_NAME, new_secret, already_exists
+    ):
+        logger.debug(_("The Redis password was successfully updated."))
+        return True
+
+    logger.error(_("The Redis password was not updated."))
+    return False
