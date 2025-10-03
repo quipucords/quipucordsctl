@@ -66,7 +66,7 @@ def test_confirm_skipped_via_args(  # noqa: PLR0913
         assert mock_input.call_count == 0
     else:
         assert mock_input.call_count == 1
-        mock_input.assert_called_once_with(prompt)
+        mock_input.assert_called_once_with(f"{prompt} [y/n] ")
 
 
 @mock.patch("builtins.input")
@@ -76,7 +76,7 @@ def test_confirm_custom_prompt(mock_input, faker):
     prompt = faker.sentence()
     assert shell_utils.confirm(prompt)
     assert mock_input.call_count == 1
-    mock_input.assert_called_once_with(prompt)
+    mock_input.assert_called_once_with(f"{prompt} [y/n] ")
 
 
 def test_run_command():

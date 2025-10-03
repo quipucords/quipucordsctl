@@ -1,24 +1,12 @@
 """Test the quipucordsctl.secrets module."""
 
+import dataclasses
 import logging
 from unittest import mock
 
 import pytest
 
 from quipucordsctl import secrets
-
-
-@mock.patch.object(secrets.getpass, "getpass")
-def test_prompt_secret_success(mock_getpass, good_secret):
-    """Test prompt_secret with successful entry."""
-    mock_getpass.side_effect = [good_secret, good_secret]
-    assert secrets.prompt_secret("potato") == good_secret
-    mock_getpass.assert_has_calls(
-        [
-            mock.call("Enter new potato: "),
-            mock.call("Confirm new potato: "),
-        ]
-    )
 
 
 @pytest.mark.parametrize(
@@ -50,16 +38,23 @@ def test_prompt_secret_success(mock_getpass, good_secret):
 )
 def test_check_secret(new_secret, kwargs, expected_result):
     """Test check_secret requires sufficiently complex inputs."""
-    assert secrets.check_secret(new_secret, "my secret", **kwargs) == expected_result
+    assert secrets.check_secret(new_secret, **kwargs) == expected_result
 
 
 @mock.patch.object(secrets.getpass, "getpass")
-def test_prompt_secret(mock_getpass, good_secret, caplog):
-    """Test prompt_secret succeeds when input passes check_secret."""
+def test_prompt_secret_success(mock_getpass, good_secret, caplog):
+    """Test prompt_secret succeeds with successful input."""
     caplog.set_level(logging.ERROR)
     mock_getpass.side_effect = [good_secret, good_secret]
+    messages = mock.Mock()
 
-    assert secrets.prompt_secret("potato")
+    assert secrets.prompt_secret(messages) == good_secret
+    mock_getpass.assert_has_calls(
+        [
+            mock.call(messages.prompt_enter_value),
+            mock.call(messages.prompt_confirm_value),
+        ]
+    )
     assert len(caplog.messages) == 0
 
 
@@ -69,19 +64,171 @@ def test_prompt_secret_fails_mismatch(mock_getpass, good_secret, bad_secret, cap
     caplog.set_level(logging.ERROR)
     mock_getpass.side_effect = [good_secret, good_secret[::-1]]
 
-    assert not secrets.prompt_secret("potato")
+    messages = secrets.ResetSecretMessages()
+    assert not secrets.prompt_secret()
     assert len(caplog.messages) == 1
-    assert "Your potato inputs do not match." in caplog.messages
+    assert str(messages.prompt_values_no_match) in caplog.messages
 
 
-@mock.patch.object(secrets.getpass, "getpass")
-def test_prompt_secret_fails_check_secret(mock_getpass, bad_secret, caplog):
-    """Test prompt_secret fails when input fails check_secret."""
-    caplog.set_level(logging.ERROR)
-    mock_getpass.side_effect = [bad_secret, bad_secret]
+@dataclasses.dataclass
+class GetNewSecretValueTestCase:
+    """Define expectations and simulated inputs to test get_new_secret_value."""
 
-    assert secrets.prompt_secret("potato") is None
-    assert len(caplog.messages) == 3
-    assert "Your potato must be at least 16 characters long." in caplog.messages
-    assert "Your potato must contain a number." in caplog.messages
-    assert "Your potato must contain a letter." in caplog.messages
+    expect_success: bool
+    already_exists: bool = False
+    must_confirm_replace_existing: bool = False
+    must_confirm_allow_nonrandom: bool = False
+    must_prompt_interactive_input: bool = False
+    may_prompt_interactive_input: bool = False
+    simulate_allow_replace_existing: bool = False
+    simulate_allow_nonrandom: bool = False
+    simulate_quiet_mode: bool = False
+    simulate_yes_mode: bool = False
+    simulate_invalid_input: bool = False
+    simulate_env_var_set: bool = False
+    simulate_invalid_env_var: bool = False
+    expect_random: bool = False
+
+
+get_new_secret_value_test_cases = {
+    "random-basic": GetNewSecretValueTestCase(
+        # like "reset_session_secret" first time behavior
+        expect_random=True,
+        expect_success=True,
+    ),
+    "random-exists-allow": GetNewSecretValueTestCase(
+        # like "reset_session_secret" after already run, then 'y'
+        must_confirm_replace_existing=True,
+        simulate_allow_replace_existing=True,
+        expect_random=True,
+        expect_success=True,
+    ),
+    "random-exists-decline": GetNewSecretValueTestCase(
+        # like "reset_session_secret" after already run, then 'n'
+        must_confirm_replace_existing=True,
+        simulate_allow_replace_existing=False,
+        expect_random=True,
+        expect_success=False,
+    ),
+    "interactive": GetNewSecretValueTestCase(
+        # like "reset_admin_password" first time behavior
+        may_prompt_interactive_input=True,
+        expect_success=True,
+    ),
+    "interactive-invalid": GetNewSecretValueTestCase(
+        # like "reset_admin_password" failure
+        may_prompt_interactive_input=True,
+        simulate_invalid_input=True,
+        expect_success=False,
+    ),
+    "interactive-confirm-nonrandom-allow": GetNewSecretValueTestCase(
+        # like "reset_database_password --prompt" first time, "y"
+        must_prompt_interactive_input=True,
+        must_confirm_allow_nonrandom=True,
+        simulate_allow_nonrandom=True,
+        expect_success=True,
+    ),
+    "interactive-confirm-nonrandom-decline": GetNewSecretValueTestCase(
+        # like "reset_database_password --prompt" first time, "y"
+        must_prompt_interactive_input=True,
+        must_confirm_allow_nonrandom=True,
+        simulate_allow_nonrandom=False,
+        expect_success=False,
+    ),
+    "interactive-exists-confirm-nonrandom-allow-decline": GetNewSecretValueTestCase(
+        # like "reset_database_password --prompt" after already run, "y", "n"
+        must_confirm_replace_existing=True,
+        must_prompt_interactive_input=True,
+        must_confirm_allow_nonrandom=True,
+        simulate_allow_replace_existing=False,
+        simulate_allow_nonrandom=False,
+        expect_success=False,
+    ),
+    "interactive-confirm-yes-mode": GetNewSecretValueTestCase(
+        # like "-y reset_database_password --prompt" after already run
+        must_prompt_interactive_input=True,
+        must_confirm_allow_nonrandom=True,
+        simulate_yes_mode=True,
+        expect_success=True,
+    ),
+    "env-var-headless": GetNewSecretValueTestCase(
+        # like "-y -q reset_database_password" with env var first time behavior
+        simulate_env_var_set=True,
+        simulate_yes_mode=True,
+        simulate_quiet_mode=True,
+        expect_success=True,
+    ),
+    "env-var-headless-exists-yes": GetNewSecretValueTestCase(
+        # like "-y -q reset_database_password" with env var after already run
+        simulate_env_var_set=True,
+        must_confirm_replace_existing=True,
+        simulate_yes_mode=True,
+        simulate_quiet_mode=True,
+        expect_success=True,
+    ),
+    "env-var-headless-exists-abort": GetNewSecretValueTestCase(
+        # like "-q reset_database_password" with env var after already run
+        simulate_env_var_set=True,
+        must_confirm_replace_existing=True,
+        simulate_quiet_mode=True,
+        expect_random=False,
+        expect_success=False,
+    ),
+}
+
+
+@pytest.mark.parametrize("name,test_case", get_new_secret_value_test_cases.items())
+def test_get_new_secret_value(
+    name: str, test_case: GetNewSecretValueTestCase, faker, mocker
+):
+    """Test `get_new_secret` behaviors under different conditions and user inputs."""
+    podman_secret_name = faker.slug()
+    input_value = faker.password()
+
+    secrets_runtime = mocker.patch.object(secrets.settings, "runtime")
+    shell_utils_runtime = mocker.patch.object(secrets.shell_utils.settings, "runtime")
+    secrets_runtime.quiet = shell_utils_runtime.quiet = test_case.simulate_quiet_mode
+    secrets_runtime.yes = shell_utils_runtime.yes = test_case.simulate_yes_mode
+
+    if not test_case.simulate_quiet_mode and not test_case.simulate_yes_mode:
+        mocker.patch.object(
+            secrets,
+            "confirm_replace_existing",
+            return_value=test_case.simulate_allow_replace_existing,
+        )
+        mocker.patch.object(
+            secrets,
+            "confirm_allow_nonrandom",
+            return_value=test_case.simulate_allow_nonrandom,
+        )
+
+    if not test_case.simulate_quiet_mode:
+        mocker.patch.object(secrets.getpass, "getpass", return_value=input_value)
+
+    if test_case.simulate_env_var_set:
+        mock_get_env = mocker.patch.object(secrets.shell_utils, "get_env")
+        mock_get_env.return_value = input_value
+
+    env_var_name = faker.slug() if test_case.simulate_env_var_set else None
+
+    mocker.patch.object(
+        secrets,
+        "check_secret",
+        return_value=None if test_case.simulate_invalid_input else input_value,
+    )
+    if test_case.expect_random:
+        mocker.patch.object(secrets, "generate_random_secret", return_value=input_value)
+
+    result = secrets.get_new_secret_value(
+        podman_secret_name,
+        env_var_name=env_var_name,
+        check_requirements={},
+        must_confirm_replace_existing=test_case.must_confirm_replace_existing,
+        must_confirm_allow_nonrandom=test_case.must_confirm_allow_nonrandom,
+        may_prompt_interactive_input=test_case.may_prompt_interactive_input,
+        must_prompt_interactive_input=test_case.must_prompt_interactive_input,
+    )
+    if test_case.expect_success:
+        assert result == input_value
+    else:
+        assert result is None
