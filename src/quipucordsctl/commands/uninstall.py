@@ -189,8 +189,9 @@ def run(args: argparse.Namespace) -> bool:  # noqa: PLR0911
     remove_data()
     if not remove_secrets():
         return False
-    print(
-        _("%(server_software_name)s uninstalled successfully.")
-        % {"server_software_name": settings.SERVER_SOFTWARE_NAME}
-    )
+    if not args.quiet:
+        print(
+            _("%(server_software_name)s uninstalled successfully.")
+            % {"server_software_name": settings.SERVER_SOFTWARE_NAME}
+        )
     return True

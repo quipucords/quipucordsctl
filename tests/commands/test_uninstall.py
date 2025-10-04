@@ -1,5 +1,6 @@
 """Test the "uninstall" command."""
 
+import argparse
 import pathlib
 from unittest import mock
 
@@ -190,7 +191,7 @@ def test_remove_secrets_failure():
 
 def test_uninstall_run(capsys):
     """Test the command invokes the expected subcommands."""
-    mock_args = mock.Mock()
+    mock_args = argparse.Namespace()
     with (
         mock.patch.object(uninstall, "stop_containers") as mock_stop_containers,
         mock.patch.object(
@@ -208,6 +209,7 @@ def test_uninstall_run(capsys):
         mock_remove_data.return_value = True
         mock_remove_secrets.return_value = True
 
+        mock_args.quiet = False
         assert uninstall.run(mock_args)
 
         mock_stop_containers.assert_called_once()
