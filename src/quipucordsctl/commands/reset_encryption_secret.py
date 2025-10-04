@@ -7,6 +7,7 @@ The encryption secret key is used to encrypt credentials in the database.
 
 import argparse
 import logging
+import textwrap
 from gettext import gettext as _
 
 from quipucordsctl import podman_utils, secrets, settings
@@ -21,6 +22,27 @@ REQUIREMENTS = {"min_length": MIN_LENGTH}
 def get_help() -> str:
     """Get the help/docstring for this command."""
     return _("Reset the encryption secret key.")
+
+
+def get_description() -> str:
+    """Get the longer description of this command."""
+    return _(
+        textwrap.dedent(
+            """
+            The `%(command_name)s` command resets the %(server_software_name)s
+            encryption secret key. This secret key is used only by the
+            %(server_software_name)s server internally to protect sensitive
+            values such as your source credentials, and as a user, you never
+            need to use this secret key directly.
+            The `%(command_name)s` command will try to use the value from
+            the environment variable `%(env_var_name)s` if you have set one.
+            """
+        )
+    ) % {
+        "command_name": __name__.rpartition(".")[-1],
+        "server_software_name": settings.SERVER_SOFTWARE_NAME,
+        "env_var_name": ENV_VAR_NAME,
+    }
 
 
 def setup_parser(parser: argparse.ArgumentParser) -> None:
