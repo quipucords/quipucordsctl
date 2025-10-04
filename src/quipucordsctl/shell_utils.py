@@ -1,19 +1,38 @@
 """Utilities for interacting with user's shell and external programs."""
 
 import logging
+import os
 import subprocess
 from gettext import gettext as _
+
+from quipucordsctl import settings
 
 logger = logging.getLogger(__name__)
 
 
+def get_env(name: str) -> str | None:
+    """Get the value of the specified environment variable."""
+    if value := os.environ.get(name):
+        logger.debug(_("Environment variable '%(name)s' found."), {"name": name})
+        return value
+    else:
+        logger.debug(_("Environment variable '%(name)s' not found."), {"name": name})
+        return None
+
+
 def confirm(prompt: str | None = None) -> bool:
     """Present a typical [y/n] confirmation prompt."""
+    if settings.runtime.yes:
+        return True
+    if settings.runtime.quiet:
+        return False
+
     user_input = None
     if not prompt:
-        prompt = _("Do you want to continue? [y/n] ")
+        prompt = _("Do you want to continue?")
     while user_input is None:
-        user_input = input(prompt).lower()
+        prompt_with_yn = _("%(question)s [y/n] ") % {"question": prompt}
+        user_input = input(prompt_with_yn).lower()
         if user_input == _("y"):
             return True
         elif user_input != _("n"):

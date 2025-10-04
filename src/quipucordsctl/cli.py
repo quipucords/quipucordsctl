@@ -37,11 +37,19 @@ def create_parser(commands: dict[str, ModuleType]) -> argparse.ArgumentParser:
         help=_("Increase verbose output"),
     )
     parser.add_argument(
+        "-y",
+        "--yes",
+        action="store_true",
+        dest="yes",
+        default=False,
+        help=_("Automatically answer 'y' to all confirmation prompts"),
+    )
+    parser.add_argument(
         "-q",
         "--quiet",
         action="store_true",
         dest="quiet",
-        default=0,
+        default=False,
         help=_("Quiet output (overrides `-v`/`--verbose`)"),
     )
 
@@ -55,8 +63,23 @@ def create_parser(commands: dict[str, ModuleType]) -> argparse.ArgumentParser:
 
     subparsers = parser.add_subparsers(dest="command")
     for command_name, command_module in commands.items():
+        _help = (
+            getattr(command_module, "get_help")()
+            if hasattr(command_module, "get_help")
+            else None
+        )
+        description = (
+            getattr(command_module, "get_description")()
+            if hasattr(command_module, "get_description")
+            else None
+        )
+        epilog = (
+            getattr(command_module, "get_epilog")()
+            if hasattr(command_module, "get_epilog")
+            else None
+        )
         command_parser = subparsers.add_parser(
-            command_name, help=command_module.get_help()
+            command_name, help=_help, description=description, epilog=epilog
         )
         if hasattr(command_module, "setup_parser"):
             command_module.setup_parser(command_parser)
@@ -95,6 +118,7 @@ def run():
     parser = create_parser(commands)
     args = parser.parse_args()
     configure_logging(args.verbosity, args.quiet)
+    settings.runtime.update(yes=args.yes, quiet=args.quiet)
 
     if args.command in commands:
         try:
