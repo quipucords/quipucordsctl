@@ -8,6 +8,7 @@ of session data and related tokens.
 
 import argparse
 import logging
+import textwrap
 from gettext import gettext as _
 
 from quipucordsctl import podman_utils, secrets, settings
@@ -22,6 +23,28 @@ REQUIREMENTS = {"min_length": MIN_LENGTH}
 def get_help() -> str:
     """Get the help/docstring for this command."""
     return _("Reset the session secret key.")
+
+
+def get_description() -> str:
+    """Get the longer description of this command."""
+    return _(
+        textwrap.dedent(
+            """
+            The `%(command_name)s` command resets the %(server_software_name)s
+            session secret key. This secret key is used only by the
+            %(server_software_name)s server internally to protect your session and
+            the connection between your web browser or CLI and the
+            %(server_software_name)s server, and as a user, you never need to use
+            this secret key directly.
+            The `%(command_name)s` command will try to use the value from
+            the environment variable `%(env_var_name)s` if you have set one.
+            """
+        )
+    ) % {
+        "command_name": __name__.rpartition(".")[-1],
+        "server_software_name": settings.SERVER_SOFTWARE_NAME,
+        "env_var_name": ENV_VAR_NAME,
+    }
 
 
 def setup_parser(parser: argparse.ArgumentParser) -> None:

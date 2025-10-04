@@ -7,6 +7,7 @@ The Redis password is only used for communicating with the local Redis server.
 
 import argparse
 import logging
+import textwrap
 from gettext import gettext as _
 
 from quipucordsctl import podman_utils, secrets, settings
@@ -21,6 +22,26 @@ REQUIREMENTS = {"min_length": MIN_LENGTH}
 def get_help() -> str:
     """Get the help/docstring for this command."""
     return _("Reset the Redis password.")
+
+
+def get_description() -> str:
+    """Get the longer description of this command."""
+    return _(
+        textwrap.dedent(
+            """
+            The `%(command_name)s` command resets the %(server_software_name)s
+            Redis password. This password is used only by the
+            %(server_software_name)s server to communicate with its local
+            Redis server, and as a user, you never need to use this value directly.
+            The `%(command_name)s` command will try to use the value from
+            the environment variable `%(env_var_name)s` if you have set one.
+            """
+        )
+    ) % {
+        "command_name": __name__.rpartition(".")[-1],
+        "server_software_name": settings.SERVER_SOFTWARE_NAME,
+        "env_var_name": ENV_VAR_NAME,
+    }
 
 
 def setup_parser(parser: argparse.ArgumentParser) -> None:
