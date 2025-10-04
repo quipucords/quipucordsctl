@@ -10,10 +10,10 @@ import argparse
 import logging
 from gettext import gettext as _
 
-from quipucordsctl import podman_utils, secrets, shell_utils
+from quipucordsctl import podman_utils, secrets, settings, shell_utils
 
 logger = logging.getLogger(__name__)
-REDIS_PASSWORD_PODMAN_SECRET_NAME = "quipucords-redis-password"  # noqa: S105
+REDIS_PASSWORD_PODMAN_SECRET_NAME = settings.QUIPUCORDS_SECRETS["redis"]  # noqa: S105
 SECRET_MIN_LENGTH = 64
 
 

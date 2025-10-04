@@ -8,7 +8,7 @@ from gettext import gettext as _
 from quipucordsctl import podman_utils, secrets, settings, shell_utils
 
 logger = logging.getLogger(__name__)
-DATABASE_PASSWORD_PODMAN_SECRET_NAME = "quipucords-db-password"  # noqa: S105
+DATABASE_PASSWORD_PODMAN_SECRET_NAME = settings.QUIPUCORDS_SECRETS["db"]  # noqa: S105
 DATABASE_PASSWORD_MIN_LENGTH = 16
 
 
