@@ -63,8 +63,23 @@ def create_parser(commands: dict[str, ModuleType]) -> argparse.ArgumentParser:
 
     subparsers = parser.add_subparsers(dest="command")
     for command_name, command_module in commands.items():
+        _help = (
+            getattr(command_module, "get_help")()
+            if hasattr(command_module, "get_help")
+            else None
+        )
+        description = (
+            getattr(command_module, "get_description")()
+            if hasattr(command_module, "get_description")
+            else None
+        )
+        epilog = (
+            getattr(command_module, "get_epilog")()
+            if hasattr(command_module, "get_epilog")
+            else None
+        )
         command_parser = subparsers.add_parser(
-            command_name, help=command_module.get_help()
+            command_name, help=_help, description=description, epilog=epilog
         )
         if hasattr(command_module, "setup_parser"):
             command_module.setup_parser(command_parser)
