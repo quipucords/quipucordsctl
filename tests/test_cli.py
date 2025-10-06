@@ -12,17 +12,15 @@ from quipucordsctl import cli
 def test_load_commands():
     """Test some known commands are loaded and returned."""
     from quipucordsctl.commands import install as install_module  # noqa: PLC0415
+    from quipucordsctl.commands import uninstall as uninstall_module  # noqa: PLC0415
 
     commands = cli.load_commands()
     assert "install" in commands
+    assert "uninstall" in commands
     assert commands["install"] == install_module
+    assert commands["uninstall"] == uninstall_module
 
     assert "__init__" not in commands
-
-    # For now, even thought "uninstall.py" exists, we skip loading it.
-    # This will change/break later when we implement the uninstall logic,
-    # and this test will need to be updated.
-    assert "uninstall" not in commands
 
 
 def test_create_parser_and_parse(faker):

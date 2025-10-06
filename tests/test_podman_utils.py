@@ -220,3 +220,83 @@ def test_set_secret_unhandled_exception(mock_get_podman_client, faker, caplog):
     mock_podman_client.secrets.create.assert_not_called()
     assert f"A podman secret {secret_name} already exists." == caplog.messages[0]
     assert len(caplog.messages) == 1
+
+
+@mock.patch.object(podman_utils, "get_podman_client")
+def test_delete_secret(mock_get_podman_client, faker, caplog):
+    """Test the delete_secret function deletes a secret."""
+    caplog.set_level(logging.INFO)
+    secret_name = faker.slug()
+    mock_podman_client = mock_get_podman_client.return_value.__enter__.return_value
+    mock_podman_client.secrets.exists.return_value = True
+
+    assert podman_utils.delete_secret(secret_name)
+
+    mock_podman_client.secrets.exists.assert_called_once_with(secret_name)
+    mock_podman_client.secrets.remove.assert_called_once_with(secret_name)
+    assert f"Podman secret {secret_name} was removed." == caplog.messages[0]
+
+
+@mock.patch.object(podman_utils, "get_podman_client")
+def test_delete_secret_non_existent(mock_get_podman_client, faker):
+    """Test the delete_secret function does nothing if the secret is not there."""
+    secret_name = faker.slug()
+    mock_podman_client = mock_get_podman_client.return_value.__enter__.return_value
+    mock_podman_client.secrets.exists.return_value = False
+
+    assert podman_utils.delete_secret(secret_name)
+
+    mock_podman_client.secrets.exists.assert_called_once_with(secret_name)
+    mock_podman_client.secrets.remove.assert_not_called()
+
+
+@mock.patch.object(podman_utils, "get_podman_client")
+def test_remove_image(mock_get_podman_client, faker, caplog):
+    """Test the remove_image function removes an image."""
+    caplog.set_level(logging.INFO)
+    image_ref = f"quay.io/{faker.slug()}/{faker.slug()}:latest"
+    mock_podman_client = mock_get_podman_client.return_value.__enter__.return_value
+    mock_podman_client.images.remove.return_value = True
+
+    assert podman_utils.remove_image(image_ref)
+
+    mock_podman_client.images.remove.assert_called_once_with(image_ref)
+    assert f"Removing the container image {image_ref}" == caplog.messages[0]
+
+
+@mock.patch.object(podman_utils, "get_podman_client")
+def test_remove_image_already_removed(mock_get_podman_client, faker, caplog):
+    """Test the remove_image function returns true if the image is already removed."""
+    caplog.set_level(logging.INFO)
+    image_ref = f"quay.io/{faker.slug()}/{faker.slug()}:latest"
+    mock_podman_client = mock_get_podman_client.return_value.__enter__.return_value
+    mock_podman_client.images.remove.side_effect = podman_errors.ImageNotFound(
+        image_ref
+    )
+
+    assert podman_utils.remove_image(image_ref)
+
+    mock_podman_client.images.remove.assert_called_once_with(image_ref)
+    assert f"Removing the container image {image_ref}" == caplog.messages[0]
+    assert (
+        f"Podman could not remove image {image_ref} - Image not found."
+        == caplog.messages[1]
+    )
+
+
+@mock.patch.object(podman_utils, "get_podman_client")
+def test_remove_image_podman_api_error(mock_get_podman_client, faker, caplog):
+    """Test the remove_image function returns false if the Podman API call fails."""
+    caplog.set_level(logging.INFO)
+    image_ref = f"quay.io/{faker.slug()}/{faker.slug()}:latest"
+    mock_podman_client = mock_get_podman_client.return_value.__enter__.return_value
+    mock_podman_client.images.remove.side_effect = podman_errors.APIError(image_ref)
+
+    assert not podman_utils.remove_image(image_ref)
+
+    mock_podman_client.images.remove.assert_called_once_with(image_ref)
+    assert f"Removing the container image {image_ref}" == caplog.messages[0]
+    assert (
+        f"Podman could not remove image {image_ref} - Failed Podman API call."
+        == caplog.messages[1]
+    )

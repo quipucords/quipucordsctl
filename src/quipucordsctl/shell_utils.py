@@ -22,7 +22,7 @@ def confirm(prompt: str | None = None) -> bool:
     return False
 
 
-def run_command(command: list[str]) -> tuple[str, str, int]:
+def run_command(command: list[str], *, raise_error=True) -> tuple[str, str, int]:
     """Run an external program."""
     logger.debug(
         _("Invoking subprocess with arguments %(command)s"), {"command": command}
@@ -55,7 +55,7 @@ def run_command(command: list[str]) -> tuple[str, str, int]:
     for line in stderr.strip().splitlines():
         stderr_logger(line)
 
-    if exit_code != 0:
+    if raise_error and exit_code != 0:
         logger.error(
             _(
                 "Subprocess with arguments %(command)s failed "

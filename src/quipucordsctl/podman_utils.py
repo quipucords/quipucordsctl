@@ -9,6 +9,7 @@ from urllib import parse
 
 import podman
 import xdg
+from podman import errors as podman_errors
 
 from quipucordsctl import settings, shell_utils
 
@@ -153,3 +154,53 @@ def set_secret(secret_name: str, secret_value: str, allow_replace=True) -> bool:
             {"secret_name": secret_name},
         )
     return True
+
+
+def delete_secret(secret_name: str) -> bool:
+    """Delete a podman secret."""
+    with get_podman_client() as podman_client:
+        if podman_client.secrets.exists(secret_name):
+            try:
+                podman_client.secrets.remove(secret_name)
+                logger.info(
+                    _("Podman secret %(secret_name)s was removed."),
+                    {"secret_name": secret_name},
+                )
+            except podman_errors.APIError:
+                logger.error(
+                    _(
+                        "Podman could not remove the secret %(secret_name)."
+                        " Please check logs."
+                    ),
+                    {"secret_name": secret_name},
+                )
+                return False
+    return True
+
+
+def remove_image(image: str) -> bool:
+    """Remove a podman container image."""
+    with get_podman_client() as podman_client:
+        try:
+            logger.info(
+                _("Removing the container image %(image)s"),
+                {"image": image},
+            )
+            podman_client.images.remove(image)
+            return True
+        except podman_errors.ImageNotFound:
+            logger.warning(
+                _("Podman could not remove image %(image)s - Image not found."),
+                {"image": image},
+            )
+            return True
+        except podman_errors.APIError as error:
+            logger.warning(
+                _("Podman could not remove image %(image)s - Failed Podman API call."),
+                {"image": image},
+            )
+            logger.debug(
+                _("Error removing image %(image)s - %(error)s."),
+                {"image": image, "error": error},
+            )
+            return False
