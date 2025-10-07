@@ -1,8 +1,12 @@
+###############################################################
+# Update the following globals for the downstream build:
 %global product_name_lower quipucords
 %global product_name_title Quipucords
-%global version_ctl 2.2.0
 %global server_image quay.io/quipucords/quipucords:2.2
 %global ui_image quay.io/quipucords/quipucords-ui:2.2
+###############################################################
+
+%global version_ctl 2.2.0
 %global templates_dir src/quipucordsctl/templates
 
 ###############################################################
@@ -79,7 +83,9 @@ Requires:       bash
 Requires:       coreutils
 Requires:       podman >= 4.9.4
 Requires:       python3-podman
+Requires:       python3-pyxdg
 Requires:       python%{python3_pkgversion}
+Requires:       python%{python3_pkgversion}-setuptools
 
 
 %description
@@ -95,6 +101,11 @@ sed -i \
   -e 's/^quipucordsctl = "quipucordsctl.__main__:main"$/%{name} = "quipucordsctl.__main__:main"/' \
   -e 's/^version = "0.1.0"$/version = "%{version}"/' \
   %{_builddir}/quipucordsctl-%{version}/pyproject.toml
+sed -i -E \
+  -e 's/^(PROGRAM_NAME\s*=\s*)"[^\"]*"(.*)$/\1"%{name}"\2/' \
+  -e 's/^(SERVER_SOFTWARE_PACKAGE\s*=\s*)"[^\"]*"(.*)$/\1"%{product_name_lower}"\2/' \
+  -e 's/^(SERVER_SOFTWARE_NAME\s*=\s*)"[^\"]*"(.*)$/\1"%{product_name_title}"\2/' \
+  %{_builddir}/quipucordsctl-%{version}/src/quipucordsctl/settings.py
 python%{python3_pkgversion} -m ensurepip
 python%{python3_pkgversion} -m pip install wheel setuptools
 
@@ -155,11 +166,11 @@ sed -i 's#^Image=.*#Image=%{ui_image}#g' %{buildroot}/%{_datadir}/%{name}/config
 %{_datadir}/%{name}/env/env-db.env
 %{_datadir}/%{name}/env/env-redis.env
 %{_datadir}/%{name}/env/env-server.env
-%{python3_sitelib}/%{name}/
+%{python3_sitelib}/quipucordsctl/
 %if 0%{?rhel} == 8 || 0%{?rhel} == 9
-  %{python3_sitelib}/%{name}-*.egg-info/
+  %{python3_sitelib}/quipucordsctl-*.egg-info/
 %else
-  %{python3_sitelib}/%{name}-*.dist-info/
+  %{python3_sitelib}/quipucordsctl-*.dist-info/
 %endif
 
 %changelog
