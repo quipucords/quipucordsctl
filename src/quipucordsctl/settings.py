@@ -52,12 +52,12 @@ if SYSTEMD_GENERATED_SERVICES_DIR:
     )
 
 SYSTEMD_SERVICE_FILENAMES = (
-    "quipucords-app.service",
-    "quipucords-celery-worker.service",
-    "quipucords-db.service",
-    "quipucords-network.service",
-    "quipucords-redis.service",
-    "quipucords-server.service",
+    f"{SERVER_SOFTWARE_PACKAGE}-app.service",
+    f"{SERVER_SOFTWARE_PACKAGE}-celery-worker.service",
+    f"{SERVER_SOFTWARE_PACKAGE}-db.service",
+    f"{SERVER_SOFTWARE_PACKAGE}-network.service",
+    f"{SERVER_SOFTWARE_PACKAGE}-redis.service",
+    f"{SERVER_SOFTWARE_PACKAGE}-server.service",
 )
 
 # System commands commonly run
@@ -68,23 +68,23 @@ SYSTEMCTL_USER_LIST_QUIPUCORDS_APP = [
     "-q",
     "--user",
     "list-unit-files",
-    "quipucords-app.service",
+    f"{SERVER_SOFTWARE_PACKAGE}-app.service",
 ]
-SYSTEMCTL_USER_STOP_QUIPUCORDS_APP = ["systemctl", "--user", "stop", "quipucords-app"]
+SYSTEMCTL_USER_STOP_QUIPUCORDS_APP = ["systemctl", "--user", "stop", f"{SERVER_SOFTWARE_PACKAGE}-app"]
 SYSTEMCTL_USER_STOP_QUIPUCORDS_NETWORK = [
     "systemctl",
     "--user",
     "stop",
-    "quipucords-network",
+    f"{SERVER_SOFTWARE_PACKAGE}-network",
 ]
 
 # podman secrets we use
 QUIPUCORDS_SECRETS = {
-    "db": "quipucords-db-password",
-    "encryption": "quipucords-encryption-secret-key",
-    "redis": "quipucords-redis-password",
-    "server": "quipucords-server-password",
-    "session": "quipucords-session-secret-key",
+    "db": f"{SERVER_SOFTWARE_PACKAGE}-db-password",
+    "encryption": f"{SERVER_SOFTWARE_PACKAGE}-encryption-secret-key",
+    "redis": f"{SERVER_SOFTWARE_PACKAGE}-redis-password",
+    "server": f"{SERVER_SOFTWARE_PACKAGE}-server-password",
+    "session": f"{SERVER_SOFTWARE_PACKAGE}-session-secret-key",
 }
 
 QUIPUCORDS_SECRET_KEYS = QUIPUCORDS_SECRETS.values()
