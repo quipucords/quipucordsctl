@@ -14,7 +14,7 @@ from quipucordsctl import podman_utils, secrets, settings
 
 logger = logging.getLogger(__name__)
 
-PODMAN_SECRET_NAME = settings.QUIPUCORDS_SECRETS["server"]  # noqa: S105
+PODMAN_SECRET_NAME = settings.QUIPUCORDS_SECRETS["server"]
 ENV_VAR_NAME = f"{settings.ENV_VAR_PREFIX}SERVER_PASSWORD"
 MIN_LENGTH = 10
 BLOCKLIST = ["dscpassw0rd", "qpcpassw0rd"]

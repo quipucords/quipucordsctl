@@ -13,7 +13,7 @@ from gettext import gettext as _
 from quipucordsctl import podman_utils, secrets, settings
 
 logger = logging.getLogger(__name__)
-PODMAN_SECRET_NAME = settings.QUIPUCORDS_SECRETS["encryption"]  # noqa: S105 E501
+PODMAN_SECRET_NAME = settings.QUIPUCORDS_SECRETS["encryption"]
 ENV_VAR_NAME = f"{settings.ENV_VAR_PREFIX}ENCRYPTION_SECRET_KEY"
 MIN_LENGTH = 64
 REQUIREMENTS = {"min_length": MIN_LENGTH}
