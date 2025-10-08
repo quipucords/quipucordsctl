@@ -59,31 +59,26 @@ def is_set() -> bool:
     return podman_utils.secret_exists(PODMAN_SECRET_NAME)
 
 
+reset_secret_messages = secrets.ResetSecretMessages(
+    result_updated=_("The admin login password was successfully updated."),
+    result_not_updated=_("The admin login password was not updated."),
+)
+
+
 def run(args: argparse.Namespace) -> bool:
     """
     Reset the admin login password.
 
-    Value prompts random by default, but allow env var.
-
-    Returns True if everything succeeded, else False because some input validation
-    failed or the user declined a confirmation prompt.
+    Read from the environment variable or prompt the user for input.
+    No need to give warnings or prompt for extra confirmation.
     """
-    already_exists = podman_utils.secret_exists(PODMAN_SECRET_NAME)
-    new_secret = secrets.get_new_secret_value(
+    return secrets.reset_secret(
         podman_secret_name=PODMAN_SECRET_NAME,
-        must_confirm_replace_existing=already_exists,
+        messages=reset_secret_messages,
+        must_confirm_replace_existing=False,
         must_confirm_allow_nonrandom=False,
         must_prompt_interactive_input=False,
         may_prompt_interactive_input=True,
         env_var_name=ENV_VAR_NAME,
         check_requirements=REQUIREMENTS,
     )
-
-    if new_secret and podman_utils.set_secret(
-        PODMAN_SECRET_NAME, new_secret, already_exists
-    ):
-        logger.debug(_("The admin login password was successfully updated."))
-        return True
-
-    logger.error(_("The admin login password was not updated."))
-    return False
