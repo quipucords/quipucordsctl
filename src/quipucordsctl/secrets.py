@@ -7,7 +7,7 @@ import logging
 import secrets
 from gettext import gettext as _
 
-from quipucordsctl import settings, shell_utils
+from quipucordsctl import podman_utils, settings, shell_utils
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +74,8 @@ class ResetSecretMessages:
     check_failed_too_similar: str = _(
         "The value you provided is too similar to another secret's value."
     )
+    result_updated: str = _("The secret was successfully updated.")
+    result_not_updated: str = _("The secret was not updated.")
 
 
 # Defaults are generic enough if no customization is desired.
@@ -129,6 +131,46 @@ def confirm_allow_nonrandom(messages: ResetSecretMessages | None = None) -> bool
     return shell_utils.confirm(messages.manual_reset_question)
 
 
+def reset_secret(
+    podman_secret_name: str,
+    messages: ResetSecretMessages | None = None,
+    must_confirm_replace_existing: bool = False,
+    **kwargs,  # additional kwargs will pass to get_new_secret_value
+):
+    """
+    Reset the given podman secret, reading an env var or prompting the user if needed.
+
+    This function can be considered a main function or entrypoint for resetting any
+    secret-like values. It warns if a value was already set, optionally reads from
+    an environment variable, validates user input, and generates a new pseudorandom
+    value if no input was given.
+
+    Returns True if everything succeeded, else False because some input validation
+    failed or the user declined a confirmation prompt. The functions called by this
+    function log appropriate messages to explain any potential failures whenever
+    they may occur.
+    """
+    if not messages:
+        messages = _default_reset_secret_messages
+
+    already_exists = podman_utils.secret_exists(podman_secret_name)
+    new_secret = get_new_secret_value(
+        podman_secret_name=podman_secret_name,
+        messages=messages,
+        must_confirm_replace_existing=must_confirm_replace_existing and already_exists,
+        **kwargs,
+    )
+
+    if new_secret and podman_utils.set_secret(
+        podman_secret_name, new_secret, already_exists
+    ):
+        logger.debug(messages.result_updated)
+        return True
+
+    logger.error(messages.result_not_updated)
+    return False
+
+
 def get_new_secret_value(  # noqa: PLR0911, PLR0913, C901
     podman_secret_name: str,
     messages: ResetSecretMessages | None = None,
@@ -143,24 +185,14 @@ def get_new_secret_value(  # noqa: PLR0911, PLR0913, C901
     """
     Return a new secret value following a possibly complex interaction of inputs.
 
-    This function can be considered a main function or entrypoint for resetting any
-    secret-like values. It warns if a value was already set, optionally reads from
-    an environment variable, validates user input, and generates a new pseudorandom
-    value if no input was given.
-
-    This function returns the new value if successful, else None. This function and
-    the functions it calls log appropriate messages to explain any potential failures
-    when they may occur.
-
     Several of this function's conditions could be merged or use more walrus operators
     to reduce the number of variable assignments, but the myriad use cases and types of
     input handling are already complex enough, and the author of this code favored using
     many early returns (see: PLR0911) with individual inline comment explanations to
     provide more readable (and hopefully maintainable) code to fellow human developers.
-    """
-    if not messages:
-        messages = _default_reset_secret_messages
 
+    Returns the new secret value if everything succeeded, else None.
+    """
     if must_confirm_replace_existing and not confirm_replace_existing(messages):
         # Secret value already exists, and user decided not to replace it.
         return None
