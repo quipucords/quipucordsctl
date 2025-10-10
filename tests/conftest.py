@@ -23,9 +23,8 @@ def temp_config_directories(
 
     commands_package = importlib.import_module("quipucordsctl.commands")
     command_names = [
-        module_info.name for module_info in pkgutil.iter_modules(
-            commands_package.__path__
-        )
+        module_info.name
+        for module_info in pkgutil.iter_modules(commands_package.__path__)
     ]
     for command in command_names:
         for settings_dir in ("SERVER_DATA_DIR", "SERVER_ENV_DIR", "SYSTEMD_UNITS_DIR"):
