@@ -33,6 +33,11 @@ jobs:
   test:
     strategy:
       matrix:
+        type:
+          [
+            lint,
+            test-coverage,
+          ]
         python-version: ["3.12"]
     runs-on: ubuntu-latest
 
@@ -54,10 +59,10 @@ jobs:
         run: uv sync
 
       - name: Run Test
-        run: make test-coverage
+        run: make ${{ matrix.type }} -k
 
       - name: Report coverage
-        if: ${{ success() }}
+        if: ${{ success() && contains(matrix.type, 'test-coverage') }}
         uses: codecov/codecov-action@v4
         with:
           fail_ci_if_error: true # optional (default = false)
