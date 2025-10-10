@@ -27,7 +27,6 @@ SERVER_DATA_SUBDIRS = dict(
 
 # "Explicit is better than implicit." - PEP 20
 # Do not glob the template directories. Use these definitions.
-TEMPLATE_SYSTEMD_UNITS_RESOURCE_PATH = "templates/config"
 TEMPLATE_SYSTEMD_UNITS_FILENAMES = (
     f"{SERVER_SOFTWARE_PACKAGE}.network",
     f"{SERVER_SOFTWARE_PACKAGE}-app.container",
@@ -36,7 +35,6 @@ TEMPLATE_SYSTEMD_UNITS_FILENAMES = (
     f"{SERVER_SOFTWARE_PACKAGE}-redis.container",
     f"{SERVER_SOFTWARE_PACKAGE}-server.container",
 )
-TEMPLATE_SERVER_ENV_RESOURCE_PATH = "templates/env"
 TEMPLATE_SERVER_ENV_FILENAMES = (
     "env-ansible.env",
     "env-app.env",
