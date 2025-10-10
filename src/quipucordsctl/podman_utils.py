@@ -1,6 +1,7 @@
 """Functions to simplify interfacing with podman."""
 
 import logging
+import os
 import pathlib
 import sys
 import textwrap
@@ -8,7 +9,6 @@ from gettext import gettext as _
 from urllib import parse
 
 import podman
-import xdg
 from podman import errors as podman_errors
 
 from quipucordsctl import settings, shell_utils
@@ -38,7 +38,19 @@ class PodmanIsNotReadyError(Exception):
     """Exception raised when podman is not ready."""
 
 
-def ensure_podman_socket(base_url=None):
+def get_socket_path(base_url: str | None = None) -> pathlib.Path:
+    """Get the podman socket path."""
+    if base_url:
+        url_or_path = base_url
+    elif sys.platform == "darwin":
+        url_or_path = MACOS_DEFAULT_PODMAN_URL
+    else:
+        runtime_dir = os.environ.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}"
+        url_or_path = str(pathlib.Path(runtime_dir) / "podman" / "podman.sock")
+    return pathlib.Path(parse.urlparse(url_or_path).path)
+
+
+def ensure_podman_socket(base_url: str | None = None):
     """Ensure podman socket is available, as required by the Podman client."""
     logger.debug(_("Ensuring Podman socket is available."))
 
@@ -72,20 +84,7 @@ def ensure_podman_socket(base_url=None):
             )
             raise e
 
-    socket_path = pathlib.Path(
-        parse.urlparse(
-            base_url
-            or (
-                MACOS_DEFAULT_PODMAN_URL
-                if sys.platform == "darwin"
-                else str(
-                    pathlib.Path(xdg.BaseDirectory.get_runtime_dir(strict=False))
-                    / "podman"
-                    / "podman.sock"
-                )
-            )
-        ).path
-    )
+    socket_path = get_socket_path(base_url)
     if not socket_path.exists():
         raise PodmanIsNotReadyError(
             _(
