@@ -39,38 +39,92 @@ def test_ensure_cgroups_v2_failed(mock_get_podman_client, capsys):
 
 
 @mock.patch.object(podman_utils, "sys")
-@mock.patch.object(podman_utils, "shell_utils")
-@mock.patch.object(podman_utils, "xdg")
-def test_ensure_podman_socket(mock_xdg, mock_shell_utils, mock_sys, tmp_path):
-    """Test ensure_podman_socket does nothing when podman socket is default path."""
+@mock.patch.object(podman_utils, "os")
+def test_get_socket_path_linux_default(mock_os, mock_sys, tmp_path, faker):
+    """Test get_socket_path uses /run/user/uid on Linux by default."""
     mock_sys.platform = "linux"
-    socket_path = pathlib.Path(tmp_path / "podman" / "podman.sock")
-    socket_path.parent.mkdir(parents=True, exist_ok=True)
-    socket_path.touch()
-    mock_shell_utils.run_command.side_effect = [("", "", 0), ("", "", 0)]
-    mock_xdg.BaseDirectory.get_runtime_dir.return_value = str(tmp_path)
+    mock_os.environ.get.return_value = None
+    uid = faker.pyint()
+    mock_os.getuid.return_value = uid
+    expected_socket_path = pathlib.Path(f"/run/user/{uid}/podman/podman.sock")
+    assert podman_utils.get_socket_path() == expected_socket_path
 
-    podman_utils.ensure_podman_socket()
-    assert len(mock_shell_utils.run_command.call_args_list) == 2
+
+@mock.patch.object(podman_utils, "sys")
+@mock.patch.object(podman_utils, "os")
+def test_get_socket_path_linux_with_xdg_env_var(mock_os, mock_sys, tmp_path):
+    """Test get_socket_path uses XDG_RUNTIME_DIR on Linux if set."""
+    mock_sys.platform = "linux"
+    mock_os.environ.get.return_value = str(tmp_path)
+    expected_socket_path = pathlib.Path(tmp_path / "podman" / "podman.sock")
+    assert podman_utils.get_socket_path() == expected_socket_path
+    mock_os.environ.get.assert_called_once_with("XDG_RUNTIME_DIR")
+
+
+@mock.patch.object(podman_utils, "sys")
+def test_get_socket_path_macos_darwin(mock_sys, tmp_path):
+    """Test get_socket_path uses MACOS_DEFAULT_PODMAN_URL on macOS by default."""
+    mock_sys.platform = "darwin"
+    expected_socket_path = pathlib.Path(tmp_path / "podman.sock")
+    with mock.patch.object(
+        podman_utils, "MACOS_DEFAULT_PODMAN_URL", new=str(expected_socket_path)
+    ):
+        assert podman_utils.get_socket_path() == expected_socket_path
+
+
+def test_get_socket_path_uses_base_url_if_given(tmp_path):
+    """Test get_socket_path uses base_url if given."""
+    expected_socket_path = pathlib.Path(tmp_path / "podman" / "podman.sock")
+    base_url = f"unix://{expected_socket_path}"
+    assert podman_utils.get_socket_path(base_url) == expected_socket_path
 
 
 @mock.patch.object(podman_utils, "sys")
 @mock.patch.object(podman_utils, "shell_utils")
-def test_ensure_podman_socket_custom_path(mock_shell_utils, mock_sys, tmp_path):
-    """Test ensure_podman_socket does nothing when podman socket has custom path."""
+@mock.patch.object(podman_utils, "get_socket_path")
+def test_ensure_podman_socket_linux(
+    mock_get_socket_path, mock_shell_utils, mock_sys, tmp_path
+):
+    """Test ensure_podman_socket succeeds on Linux with working podman.socket."""
     mock_sys.platform = "linux"
     socket_path = pathlib.Path(tmp_path / "podman.sock")
     socket_path.touch()
+    mock_get_socket_path.return_value = socket_path
     mock_shell_utils.run_command.side_effect = [("", "", 0), ("", "", 0)]
 
     podman_utils.ensure_podman_socket(str(socket_path))
     assert len(mock_shell_utils.run_command.call_args_list) == 2
+    assert mock_shell_utils.run_command.call_args_list[0].args[0] == (
+        podman_utils.SYSTEMCTL_ENABLE_CMD
+    )
+    assert mock_shell_utils.run_command.call_args_list[1].args[0] == (
+        podman_utils.SYSTEMCTL_STATUS_CMD
+    )
+
+
+@mock.patch.object(podman_utils, "sys")
+@mock.patch.object(podman_utils, "shell_utils")
+@mock.patch.object(podman_utils, "get_socket_path")
+def test_ensure_podman_socket_linux_broken_podman(
+    mock_get_socket_path, mock_shell_utils, mock_sys, tmp_path
+):
+    """Test ensure_podman_socket failure when Linux has broken podman.socket."""
+    mock_sys.platform = "linux"
+    mock_shell_utils.run_command.side_effect = Exception
+
+    with pytest.raises(Exception):
+        podman_utils.ensure_podman_socket()
+
+    mock_shell_utils.run_command.assert_called_once_with(
+        podman_utils.SYSTEMCTL_ENABLE_CMD
+    )
+    mock_get_socket_path.assert_not_called()
 
 
 @mock.patch.object(podman_utils, "sys")
 @mock.patch.object(podman_utils, "shell_utils")
 def test_ensure_podman_socket_macos(mock_shell_utils, mock_sys, tmp_path):
-    """Test ensure_podman_socket does nothing when podman is enabled on macOS/darwin."""
+    """Test ensure_podman_socket succeeds when podman is enabled on macOS/darwin."""
     mock_sys.platform = "darwin"
     mock_shell_utils.run_command.side_effect = [("running", "", 0)]
     mock_path = pathlib.Path(tmp_path / "podman.sock")
