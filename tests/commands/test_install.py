@@ -2,12 +2,11 @@
 
 import logging
 import pathlib
-from importlib import resources
 from unittest import mock
 
 import pytest
 
-from quipucordsctl import settings
+from quipucordsctl import settings, shell_utils
 from quipucordsctl.commands import install
 from quipucordsctl.systemdunitparser import SystemdUnitParser
 
@@ -193,12 +192,9 @@ def test_update_systemd_template_config_with_overrides_missing_header(
 
     template_config = SystemdUnitParser()
 
-    template_traversable = resources.files("quipucordsctl").joinpath(
-        f"{settings.TEMPLATE_SYSTEMD_UNITS_RESOURCE_PATH}/{template_filename}"
-    )
-    with resources.as_file(template_traversable) as template_path:
-        template_config = SystemdUnitParser()
-        template_config.read(template_path)
+    template_path = shell_utils.systemd_template_dir() / template_filename
+    template_config = SystemdUnitParser()
+    template_config.read(template_path)
 
     install._update_systemd_template_config_with_overrides(
         template_filename, template_config, override_conf_path

@@ -10,7 +10,6 @@ import textwrap
 import types
 from datetime import datetime
 from gettext import gettext as _
-from importlib import resources
 
 from quipucordsctl import podman_utils, settings, shell_utils
 from quipucordsctl.commands import (
@@ -214,12 +213,9 @@ def write_systemd_unit(
     destination_dir: pathlib.Path,
 ):
     """Write a systemd unit file by merging a template and optional override file."""
-    template_traversable = resources.files("quipucordsctl").joinpath(
-        f"{settings.TEMPLATE_SYSTEMD_UNITS_RESOURCE_PATH}/{template_filename}"
-    )
-    with resources.as_file(template_traversable) as template_path:
-        template_config = SystemdUnitParser()
-        template_config.read(template_path)
+    template_path = shell_utils.systemd_template_dir() / template_filename
+    template_config = SystemdUnitParser()
+    template_config.read(template_path)
 
     if override_conf_path := get_override_conf_path(
         override_conf_dir, template_filename
@@ -243,11 +239,8 @@ def write_env_file(
     destination_dir: pathlib.Path,
 ):
     """Write an env file by merging a template and optional override file."""
-    template_traversable = resources.files("quipucordsctl").joinpath(
-        f"{settings.TEMPLATE_SERVER_ENV_RESOURCE_PATH}/{template_filename}"
-    )
-    with resources.as_file(template_traversable) as template_path:
-        template_text = template_path.read_text(encoding="utf-8")
+    template_path = shell_utils.env_template_dir() / template_filename
+    template_text = template_path.read_text(encoding="utf-8")
 
     if override_conf_path := get_override_conf_path(
         override_conf_dir, template_filename
