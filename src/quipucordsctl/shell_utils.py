@@ -11,8 +11,6 @@ from importlib import resources
 
 from quipucordsctl import settings
 
-from quipucordsctl import settings
-
 logger = logging.getLogger(__name__)
 
 DEFAULT_WAIT_TIMEOUT = 60  # in seconds
