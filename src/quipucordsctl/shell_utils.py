@@ -10,8 +10,6 @@ from importlib import resources
 
 from quipucordsctl import settings
 
-from quipucordsctl import settings
-
 logger = logging.getLogger(__name__)
 
 
