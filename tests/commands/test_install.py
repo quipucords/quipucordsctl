@@ -19,6 +19,16 @@ def mock_shell_utils():
         yield mock_shell_utils
 
 
+def test_get_help():
+    """Test the get_help returns an appropriate string."""
+    assert settings.SERVER_SOFTWARE_NAME in install.get_help()
+
+
+def test_get_description():
+    """Test the get_description returns an appropriate string."""
+    assert "`install`" in install.get_description()
+
+
 def test_install_run(
     temp_config_directories: dict[str, pathlib.Path], tmp_path: pathlib.Path, faker
 ):

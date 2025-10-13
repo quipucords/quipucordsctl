@@ -27,6 +27,16 @@ def first_time_run(mocker):
     )
 
 
+def test_get_help():
+    """Test the get_help returns an appropriate string."""
+    assert "Redis password" in reset_redis_password.get_help()
+
+
+def test_get_description():
+    """Test the get_description returns an appropriate string."""
+    assert "`reset_redis_password`" in reset_redis_password.get_description()
+
+
 def test_reset_redis_password_run_success(first_time_run, good_secret, mocker, caplog):
     """Test reset_redis_password.run in the default happy path."""
     mocker.patch.object(

@@ -29,6 +29,16 @@ def first_time_run(mocker):
     )
 
 
+def test_get_help():
+    """Test the get_help returns an appropriate string."""
+    assert "database password" in reset_database_password.get_help()
+
+
+def test_get_description():
+    """Test the get_description returns an appropriate string."""
+    assert "`reset_database_password`" in reset_database_password.get_description()
+
+
 def test_reset_database_password_run_success(
     first_time_run, good_secret, mocker, caplog
 ):
