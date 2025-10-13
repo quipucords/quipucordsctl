@@ -8,6 +8,7 @@
 
 %global version_ctl 2.2.0
 %global templates_dir src/quipucordsctl/templates
+%global product_name_upper %(echo %{product_name_lower} | tr '[:lower:]' '[:upper:]')
 
 ###############################################################
 # Build notes:
@@ -83,7 +84,6 @@ Requires:       bash
 Requires:       coreutils
 Requires:       podman >= 4.9.4
 Requires:       python3-podman
-Requires:       python3-pyxdg
 Requires:       python%{python3_pkgversion}
 Requires:       python%{python3_pkgversion}-setuptools
 
@@ -105,6 +105,7 @@ sed -i -E \
   -e 's/^(PROGRAM_NAME\s*=\s*)"[^\"]*"(.*)$/\1"%{name}"\2/' \
   -e 's/^(SERVER_SOFTWARE_PACKAGE\s*=\s*)"[^\"]*"(.*)$/\1"%{product_name_lower}"\2/' \
   -e 's/^(SERVER_SOFTWARE_NAME\s*=\s*)"[^\"]*"(.*)$/\1"%{product_name_title}"\2/' \
+  -e 's/^(ENV_VAR_PREFIX\s*=\s*)"[^\"]*"(.*)$/\1"%{product_name_upper}_"\2/' \
   %{_builddir}/quipucordsctl-%{version}/src/quipucordsctl/settings.py
 python%{python3_pkgversion} -m ensurepip
 python%{python3_pkgversion} -m pip install wheel setuptools
