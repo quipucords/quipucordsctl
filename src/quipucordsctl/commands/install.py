@@ -43,6 +43,28 @@ def get_help() -> str:
     }
 
 
+def get_description() -> str:
+    """Get the longer description of this command."""
+    return _(
+        textwrap.dedent(
+            """
+            The `%(command_name)s` command configures and installs the
+            %(server_software_name)s software on this system. The `%(command_name)s`
+            command may prompt you to enter some required values, such as the admin
+            login password, but you may set environment variables
+            (e.g. `%(admin_password_env_var)s`) and/or use the global `--yes` and
+            `--quiet` flags to bypass these required prompts.
+            Please review the `--help` output for each of the `reset_*` commands for
+            more details.
+            """
+        )
+    ) % {
+        "command_name": __name__.rpartition(".")[-1],
+        "server_software_name": settings.SERVER_SOFTWARE_NAME,
+        "admin_password_env_var": reset_admin_password.ENV_VAR_NAME,
+    }
+
+
 def mkdirs():
     """Ensure required data and config directories exist."""
     dir_paths = [
