@@ -27,6 +27,16 @@ def first_time_run(mocker):
     )
 
 
+def test_get_help():
+    """Test the get_help returns an appropriate string."""
+    assert "session secret" in reset_session_secret.get_help()
+
+
+def test_get_description():
+    """Test the get_description returns an appropriate string."""
+    assert "`reset_session_secret`" in reset_session_secret.get_description()
+
+
 def test_reset_session_secret_run_success(first_time_run, good_secret, mocker, caplog):
     """Test reset_session_secret.run in the default happy path."""
     mocker.patch.object(

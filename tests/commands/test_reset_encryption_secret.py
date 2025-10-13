@@ -29,6 +29,16 @@ def first_time_run(mocker):
     )
 
 
+def test_get_help():
+    """Test the get_help returns an appropriate string."""
+    assert "encryption secret" in reset_encryption_secret.get_help()
+
+
+def test_get_description():
+    """Test the get_description returns an appropriate string."""
+    assert "`reset_encryption_secret`" in reset_encryption_secret.get_description()
+
+
 def test_reset_encryption_secret_run_success(
     first_time_run, good_secret, mocker, caplog
 ):

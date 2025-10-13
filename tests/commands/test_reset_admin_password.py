@@ -17,6 +17,16 @@ class MysteryError(Exception):
         return self.__doc__
 
 
+def test_get_help():
+    """Test the get_help returns an appropriate string."""
+    assert "admin login password" in reset_admin_password.get_help()
+
+
+def test_get_description():
+    """Test the get_description returns an appropriate string."""
+    assert "`reset_admin_password`" in reset_admin_password.get_description()
+
+
 @mock.patch.object(reset_admin_password.podman_utils, "secret_exists")
 def test_admin_password_is_set(mock_secret_exists):
     """Test admin_password_is_set just wraps secret_exists."""
