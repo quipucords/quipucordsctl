@@ -7,7 +7,7 @@ import shutil
 from gettext import gettext as _
 from pathlib import Path
 
-from quipucordsctl import podman_utils, settings, shell_utils
+from quipucordsctl import podman_utils, settings, shell_utils, systemctl_utils
 from quipucordsctl.systemdunitparser import SystemdUnitParser
 
 logger = logging.getLogger(__name__)
@@ -18,35 +18,6 @@ def get_help() -> str:
     return _("Uninstall the %(server_software_name)s server.") % {
         "server_software_name": settings.SERVER_SOFTWARE_NAME
     }
-
-
-def stop_containers() -> bool:
-    """Stop all containers."""
-    logger.info(
-        _("Stopping the %(server_software_name)s server."),
-        {"server_software_name": settings.SERVER_SOFTWARE_NAME},
-    )
-    __, __, exit_code = shell_utils.run_command(
-        settings.SYSTEMCTL_USER_LIST_QUIPUCORDS_APP, raise_error=False
-    )
-    if exit_code == 0:
-        try:
-            shell_utils.run_command(settings.SYSTEMCTL_USER_STOP_QUIPUCORDS_APP)
-            shell_utils.run_command(settings.SYSTEMCTL_USER_STOP_QUIPUCORDS_NETWORK)
-        except Exception as error:  # noqa: BLE001
-            logger.error(
-                _("Could not stop the %(server_software_name)s server."),
-                {"server_software_name": settings.SERVER_SOFTWARE_NAME},
-            )
-            logger.debug(
-                _("Error stopping %(server_software_name)s - %(error)s"),
-                {
-                    "server_software_name": settings.SERVER_SOFTWARE_NAME,
-                    "error": error,
-                },
-            )
-            return False
-    return True
 
 
 def remove_container_images():
@@ -192,12 +163,12 @@ def remove_secrets() -> bool:
 
 def run(args: argparse.Namespace) -> bool:  # noqa: PLR0911
     """Uninstall the server."""
-    if not stop_containers():
+    if not systemctl_utils.stop_service():
         return False
     remove_container_images()
     if not remove_services():
         return False
-    if not reload_daemon():
+    if not systemctl_utils.reload_daemon():
         return False
     remove_data()
     if not remove_secrets():
