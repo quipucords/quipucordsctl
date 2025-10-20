@@ -27,7 +27,7 @@ def stop_service() -> bool:
                 {"server_software_name": settings.SERVER_SOFTWARE_NAME},
             )
             logger.debug(
-                _("Error stopping %(server_software_name)s - %(error)s"),
+                _("Error stopping %(server_software_name)s: %(error)s"),
                 {
                     "server_software_name": settings.SERVER_SOFTWARE_NAME,
                     "error": error,
@@ -39,7 +39,7 @@ def stop_service() -> bool:
 
 def reload_daemon() -> bool:
     """Reset systemctl failures and reload the daemon."""
-    logger.info(_("Reloading the systemctl daemon ..."))
+    logger.info(_("Reloading the systemctl daemon."))
     shell_utils.run_command(settings.SYSTEMCTL_USER_RESET_FAILED_CMD)
     shell_utils.run_command(settings.SYSTEMCTL_USER_DAEMON_RELOAD_CMD)
     return True
