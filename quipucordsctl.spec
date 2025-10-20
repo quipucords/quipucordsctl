@@ -1,6 +1,6 @@
 %global product_name_lower quipucords
 %global product_name_title Quipucords
-%global version_installer 2.2.0
+%global version_ctl 2.2.0
 %global server_image quay.io/quipucords/quipucords:2.2
 %global ui_image quay.io/quipucords/quipucords-ui:2.2
 %global templates_dir src/quipucordsctl/templates
@@ -44,7 +44,7 @@
 Name:           %{product_name_lower}ctl
 Summary:        installer for %{product_name_lower} server
 
-Version:        %{version_installer}
+Version:        %{version_ctl}
 Release:        1%{?dist}
 Epoch:          0
 
