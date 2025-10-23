@@ -50,25 +50,27 @@ def confirm(prompt: str | None = None) -> bool:
 def is_rpm_exec() -> bool:
     """Return True if we're running the RPM installed command."""
     rpm_installed_exec = f"/usr/bin/{settings.PROGRAM_NAME}"
-    return True if sys.argv[0] == rpm_installed_exec else False
+    actual_exec = os.path.realpath(sys.argv[0])
+    expected_exec = os.path.realpath(rpm_installed_exec)
+    return actual_exec == expected_exec
 
 
-def template_dir() -> str:
+def template_dir() -> pathlib.Path:
     """Return the template directory for the running command."""
     if is_rpm_exec():
-        return f"/usr/share/{settings.PROGRAM_NAME}"
+        return pathlib.Path(f"/usr/share/{settings.PROGRAM_NAME}")
     else:
-        return str(resources.files("quipucordsctl").joinpath("templates"))
+        return pathlib.Path(str(resources.files("quipucordsctl").joinpath("templates")))
 
 
 def systemd_template_dir() -> pathlib.Path:
     """Return the systemd template directory for the running command."""
-    return pathlib.Path(template_dir()).joinpath("config")
+    return template_dir().joinpath("config")
 
 
 def env_template_dir() -> pathlib.Path:
     """Return the env template directory for the running command."""
-    return pathlib.Path(template_dir()).joinpath("env")
+    return template_dir().joinpath("env")
 
 
 def run_command(
