@@ -60,18 +60,25 @@ BuildRequires:  pyproject-rpm-macros
 BuildRequires:  python%{python3_pkgversion}-devel
 BuildRequires:  python%{python3_pkgversion}-wheel
 BuildRequires:  python%{python3_pkgversion}-setuptools
-# Note: default python3-babel /usr/bin/pybabel cannot compile uninstalled
-#       locales, so 'test' could not be compiled.
 %if 0%{?rhel} == 8
+# Note: On RHEL 8, the default python3-babel's /usr/bin/pybabel command cannot
+#       compile uninstalled locales, so 'test' could not be compiled.
+#       A newer version of pybabel (2.7.0+) needs to be installed and that
+#       is available via the python38-babel RPM.
+#
+#       The /usr/bin/pybabel-3.8 command is in the python38-babel RPM and there
+#       is no corresponding babel RPM to install.
 BuildRequires:  python38-babel
+%global __pybabel /usr/bin/pybabel-3.8
 %else
 BuildRequires:  python3-babel
-%endif
-# Note: python3-babel was not providing the /usr/bin/pybabel
-#       binary outside a virtual environment when building in COPR
-#       for all releases. Including the following package
-#       enabled this for us.
+# Note: python3-babel does not provide the /usr/bin/pybabel binary outside
+#       a virtual environment when building in COPR for all releases.
+#
+#       We need to include the babel package to enable this for us.
 BuildRequires:  babel
+%global __pybabel /usr/bin/pybabel
+%endif
 
 Requires:       bash
 Requires:       coreutils
@@ -102,12 +109,7 @@ sed -i -E \
   %{_builddir}/quipucordsctl-%{version}/src/quipucordsctl/settings.py
 python%{python3_pkgversion} -m ensurepip
 python%{python3_pkgversion} -m pip install wheel setuptools
-
-%if 0%{?rhel} == 8
-python3 scripts/translations.py --pybabel /usr/bin/pybabel-3.8 compile
-%else
-python3 scripts/translations.py --pybabel /usr/bin/pybabel compile
-%endif
+python3 scripts/translations.py --pybabel %{__pybabel} compile
 
 %if 0%{?rhel} == 8 || 0%{?rhel} == 9
     %py3_build
