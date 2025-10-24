@@ -1,11 +1,12 @@
 """Test the shell_utils module."""
 
+import pathlib
 import subprocess
 from unittest import mock
 
 import pytest
 
-from quipucordsctl import shell_utils
+from quipucordsctl import settings, shell_utils
 
 
 @pytest.mark.parametrize(
@@ -108,3 +109,12 @@ def test_run_command_error():
         mock_subprocess.CalledProcessError = subprocess.CalledProcessError
         with pytest.raises(subprocess.CalledProcessError):
             shell_utils.run_command(example_command)
+
+
+def test_template_dir():
+    """Test that template_dir for RPM-based installations is off /usr/share."""
+    with mock.patch("quipucordsctl.shell_utils.is_rpm_exec") as mock_is_rpm_exec:
+        mock_is_rpm_exec.return_value = True
+        assert shell_utils.template_dir() == pathlib.Path(
+            f"/usr/share/{settings.PROGRAM_NAME}"
+        )
