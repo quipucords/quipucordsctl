@@ -50,9 +50,9 @@ def confirm(prompt: str | None = None) -> bool:
 def is_rpm_exec() -> bool:
     """Return True if we're running the RPM installed command."""
     rpm_installed_exec = f"/usr/bin/{settings.PROGRAM_NAME}"
-    actual_exec = os.path.realpath(sys.argv[0])
-    expected_exec = os.path.realpath(rpm_installed_exec)
-    return actual_exec == expected_exec
+    if pathlib.Path(rpm_installed_exec).exists():
+        return pathlib.Path(sys.argv[0]).samefile(rpm_installed_exec)
+    return False
 
 
 def template_dir() -> pathlib.Path:

@@ -1,5 +1,4 @@
 ###############################################################
-# Update the following globals for the downstream build:
 %global product_name_lower quipucords
 %global product_name_title Quipucords
 %global server_image quay.io/quipucords/quipucords:2.2
