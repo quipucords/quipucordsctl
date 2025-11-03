@@ -1,14 +1,12 @@
 """Uninstall the server."""
 
 import argparse
-import configparser
 import logging
 import shutil
 from gettext import gettext as _
 from pathlib import Path
 
 from quipucordsctl import podman_utils, settings, shell_utils, systemctl_utils
-from quipucordsctl.systemdunitparser import SystemdUnitParser
 
 logger = logging.getLogger(__name__)
 
@@ -26,31 +24,9 @@ def remove_container_images():
         _("Removing the %(server_software_name)s container images."),
         {"server_software_name": settings.SERVER_SOFTWARE_NAME},
     )
-    unique_images = set()
 
-    for unit_file in settings.TEMPLATE_SYSTEMD_UNITS_FILENAMES:
-        unit_file_path = Path(settings.SYSTEMD_UNITS_DIR) / unit_file
-        if unit_file_path.suffix == ".container" and unit_file_path.exists():
-            unit_file_config = SystemdUnitParser()
-            try:
-                unit_file_config.read(unit_file_path)
-            except configparser.MissingSectionHeaderError:
-                logger.warning(
-                    _(
-                        "Skipping the %(unit_file)s container file due to"
-                        " missing section headers."
-                    ),
-                    {"unit_file": unit_file},
-                )
-
-            if "Container" in unit_file_config.sections() and (
-                image := unit_file_config.get("Container", "Image")
-            ):
-                unique_images.add(image)
-
-    if unique_images:
-        successes = [podman_utils.remove_image(image) for image in unique_images]
-        if not all(successes):
+    if unique_images := podman_utils.list_expected_podman_container_images():
+        if not all(podman_utils.remove_image(image) for image in unique_images):
             logger.warning(
                 _(
                     "Podman failed to remove at least one image. Please check logs "

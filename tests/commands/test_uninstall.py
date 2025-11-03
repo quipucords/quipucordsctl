@@ -17,34 +17,11 @@ def test_get_help():
 
 def test_remove_container_images(tmp_path: pathlib.Path, monkeypatch, faker):
     """Test remove_container_images invokes expected Podman commands."""
-    systemd_units_dir = tmp_path / "systemd"
-    monkeypatch.setattr(
-        "quipucordsctl.commands.install.settings.SYSTEMD_UNITS_DIR",
-        systemd_units_dir,
-    )
-    pathlib.Path.mkdir(systemd_units_dir)
-    # Let's create systemd unit files with container Image paths
-    container_images = []
-    for unit_file in settings.TEMPLATE_SYSTEMD_UNITS_FILENAMES:
-        unit_file_path = systemd_units_dir / unit_file
-        if unit_file_path.suffix == ".container":
-            container_image = f"quay.io/{faker.slug()}/{faker.slug()}:latest"
-            # let's create a bad unit file for testing Image skipping logic.
-            if unit_file == "quipucords-redis.container":
-                unit_file_content = f"Requires=podman.socket\nImage={container_image}\n"
-            else:
-                unit_file_content = (
-                    "\n"
-                    "[Unit]\n"
-                    "Requires=podman.socket\n"
-                    "\n"
-                    "[Container]\n"
-                    f"Image={container_image}\n"
-                )
-                container_images.append(container_image)
-            unit_file_path.write_text(unit_file_content)
-
+    container_images = {faker.slug(), faker.slug(), faker.slug()}
     with mock.patch.object(uninstall, "podman_utils") as mock_podman_utils:
+        mock_podman_utils.list_expected_podman_container_images.return_value = set(
+            container_images
+        )
         uninstall.remove_container_images()
         remove_image_calls = [
             mock.call(container_image) for container_image in container_images
