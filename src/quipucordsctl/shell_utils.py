@@ -9,6 +9,8 @@ from quipucordsctl import settings
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_WAIT_TIMEOUT = 60  # in seconds
+
 
 def get_env(name: str) -> str | None:
     """Get the value of the specified environment variable."""
@@ -41,11 +43,19 @@ def confirm(prompt: str | None = None) -> bool:
     return False
 
 
-def run_command(command: list[str], *, raise_error=True) -> tuple[str, str, int]:
+def run_command(
+    command: list[str], *, raise_error=True, wait_timeout=None
+) -> tuple[str, str, int]:
     """Run an external program."""
     logger.debug(
         _("Invoking subprocess with arguments %(command)s"), {"command": command}
     )
+    if wait_timeout is None:
+        wait_timeout = DEFAULT_WAIT_TIMEOUT
+        logger.debug(
+            _("Command has %(wait_timeout)s seconds timeout."),
+            {"wait_timeout": wait_timeout},
+        )
     try:
         process = subprocess.Popen(
             args=command,  # a list like ["systemctl", "--user", "reset-failed"]
@@ -58,8 +68,17 @@ def run_command(command: list[str], *, raise_error=True) -> tuple[str, str, int]
         # TODO figure out how we want to handle stdout/stderr
         # TODO maybe support "realtime" stdout display instead of capturing at the end
         # TODO should these *always* go to our stdout/stderr or use the logger?
-        stdout, stderr = process.communicate()
+        stdout, stderr = process.communicate(timeout=wait_timeout)
         exit_code = process.returncode
+    except subprocess.TimeoutExpired as error:
+        logger.error(
+            _(
+                "Subprocess with arguments %(command)s timed out after "
+                "%(wait_timeout)s seconds."
+            ),
+            {"command": command, "wait_timeout": wait_timeout},
+        )
+        raise error
     except Exception as error:
         logger.error(
             _("Subprocess with arguments %(command)s failed due to unexpected error."),
