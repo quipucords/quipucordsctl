@@ -49,6 +49,7 @@ def run_command(command: list[str], *, raise_error=True) -> tuple[str, str, int]
     try:
         process = subprocess.Popen(
             args=command,  # a list like ["systemctl", "--user", "reset-failed"]
+            stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,  # we always expect input/output text, not byte strings

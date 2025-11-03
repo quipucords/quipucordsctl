@@ -89,6 +89,7 @@ def test_run_command():
         shell_utils.run_command(example_command)
     mock_subprocess.Popen.assert_called_once_with(
         args=example_command,
+        stdin=mock_subprocess.DEVNULL,
         stdout=mock_subprocess.PIPE,
         stderr=mock_subprocess.PIPE,
         text=True,
