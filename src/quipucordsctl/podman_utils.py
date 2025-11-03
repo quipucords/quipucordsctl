@@ -93,6 +93,22 @@ def ensure_podman_socket(base_url: str | None = None):
         )
 
 
+def get_registry_from_image_name(
+    image_name: str, default_registry: str = "registry.redhat.io"
+) -> str:
+    """Get the registry, if set, from the given container image name."""
+    if "/" not in image_name:
+        return default_registry
+
+    first_part = image_name.split("/", 1)[0]
+    # Note that "localhost" is a known universal special case.
+    return (
+        first_part
+        if "." in first_part or ":" in first_part or first_part == "localhost"
+        else default_registry
+    )
+
+
 def ensure_cgroups_v2():
     """
     Ensure that cgroups v2 is enabled.

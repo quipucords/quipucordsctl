@@ -370,3 +370,23 @@ def test_list_expected_podman_container_images(
     assert len(container_images) > 1
     actual_container_images = podman_utils.list_expected_podman_container_images()
     assert actual_container_images == container_images
+
+
+@pytest.mark.parametrize(
+    "image_name,expected_registry",
+    (
+        ("example.com/foo/bar", "example.com"),
+        ("example.com/foo/bar:biz", "example.com"),
+        ("example.com/bar", "example.com"),
+        ("example.com/bar:biz", "example.com"),
+        ("example.com:8888/foo/bar", "example.com:8888"),
+        ("example.com:8888/foo/bar:biz", "example.com:8888"),
+        ("localhost/bar:biz", "localhost"),
+        ("bar:biz", "registry.redhat.io"),
+        ("bar", "registry.redhat.io"),
+    ),
+)
+def test_get_registry_from_image_name(image_name, expected_registry):
+    """Test get_registry_from_image_name returns expected values."""
+    registry = podman_utils.get_registry_from_image_name(image_name)
+    assert registry == expected_registry
