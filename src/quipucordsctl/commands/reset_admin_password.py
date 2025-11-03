@@ -60,6 +60,8 @@ def is_set() -> bool:
 
 
 reset_secret_messages = secrets.ResetSecretMessages(
+    prompt_enter_value=_("Enter new admin login password: "),
+    prompt_confirm_value=_("Confirm new admin login password: "),
     result_updated=_("The admin login password was successfully updated."),
     result_not_updated=_("The admin login password was not updated."),
 )
