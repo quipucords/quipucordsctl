@@ -390,3 +390,21 @@ def test_get_registry_from_image_name(image_name, expected_registry):
     """Test get_registry_from_image_name returns expected values."""
     registry = podman_utils.get_registry_from_image_name(image_name)
     assert registry == expected_registry
+
+
+@mock.patch.object(podman_utils, "shell_utils")
+def test_pull_image(mock_shell_utils, faker):
+    """Test pull_image returns True on the happy path."""
+    mock_shell_utils.run_command.return_value = None, None, 0
+    image_name = faker.slug()
+    assert podman_utils.pull_image(image_name)
+
+
+@mock.patch.object(podman_utils, "shell_utils")
+def test_pull_image_error(mock_shell_utils, faker, caplog):
+    """Test pull_image logs an error and returns False returns when an error occurs."""
+    caplog.set_level(logging.ERROR)
+    mock_shell_utils.run_command.return_value = None, None, 1
+    image_name = faker.slug()
+    assert not podman_utils.pull_image(image_name)
+    assert image_name in caplog.messages[-1]
