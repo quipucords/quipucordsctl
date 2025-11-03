@@ -333,3 +333,40 @@ def test_remove_image_already_removed(mock_run_command, faker, caplog):
 
     assert not podman_utils.remove_image(image_id)
     assert f"Podman failed to remove image '{image_id}'." == caplog.messages[-1]
+
+
+def test_list_expected_podman_container_images(
+    tmp_path: pathlib.Path, monkeypatch, faker
+):
+    """Test test_list_expected_podman_container_images returns expected values."""
+    systemd_units_dir = pathlib.Path(tmp_path) / "systemd"
+    monkeypatch.setattr(
+        "quipucordsctl.podman_utils.settings.SYSTEMD_UNITS_DIR",
+        systemd_units_dir,
+    )
+    pathlib.Path.mkdir(systemd_units_dir)
+    # Let's create systemd unit files with container Image paths
+    container_images = []
+    for unit_file in settings.TEMPLATE_SYSTEMD_UNITS_FILENAMES:
+        unit_file_path = systemd_units_dir / unit_file
+        if unit_file_path.suffix == ".container":
+            container_image = f"quay.io/{faker.slug()}/{faker.slug()}:latest"
+            # let's create a bad unit file for testing Image skipping logic.
+            if unit_file == "quipucords-redis.container":
+                unit_file_content = f"Requires=podman.socket\nImage={container_image}\n"
+            else:
+                unit_file_content = (
+                    "\n"
+                    "[Unit]\n"
+                    "Requires=podman.socket\n"
+                    "\n"
+                    "[Container]\n"
+                    f"Image={container_image}\n"
+                )
+                container_images.append(container_image)
+            unit_file_path.write_text(unit_file_content)
+
+    container_images = set(container_images)
+    assert len(container_images) > 1
+    actual_container_images = podman_utils.list_expected_podman_container_images()
+    assert actual_container_images == container_images

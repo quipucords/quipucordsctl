@@ -1,5 +1,6 @@
 """Functions to simplify interfacing with podman."""
 
+import configparser
 import json
 import logging
 import os
@@ -9,7 +10,7 @@ import textwrap
 from gettext import gettext as _
 from urllib import parse
 
-from quipucordsctl import settings, shell_utils
+from quipucordsctl import settings, shell_utils, systemdunitparser
 
 logger = logging.getLogger(__name__)
 MACOS_DEFAULT_PODMAN_URL = "unix:///var/run/docker.sock"
@@ -121,6 +122,41 @@ def ensure_cgroups_v2():
                 % {"server_software_name": settings.SERVER_SOFTWARE_NAME}
             )
         raise PodmanIsNotReadyError(_("cgroups v2 is required but not available."))
+
+
+def list_expected_podman_container_images():
+    """List expected container images as defined by installed configs."""
+    unique_images = set()
+
+    unit_files = (
+        settings.SYSTEMD_UNITS_DIR / unit_file
+        for unit_file in settings.TEMPLATE_SYSTEMD_UNITS_FILENAMES
+    )
+    unit_files = (
+        unit_file
+        for unit_file in unit_files
+        if unit_file.exists() and unit_file.suffix == ".container"
+    )
+
+    for unit_file in unit_files:
+        unit_file_config = systemdunitparser.SystemdUnitParser()
+        try:
+            unit_file_config.read(unit_file)
+        except configparser.MissingSectionHeaderError:
+            logger.warning(
+                _(
+                    "Skipping the %(unit_file)s container file due to"
+                    " missing section headers."
+                ),
+                {"unit_file": unit_file.name},
+            )
+
+        if "Container" in unit_file_config.sections() and (
+            image := unit_file_config.get("Container", "Image")
+        ):
+            unique_images.add(image)
+
+    return unique_images
 
 
 def secret_exists(secret_name: str) -> bool:
