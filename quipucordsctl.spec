@@ -82,7 +82,6 @@ BuildRequires:  babel
 Requires:       bash
 Requires:       coreutils
 Requires:       podman >= 4.9.4
-Requires:       python3-pyxdg
 Requires:       python%{python3_pkgversion}
 Requires:       python%{python3_pkgversion}-setuptools
 

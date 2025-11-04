@@ -1,6 +1,5 @@
 """Test the quipucords.__main__ entrypoint module."""
 
-import sys
 from unittest import mock
 
 from quipucordsctl import __main__
@@ -36,28 +35,4 @@ def test_main_invokes_other_setup_and_cli_run(mocker):
     main_module.main()
 
     mock_other_setup.assert_called_once_with()
-    mock_run.assert_called_once_with()
-
-
-def test_main_invokes_pip_install_podman(mocker):
-    """Tests the main entrypoint on RPM-based installations installs podman."""
-    import quipucordsctl.__main__ as main_module  # noqa: PLC0415
-    import quipucordsctl.shell_utils as shell_utils_module  # noqa: PLC0415
-
-    mock_setup_gettext = mocker.patch.object(main_module, "set_up_gettext")
-    mock_is_rpm_exec = mocker.patch.object(shell_utils_module, "is_rpm_exec")
-    mock_run_command = mocker.patch.object(shell_utils_module, "run_command")
-    mock_run = mocker.patch("quipucordsctl.cli.run")
-
-    mock_is_rpm_exec.return_value = True
-
-    main_module.main()
-
-    mock_setup_gettext.assert_called_once_with()
-    mock_run_command.assert_has_calls(
-        [
-            mock.call([sys.executable, "-m", "ensurepip"]),
-            mock.call([sys.executable, "-m", "pip", "-q", "install", "podman"]),
-        ]
-    )
     mock_run.assert_called_once_with()
