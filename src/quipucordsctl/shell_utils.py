@@ -2,8 +2,8 @@
 
 import logging
 import os
-import shlex
 import pathlib
+import shlex
 import subprocess
 import sys
 from gettext import gettext as _
