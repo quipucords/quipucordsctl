@@ -1,0 +1,141 @@
+"""Upgrade the quipucords-app service, or install it if absent."""
+
+import argparse
+import logging
+import textwrap
+from gettext import gettext as _
+
+from quipucordsctl import argparse_utils, podman_utils, settings, systemctl_utils
+from quipucordsctl.commands import install
+
+logger = logging.getLogger(__name__)
+
+
+def get_help() -> str:
+    """Get the help/docstring for this command."""
+    return _("Upgrade the %(server_software_name)s server.") % {
+        "server_software_name": settings.SERVER_SOFTWARE_NAME
+    }
+
+
+def get_description() -> str:
+    """Get the longer description of this command."""
+    return _(
+        "The `%(command_name)s` command upgrades the %(server_software_name)s server "
+        "if it is already installed or installs the software if not already installed."
+    ) % {
+        "command_name": __name__.rpartition(".")[-1],
+        "server_software_name": settings.SERVER_SOFTWARE_NAME,
+    }
+
+
+def setup_parser(parser: argparse.ArgumentParser) -> None:
+    """Add arguments to this command's argparse subparser."""
+    parser.add_argument(
+        "-P",
+        "--no-pull",
+        action="store_true",
+        help=_(
+            "Do not automatically pull the latest podman images "
+            "(default: pull, requires network connection)"
+        ),
+    )
+    parser.add_argument(
+        "-t",
+        "--timeout",
+        type=argparse_utils.non_negative_integer,
+        default=podman_utils.DEFAULT_PODMAN_PULL_TIMEOUT,
+        help=_(
+            "Maximum number of seconds to wait for `podman pull` to complete "
+            "(default: %(default)s)"
+        )
+        % {"default": podman_utils.DEFAULT_PODMAN_PULL_TIMEOUT},
+    )
+
+
+def pull_latest_images():
+    """
+    Pull the images defined in the updated configs.
+
+    If any pull command fails, perhaps due to network connectivity or missing auth,
+    then log appropriate error messages and return False. Else, return True if all
+    images pull successfully.
+    """
+    failures = []
+    for image in podman_utils.list_expected_podman_container_images():
+        if not podman_utils.pull_image(image):
+            failures.append(image)
+    if failures:
+        logger.error(
+            _(
+                "Failed to pull at least one image. "
+                "Please review the logs, check network connectivity, and "
+                "verify your podman credentials before trying again."
+            )
+        )
+        return False
+    return True
+
+
+def print_success():
+    """Print a success message."""
+    print(
+        _(
+            textwrap.dedent(
+                """
+                Upgrade completed successfully.
+                Please run the following command to restart the %(server_software_name)s server:
+
+                    systemctl --user restart %(server_software_package)s-app
+                """  # noqa: E501
+            )
+        )
+        % {
+            "server_software_name": settings.SERVER_SOFTWARE_NAME,
+            "server_software_package": settings.SERVER_SOFTWARE_PACKAGE,
+        },
+    )
+
+
+def run(args: argparse.Namespace) -> bool:
+    """Stop the quipucords-app service."""
+    if not systemctl_utils.stop_service():
+        logger.error(
+            _(
+                "Could not upgrade the %(server_software_name)s software because "
+                "the service failed to stop normally."
+            ),
+            {"server_software_name": settings.SERVER_SOFTWARE_NAME},
+        )
+        return False
+
+    install_args = argparse.Namespace(
+        # Force "quiet" to silence the nested "install" command's success message.
+        **{**vars(args), "quiet": True}
+    )
+    if not install.run(install_args):
+        logger.error(
+            _(
+                "Could not upgrade the %(server_software_name)s software because "
+                "the software failed to install normally."
+            ),
+            {"server_software_name": settings.SERVER_SOFTWARE_NAME},
+        )
+        return False
+
+    if args.no_pull:
+        logger.warning(
+            _(
+                "You requested an upgrade without pulling the latest podman images. "
+                "Please verify that you have the latest podman images before you "
+                "restart the %(server_software_name)s software, or the software may "
+                "not run correctly."
+            ),
+            {"server_software_name": settings.SERVER_SOFTWARE_NAME},
+        )
+    elif not pull_latest_images():
+        return False
+
+    if not args.quiet:
+        print_success()
+    return True
