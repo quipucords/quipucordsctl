@@ -8,8 +8,6 @@ import sys
 from gettext import gettext as _
 from types import ModuleType
 
-from podman import errors as podman_errors
-
 from . import podman_utils, settings
 
 logger = logging.getLogger(__name__)
@@ -138,11 +136,6 @@ def run():
             # can occur if podman is not available or running
             print()
             logger.error(e)
-            sys.exit(1)
-        except (podman_errors.APIError, podman_errors.PodmanError):
-            # can occur if podman is not available or fails unexpectedly
-            print()  # new line for cleaner output before logger
-            logger.error(_("Communication with podman failed unexpectedly."))
             sys.exit(1)
         except Exception as e:  # noqa: BLE001
             print()  # new line for cleaner output before logger
