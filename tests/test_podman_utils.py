@@ -5,16 +5,14 @@ import pathlib
 from unittest import mock
 
 import pytest
-from podman import errors as podman_errors
 
 from quipucordsctl import podman_utils, settings
 
 
-@mock.patch.object(podman_utils, "get_podman_client")
-def test_ensure_cgroups_v2_happy_path(mock_get_podman_client, capsys):
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_ensure_cgroups_v2_happy_path(mock_run_command, capsys):
     """Test ensure_cgroups_v2 does nothing when cgroups v2 is enabled."""
-    mock_podman_client = mock_get_podman_client.return_value.__enter__.return_value
-    mock_podman_client.info.return_value = {"host": {"cgroupVersion": "v2"}}
+    mock_run_command.return_value = '{"host": {"cgroupVersion": "v2"}}', None, 0
 
     podman_utils.ensure_cgroups_v2()
     assert capsys.readouterr().out == ""
@@ -22,11 +20,10 @@ def test_ensure_cgroups_v2_happy_path(mock_get_podman_client, capsys):
     # Nothing else to assert; simply expect no output and no exceptions.
 
 
-@mock.patch.object(podman_utils, "get_podman_client")
-def test_ensure_cgroups_v2_failed(mock_get_podman_client, capsys):
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_ensure_cgroups_v2_is_not_v2(mock_run_command, capsys):
     """Test ensure_cgroups_v2 when cgroups v2 is not enabled (RHEL8 default)."""
-    mock_podman_client = mock_get_podman_client.return_value.__enter__.return_value
-    mock_podman_client.info.return_value = {"host": {"cgroupVersion": "v1"}}
+    mock_run_command.return_value = '{"host": {"cgroupVersion": "v1"}}', None, 0
 
     with pytest.raises(podman_utils.PodmanIsNotReadyError):
         podman_utils.ensure_cgroups_v2()
@@ -35,6 +32,28 @@ def test_ensure_cgroups_v2_failed(mock_get_podman_client, capsys):
         % {"server_software_name": settings.SERVER_SOFTWARE_NAME}
         in capsys.readouterr().out
     )
+    assert capsys.readouterr().err == ""
+
+
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_ensure_cgroups_v2_fails_to_read_json(mock_run_command, capsys):
+    """Test ensure_cgroups_v2 when podman info fails to return JSON."""
+    mock_run_command.return_value = 'oh my potatoes\n\n""&;', None, 0
+
+    with pytest.raises(podman_utils.PodmanIsNotReadyError):
+        podman_utils.ensure_cgroups_v2()
+    assert capsys.readouterr().out == ""
+    assert capsys.readouterr().err == ""
+
+
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_ensure_cgroups_v2_failed(mock_run_command, capsys):
+    """Test ensure_cgroups_v2 when podman info fails unexpectedly."""
+    mock_run_command.return_value = "", None, 1
+
+    with pytest.raises(podman_utils.PodmanIsNotReadyError):
+        podman_utils.ensure_cgroups_v2()
+    assert capsys.readouterr().out == ""
     assert capsys.readouterr().err == ""
 
 
@@ -95,10 +114,10 @@ def test_ensure_podman_socket_linux(
     podman_utils.ensure_podman_socket(str(socket_path))
     assert len(mock_shell_utils.run_command.call_args_list) == 2
     assert mock_shell_utils.run_command.call_args_list[0].args[0] == (
-        podman_utils.SYSTEMCTL_ENABLE_CMD
+        ["systemctl", "--user", "enable", "--now", "podman.socket"]
     )
     assert mock_shell_utils.run_command.call_args_list[1].args[0] == (
-        podman_utils.SYSTEMCTL_STATUS_CMD
+        ["systemctl", "--user", "status", "podman.socket"]
     )
 
 
@@ -116,7 +135,7 @@ def test_ensure_podman_socket_linux_broken_podman(
         podman_utils.ensure_podman_socket()
 
     mock_shell_utils.run_command.assert_called_once_with(
-        podman_utils.SYSTEMCTL_ENABLE_CMD
+        ["systemctl", "--user", "enable", "--now", "podman.socket"]
     )
     mock_get_socket_path.assert_not_called()
 
@@ -136,7 +155,7 @@ def test_ensure_podman_socket_macos(mock_shell_utils, mock_sys, tmp_path):
         podman_utils.ensure_podman_socket()
 
     mock_shell_utils.run_command.assert_called_once_with(
-        podman_utils.PODMAN_MACHINE_STATE_CMD
+        ["podman", "machine", "inspect", "--format", "{{.State}}"]
     )
 
 
@@ -160,7 +179,7 @@ def test_ensure_podman_socket_macos_not_running(mock_shell_utils, mock_sys, tmp_
             raise e
 
     mock_shell_utils.run_command.assert_called_once_with(
-        podman_utils.PODMAN_MACHINE_STATE_CMD
+        ["podman", "machine", "inspect", "--format", "{{.State}}"]
     )
 
 
@@ -184,173 +203,133 @@ def test_ensure_podman_socket_macos_broken(mock_shell_utils, mock_sys, tmp_path)
             raise e
 
     mock_shell_utils.run_command.assert_called_once_with(
-        podman_utils.PODMAN_MACHINE_STATE_CMD
+        ["podman", "machine", "inspect", "--format", "{{.State}}"]
     )
 
 
-@mock.patch.object(podman_utils, "get_podman_client")
-def test_secret_exists(mock_get_podman_client, faker):
-    """Test the secret_exists function is a simple facade over the podman client."""
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_secret_exists(mock_run_command, faker):
+    """Test secret_exists simply checks the podman CLI's return code."""
     secret_name = faker.slug()
-    mock_podman_client = mock_get_podman_client.return_value.__enter__.return_value
-    mock_podman_client.secrets.exists.side_effect = [True, False, True]
+    mock_run_command.side_effect = [
+        [None, None, 0],  # manual testing confirmed '0' is podman's "yes" code
+        [None, None, 1],  # manual testing confirmed '1' is podman's "no" code
+        [None, None, 0],
+    ]
 
     assert podman_utils.secret_exists(secret_name)
     assert not podman_utils.secret_exists(secret_name)
     assert podman_utils.secret_exists(secret_name)
 
 
-@mock.patch.object(podman_utils, "get_podman_client")
-def test_set_secret(mock_get_podman_client, good_secret, faker, caplog):
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_set_secret(mock_run_command, good_secret, faker, caplog):
     """Test the set_secret function sets a new secret."""
     caplog.set_level(logging.DEBUG)
     secret_name = faker.slug()
-    mock_podman_client = mock_get_podman_client.return_value.__enter__.return_value
-    mock_podman_client.secrets.exists.return_value = False
+    mock_run_command.side_effect = [
+        [None, None, 1],  # "exists" command (no, does not exist)
+        [None, None, 0],  # "create" command success
+    ]
 
     assert podman_utils.set_secret(secret_name, good_secret)
-
-    mock_podman_client.secrets.exists.assert_called_once_with(secret_name)
-    mock_podman_client.secrets.remove.assert_not_called()
-    mock_podman_client.secrets.create.assert_called_once_with(secret_name, good_secret)
-    assert f"New podman secret {secret_name} was set." == caplog.messages[0]
+    assert f"Podman secret '{secret_name}' was set." == caplog.messages[-1]
 
 
-@mock.patch.object(podman_utils, "get_podman_client")
-def test_set_secret_exists_ans_yes_replace(mock_get_podman_client, faker, caplog):
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_set_secret_exists_and_yes_replace(mock_run_command, faker, caplog):
     """Test the set_secret function replaces existing secret."""
     caplog.set_level(logging.DEBUG)
     secret_name = faker.slug()
     secret_value = faker.password()
-    mock_podman_client = mock_get_podman_client.return_value.__enter__.return_value
-    mock_podman_client.secrets.exists.return_value = True
+    mock_run_command.side_effect = [
+        [None, None, 0],  # "exists" command (yes, does exist)
+        [None, None, 0],  # "delete" command success
+        [None, None, 0],  # "create" command success
+    ]
 
     assert podman_utils.set_secret(secret_name, secret_value)
+    assert f"Podman secret '{secret_name}' exists." == caplog.messages[0]
+    assert (
+        f"Podman secret '{secret_name}' already exists before setting a new value."
+        == caplog.messages[1]
+    )
+    assert f"Podman secret '{secret_name}' was removed." == caplog.messages[2]
+    assert f"Podman secret '{secret_name}' was set." == caplog.messages[3]
 
-    mock_podman_client.secrets.exists.assert_called_once_with(secret_name)
-    mock_podman_client.secrets.remove.assert_called_once_with(secret_name)
-    mock_podman_client.secrets.create.assert_called_once_with(secret_name, secret_value)
-    assert f"A podman secret {secret_name} already exists." == caplog.messages[0]
-    assert f"Old podman secret {secret_name} was removed." == caplog.messages[1]
-    assert f"New podman secret {secret_name} was set." == caplog.messages[2]
 
-
-@mock.patch.object(podman_utils, "get_podman_client")
-def test_set_secret_exists_but_no_replace(mock_get_podman_client, faker, caplog):
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_set_secret_exists_but_no_replace(mock_run_command, faker, caplog):
     """Test the set_secret function fails if secret exists but not told to replace."""
     caplog.set_level(logging.ERROR)
     secret_name = faker.slug()
     secret_value = faker.password()
-    mock_podman_client = mock_get_podman_client.return_value.__enter__.return_value
-    mock_podman_client.secrets.exists.return_value = True
+    mock_run_command.side_effect = [
+        [None, None, 0],  # "exists" command (yes, does exist)
+        # no other commands expected
+    ]
 
     assert not podman_utils.set_secret(secret_name, secret_value, False)
+    assert (
+        f"Podman secret '{secret_name}' already exists before setting a new value."
+        == caplog.messages[0]
+    )
 
-    mock_podman_client.secrets.exists.assert_called_once_with(secret_name)
-    mock_podman_client.secrets.remove.assert_not_called()
-    mock_podman_client.secrets.create.assert_not_called()
-    assert f"A podman secret {secret_name} already exists." == caplog.messages[0]
 
-
-@mock.patch.object(podman_utils, "get_podman_client")
-def test_set_secret_unhandled_exception(mock_get_podman_client, faker, caplog):
-    """
-    Test the set_secret function lets exceptions raise up to caller.
-
-    This is okay because we expect main.main to handle all exceptions and exit cleanly.
-    """
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_set_secret_failed_unexpectedly(mock_run_command, faker, caplog):
+    """Test the set_secret function when creating the secret fails unexpectedly."""
     caplog.set_level(logging.DEBUG)
     secret_name = faker.slug()
     secret_value = faker.password()
-    mock_podman_client = mock_get_podman_client.return_value.__enter__.return_value
-    mock_podman_client.secrets.exists.return_value = True
-    mock_podman_client.secrets.remove.side_effect = podman_errors.PodmanError
+    mock_run_command.side_effect = [
+        [None, None, 1],  # "exists" command (no, does not exist)
+        [None, None, 1],  # "create" failed unexpectedly
+    ]
 
-    with pytest.raises(podman_errors.PodmanError):
-        podman_utils.set_secret(secret_name, secret_value)
-
-    mock_podman_client.secrets.exists.assert_called_once_with(secret_name)
-    mock_podman_client.secrets.remove.assert_called_once_with(secret_name)
-    mock_podman_client.secrets.create.assert_not_called()
-    assert f"A podman secret {secret_name} already exists." == caplog.messages[0]
-    assert len(caplog.messages) == 1
+    assert not podman_utils.set_secret(secret_name, secret_value)
+    assert f"Podman failed to set secret '{secret_name}'." == caplog.messages[-1]
 
 
-@mock.patch.object(podman_utils, "get_podman_client")
-def test_delete_secret(mock_get_podman_client, faker, caplog):
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_delete_secret(mock_run_command, faker, caplog):
     """Test the delete_secret function deletes a secret."""
     caplog.set_level(logging.INFO)
     secret_name = faker.slug()
-    mock_podman_client = mock_get_podman_client.return_value.__enter__.return_value
-    mock_podman_client.secrets.exists.return_value = True
+    mock_run_command.return_value = None, None, 0  # successful delete
 
     assert podman_utils.delete_secret(secret_name)
-
-    mock_podman_client.secrets.exists.assert_called_once_with(secret_name)
-    mock_podman_client.secrets.remove.assert_called_once_with(secret_name)
-    assert f"Podman secret {secret_name} was removed." == caplog.messages[0]
+    assert f"Podman secret '{secret_name}' was removed." == caplog.messages[0]
 
 
-@mock.patch.object(podman_utils, "get_podman_client")
-def test_delete_secret_non_existent(mock_get_podman_client, faker):
-    """Test the delete_secret function does nothing if the secret is not there."""
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_delete_secret_non_existent(mock_run_command, faker, caplog):
+    """Test the delete_secret function returns False if the secret was not there."""
+    caplog.set_level(logging.INFO)
     secret_name = faker.slug()
-    mock_podman_client = mock_get_podman_client.return_value.__enter__.return_value
-    mock_podman_client.secrets.exists.return_value = False
+    mock_run_command.return_value = None, None, 1  # "failed" because did not exist
 
-    assert podman_utils.delete_secret(secret_name)
-
-    mock_podman_client.secrets.exists.assert_called_once_with(secret_name)
-    mock_podman_client.secrets.remove.assert_not_called()
+    assert not podman_utils.delete_secret(secret_name)
+    assert f"Podman failed to remove secret '{secret_name}'." == caplog.messages[0]
 
 
-@mock.patch.object(podman_utils, "get_podman_client")
-def test_remove_image(mock_get_podman_client, faker, caplog):
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_remove_image(mock_run_command, faker, caplog):
     """Test the remove_image function removes an image."""
     caplog.set_level(logging.INFO)
-    image_ref = f"quay.io/{faker.slug()}/{faker.slug()}:latest"
-    mock_podman_client = mock_get_podman_client.return_value.__enter__.return_value
-    mock_podman_client.images.remove.return_value = True
+    images_id = f"quay.io/{faker.slug()}/{faker.slug()}:latest"
+    mock_run_command.return_value = None, None, 0  # successful delete
 
-    assert podman_utils.remove_image(image_ref)
-
-    mock_podman_client.images.remove.assert_called_once_with(image_ref)
-    assert f"Removing the container image {image_ref}" == caplog.messages[0]
+    assert podman_utils.remove_image(images_id)
+    assert f"Podman image '{images_id}' was removed." == caplog.messages[-1]
 
 
-@mock.patch.object(podman_utils, "get_podman_client")
-def test_remove_image_already_removed(mock_get_podman_client, faker, caplog):
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_remove_image_already_removed(mock_run_command, faker, caplog):
     """Test the remove_image function returns true if the image is already removed."""
-    caplog.set_level(logging.INFO)
-    image_ref = f"quay.io/{faker.slug()}/{faker.slug()}:latest"
-    mock_podman_client = mock_get_podman_client.return_value.__enter__.return_value
-    mock_podman_client.images.remove.side_effect = podman_errors.ImageNotFound(
-        image_ref
-    )
+    caplog.set_level(logging.DEBUG)
+    image_id = f"quay.io/{faker.slug()}/{faker.slug()}:latest"
+    mock_run_command.return_value = None, None, 1  # "failed" because does not exist
 
-    assert podman_utils.remove_image(image_ref)
-
-    mock_podman_client.images.remove.assert_called_once_with(image_ref)
-    assert f"Removing the container image {image_ref}" == caplog.messages[0]
-    assert (
-        f"Podman could not remove image {image_ref} - Image not found."
-        == caplog.messages[1]
-    )
-
-
-@mock.patch.object(podman_utils, "get_podman_client")
-def test_remove_image_podman_api_error(mock_get_podman_client, faker, caplog):
-    """Test the remove_image function returns false if the Podman API call fails."""
-    caplog.set_level(logging.INFO)
-    image_ref = f"quay.io/{faker.slug()}/{faker.slug()}:latest"
-    mock_podman_client = mock_get_podman_client.return_value.__enter__.return_value
-    mock_podman_client.images.remove.side_effect = podman_errors.APIError(image_ref)
-
-    assert not podman_utils.remove_image(image_ref)
-
-    mock_podman_client.images.remove.assert_called_once_with(image_ref)
-    assert f"Removing the container image {image_ref}" == caplog.messages[0]
-    assert (
-        f"Podman could not remove image {image_ref} - Failed Podman API call."
-        == caplog.messages[1]
-    )
+    assert not podman_utils.remove_image(image_id)
+    assert f"Podman failed to remove image '{image_id}'." == caplog.messages[-1]

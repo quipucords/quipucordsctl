@@ -34,13 +34,6 @@
     %endif
 %endif
 
-# Note: python3-podman is built against earlier python versions.
-# only RHEL 10 and later would provide python3.2dist(podman)
-# python3.13dist(podman), etc.
-%if 0%{?rhel} == 8 || 0%{?rhel} == 9
-%global __requires_exclude ^python3.12dist.*podman.*$
-%endif
-
 Name:           %{product_name_lower}ctl
 Summary:        installer for %{product_name_lower} server
 
@@ -78,7 +71,6 @@ BuildRequires:  babel
 Requires:       bash
 Requires:       coreutils
 Requires:       podman >= 4.9.4
-Requires:       python3-podman
 Requires:       python%{python3_pkgversion}
 
 

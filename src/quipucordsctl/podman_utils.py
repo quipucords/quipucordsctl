@@ -1,5 +1,6 @@
 """Functions to simplify interfacing with podman."""
 
+import json
 import logging
 import os
 import pathlib
@@ -8,18 +9,10 @@ import textwrap
 from gettext import gettext as _
 from urllib import parse
 
-import podman
-from podman import errors as podman_errors
-
 from quipucordsctl import settings, shell_utils
 
 logger = logging.getLogger(__name__)
 MACOS_DEFAULT_PODMAN_URL = "unix:///var/run/docker.sock"
-
-SYSTEMCTL_ENABLE_CMD = ["systemctl", "--user", "enable", "--now", "podman.socket"]
-SYSTEMCTL_STATUS_CMD = ["systemctl", "--user", "status", "podman.socket"]
-PODMAN_MACHINE_STATE_CMD = ["podman", "machine", "inspect", "--format", "{{.State}}"]
-
 ENABLE_CGROUPS_V2_LONG_MESSAGE = _(
     textwrap.dedent(
         """
@@ -56,7 +49,9 @@ def ensure_podman_socket(base_url: str | None = None):
 
     if sys.platform == "darwin":
         try:
-            stdout, __, __ = shell_utils.run_command(PODMAN_MACHINE_STATE_CMD)
+            stdout, __, __ = shell_utils.run_command(
+                ["podman", "machine", "inspect", "--format", "{{.State}}"]
+            )
         except Exception:  # noqa: BLE001
             raise PodmanIsNotReadyError(
                 _(
@@ -73,8 +68,10 @@ def ensure_podman_socket(base_url: str | None = None):
             )
     else:
         try:
-            shell_utils.run_command(SYSTEMCTL_ENABLE_CMD)
-            shell_utils.run_command(SYSTEMCTL_STATUS_CMD)
+            shell_utils.run_command(
+                ["systemctl", "--user", "enable", "--now", "podman.socket"]
+            )
+            shell_utils.run_command(["systemctl", "--user", "status", "podman.socket"])
         except Exception as e:
             logger.error(
                 _(
@@ -96,110 +93,127 @@ def ensure_podman_socket(base_url: str | None = None):
 
 
 def ensure_cgroups_v2():
-    """Ensure that cgroups v2 is enabled."""
-    with get_podman_client() as podman_client:
-        if not podman_client.info().get("host", {}).get("cgroupVersion", None) == "v2":
+    """
+    Ensure that cgroups v2 is enabled.
+
+    Raises:
+        PodmanIsNotReadyError: If cgroups v2 is not enabled.
+    """
+    logger.debug(_("Ensuring cgroups v2 is enabled."))
+    stdout, __, exit_code = shell_utils.run_command(["podman", "info", "-f", "json"])
+    logger.debug(stdout)
+
+    if exit_code != 0:
+        raise PodmanIsNotReadyError(_("Podman info command failed unexpectedly."))
+
+    try:
+        cgroups_version = json.loads(stdout).get("host", {}).get("cgroupVersion", None)
+    except json.decoder.JSONDecodeError as e:
+        logger.error(e)
+        raise PodmanIsNotReadyError(_("Podman info failed to return valid JSON."))
+
+    if cgroups_version != "v2":
+        if not settings.runtime.quiet:
             print(
                 ENABLE_CGROUPS_V2_LONG_MESSAGE
                 % {"server_software_name": settings.SERVER_SOFTWARE_NAME}
             )
-            raise PodmanIsNotReadyError(_("cgroups v2 is required but not available."))
-
-
-def get_podman_client(base_url=None) -> podman.PodmanClient:
-    """Get a podman client."""
-    # podman on macOS/darwin requires a different default base_url,
-    # and we should also allow the caller to specify their own.
-    ensure_podman_socket(base_url)
-    kwargs = (
-        {"base_url": base_url}
-        if base_url
-        else {"base_url": MACOS_DEFAULT_PODMAN_URL}
-        if sys.platform == "darwin"
-        else {}
-    )
-    return podman.PodmanClient(**kwargs)
+        raise PodmanIsNotReadyError(_("cgroups v2 is required but not available."))
 
 
 def secret_exists(secret_name: str) -> bool:
     """Simply check if a secret exists."""
-    with get_podman_client() as podman_client:
-        return podman_client.secrets.exists(secret_name)
+    __, __, exit_code = shell_utils.run_command(
+        ["podman", "secret", "exists", str(secret_name)], raise_error=False
+    )
+    if exit_code == 0:
+        logger.debug(
+            _("Podman secret '%(secret_name)s' exists."), {"secret_name": secret_name}
+        )
+        return True
+    else:
+        logger.debug(
+            _("Podman secret '%(secret_name)s' does not exist."),
+            {"secret_name": secret_name},
+        )
+        return False
 
 
 def set_secret(secret_name: str, secret_value: str, allow_replace=True) -> bool:
     """Set or replace a podman secret."""
-    with get_podman_client() as podman_client:
-        if podman_client.secrets.exists(secret_name):
-            if allow_replace:
-                logger.debug(
-                    _("A podman secret %(secret_name)s already exists."),
-                    {"secret_name": secret_name},
-                )
-            else:
-                logger.error(
-                    _("A podman secret %(secret_name)s already exists."),
-                    {"secret_name": secret_name},
-                )
-                return False
-            podman_client.secrets.remove(secret_name)
-            logger.info(
-                _("Old podman secret %(secret_name)s was removed."),
+    exists = secret_exists(secret_name)
+    if exists:
+        if allow_replace:
+            logger.debug(
+                _(
+                    "Podman secret '%(secret_name)s' already exists "
+                    "before setting a new value."
+                ),
                 {"secret_name": secret_name},
             )
-        podman_client.secrets.create(secret_name, secret_value)
+        else:
+            logger.error(
+                _(
+                    "Podman secret '%(secret_name)s' already exists "
+                    "before setting a new value."
+                ),
+                {"secret_name": secret_name},
+            )
+            return False
+
+    # TODO Simplify "delete + create" to just "create --replace" when we drop RHEL8.
+    # While we support RHEL8, these commands must remain distinct because
+    # RHEL8's podman CLI does not support the "--replace" argument.
+    if exists:
+        delete_secret(secret_name)
+    __, __, exit_code = shell_utils.run_command(
+        ["podman", "secret", "create", str(secret_name), "-"],
+        raise_error=False,
+        stdin=secret_value,
+    )
+    if exit_code == 0:
         logger.info(
-            _("New podman secret %(secret_name)s was set."),
+            _("Podman secret '%(secret_name)s' was set."),
             {"secret_name": secret_name},
         )
-    return True
+        return True
+    else:
+        logger.error(
+            _("Podman failed to set secret '%(secret_name)s'."),
+            {"secret_name": secret_name},
+        )
+        return False
 
 
 def delete_secret(secret_name: str) -> bool:
     """Delete a podman secret."""
-    with get_podman_client() as podman_client:
-        if podman_client.secrets.exists(secret_name):
-            try:
-                podman_client.secrets.remove(secret_name)
-                logger.info(
-                    _("Podman secret %(secret_name)s was removed."),
-                    {"secret_name": secret_name},
-                )
-            except podman_errors.APIError:
-                logger.error(
-                    _(
-                        "Podman could not remove the secret %(secret_name)."
-                        " Please check logs."
-                    ),
-                    {"secret_name": secret_name},
-                )
-                return False
-    return True
+    __, __, exit_code = shell_utils.run_command(
+        ["podman", "secret", "rm", str(secret_name)], raise_error=False
+    )
+    if exit_code == 0:
+        logger.info(
+            _("Podman secret '%(secret_name)s' was removed."),
+            {"secret_name": secret_name},
+        )
+        return True
+    logger.error(
+        _("Podman failed to remove secret '%(secret_name)s'."),
+        {"secret_name": secret_name},
+    )
+    return False
 
 
-def remove_image(image: str) -> bool:
-    """Remove a podman container image."""
-    with get_podman_client() as podman_client:
-        try:
-            logger.info(
-                _("Removing the container image %(image)s"),
-                {"image": image},
-            )
-            podman_client.images.remove(image)
-            return True
-        except podman_errors.ImageNotFound:
-            logger.warning(
-                _("Podman could not remove image %(image)s - Image not found."),
-                {"image": image},
-            )
-            return True
-        except podman_errors.APIError as error:
-            logger.warning(
-                _("Podman could not remove image %(image)s - Failed Podman API call."),
-                {"image": image},
-            )
-            logger.debug(
-                _("Error removing image %(image)s - %(error)s."),
-                {"image": image, "error": error},
-            )
-            return False
+def remove_image(image_id: str) -> bool:
+    """Remove a podman image ID."""
+    __, __, exit_code = shell_utils.run_command(
+        ["podman", "image", "rm", str(image_id)], raise_error=False
+    )
+    if exit_code == 0:
+        logger.info(
+            _("Podman image '%(image_id)s' was removed."), {"image_id": image_id}
+        )
+        return True
+    logger.error(
+        _("Podman failed to remove image '%(image_id)s'."), {"image_id": image_id}
+    )
+    return False
