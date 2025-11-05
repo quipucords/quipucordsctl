@@ -44,7 +44,11 @@ def confirm(prompt: str | None = None) -> bool:
 
 
 def run_command(
-    command: list[str], *, raise_error=True, wait_timeout=None
+    command: list[str],
+    *,
+    raise_error: bool = True,
+    wait_timeout: int | None = None,
+    stdin: str | None = None,
 ) -> tuple[str, str, int]:
     """Run an external program."""
     logger.debug(
@@ -59,7 +63,7 @@ def run_command(
     try:
         process = subprocess.Popen(
             args=command,  # a list like ["systemctl", "--user", "reset-failed"]
-            stdin=subprocess.DEVNULL,
+            stdin=subprocess.PIPE if stdin else subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,  # we always expect input/output text, not byte strings
@@ -68,7 +72,7 @@ def run_command(
         # TODO figure out how we want to handle stdout/stderr
         # TODO maybe support "realtime" stdout display instead of capturing at the end
         # TODO should these *always* go to our stdout/stderr or use the logger?
-        stdout, stderr = process.communicate(timeout=wait_timeout)
+        stdout, stderr = process.communicate(input=stdin, timeout=wait_timeout)
         exit_code = process.returncode
     except subprocess.TimeoutExpired as error:
         logger.error(
