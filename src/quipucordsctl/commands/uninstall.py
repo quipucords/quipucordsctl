@@ -78,10 +78,13 @@ def remove_container_images():
                 unique_images.add(image)
 
     if unique_images:
-        all_removed = all(podman_utils.remove_image(image) for image in unique_images)
-        if not all_removed:
+        successes = [podman_utils.remove_image(image) for image in unique_images]
+        if not all(successes):
             logger.warning(
-                _("At least one image failed to be removed"),
+                _(
+                    "Podman failed to remove at least one image. Please check logs "
+                    "and manually remove any remaining images if necessary."
+                ),
             )
 
 
