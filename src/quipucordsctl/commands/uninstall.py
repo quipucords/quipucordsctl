@@ -174,9 +174,19 @@ def remove_secrets() -> bool:
         _("Removing the %(server_software_name)s secrets ..."),
         {"server_software_name": settings.SERVER_SOFTWARE_NAME},
     )
-    for key in settings.QUIPUCORDS_SECRET_KEYS:
-        if not podman_utils.delete_secret(key):
-            return False
+    successes = [
+        podman_utils.delete_secret(key)
+        for key in settings.QUIPUCORDS_SECRET_KEYS
+        if podman_utils.secret_exists(key)
+    ]
+    if not all(successes):
+        logger.error(
+            _(
+                "Podman failed to remove at least one secret. Please check logs "
+                "and manually remove any remaining secrets if necessary."
+            )
+        )
+        return False
     return True
 
 
