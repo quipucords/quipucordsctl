@@ -2,6 +2,7 @@
 
 import logging
 import os
+import shlex
 import subprocess
 from gettext import gettext as _
 
@@ -51,9 +52,7 @@ def run_command(
     stdin: str | None = None,
 ) -> tuple[str, str, int]:
     """Run an external program."""
-    logger.debug(
-        _("Invoking subprocess with arguments %(command)s"), {"command": command}
-    )
+    logger.debug(_("Invoking subprocess: %s"), " ".join(map(shlex.quote, command)))
     if wait_timeout is None:
         wait_timeout = DEFAULT_WAIT_TIMEOUT
         logger.debug(
