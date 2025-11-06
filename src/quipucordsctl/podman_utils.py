@@ -52,13 +52,13 @@ def ensure_podman_socket(base_url: str | None = None):
             stdout, __, __ = shell_utils.run_command(
                 ["podman", "machine", "inspect", "--format", "{{.State}}"]
             )
-        except Exception:  # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
             raise PodmanIsNotReadyError(
                 _(
                     "Podman command failed unexpectedly. Please install Podman and "
                     "run `podman machine start` before using this command."
                 )
-            )
+            ) from e
         if stdout.strip() != "running":
             raise PodmanIsNotReadyError(
                 _(
@@ -110,7 +110,9 @@ def ensure_cgroups_v2():
         cgroups_version = json.loads(stdout).get("host", {}).get("cgroupVersion", None)
     except json.decoder.JSONDecodeError as e:
         logger.error(e)
-        raise PodmanIsNotReadyError(_("Podman info failed to return valid JSON."))
+        raise PodmanIsNotReadyError(
+            _("Podman info failed to return valid JSON.")
+        ) from e
 
     if cgroups_version != "v2":
         if not settings.runtime.quiet:
