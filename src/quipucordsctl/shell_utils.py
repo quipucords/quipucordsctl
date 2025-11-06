@@ -52,6 +52,8 @@ def run_command(
     stdin: str | None = None,
 ) -> tuple[str, str, int]:
     """Run an external program."""
+    if not all(isinstance(arg, str) for arg in command):
+        raise TypeError(_("Command arguments must be strings. Got: %r") % command)
     logger.debug(_("Invoking subprocess: %s"), " ".join(map(shlex.quote, command)))
     if wait_timeout is None:
         wait_timeout = DEFAULT_WAIT_TIMEOUT
