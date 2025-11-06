@@ -282,7 +282,7 @@ def _check_configuration_files() -> int:
 def run(args: argparse.Namespace) -> bool:
     """Run the check command."""
     logger.info(
-        _("Checking %(server_software_name)s setup and configurations..."),
+        _("Checking %(server_software_name)s setup and configurations."),
         {"server_software_name": settings.SERVER_SOFTWARE_NAME},
     )
 

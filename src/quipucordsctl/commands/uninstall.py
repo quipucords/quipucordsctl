@@ -152,7 +152,7 @@ def remove_services() -> bool:
 
 def reload_daemon() -> bool:
     """Reset systemctl failures and reload the daemon."""
-    logger.info(_("Reloading the systemctl daemon ..."))
+    logger.info(_("Reloading the systemctl daemon."))
     shell_utils.run_command(settings.SYSTEMCTL_USER_RESET_FAILED_CMD)
     shell_utils.run_command(settings.SYSTEMCTL_USER_DAEMON_RELOAD_CMD)
     return True
@@ -161,7 +161,7 @@ def reload_daemon() -> bool:
 def remove_data():
     """Remove the quipucords data."""
     logger.info(
-        _("Removing the %(server_software_name)s data ..."),
+        _("Removing the %(server_software_name)s data."),
         {"server_software_name": settings.SERVER_SOFTWARE_NAME},
     )
     for data_dir in settings.SERVER_DATA_SUBDIRS_EXCLUDING_DB.values():
@@ -171,7 +171,7 @@ def remove_data():
 def remove_secrets() -> bool:
     """Remove the quipucords podman secrets."""
     logger.info(
-        _("Removing the %(server_software_name)s secrets ..."),
+        _("Removing the %(server_software_name)s secrets."),
         {"server_software_name": settings.SERVER_SOFTWARE_NAME},
     )
     successes = [
