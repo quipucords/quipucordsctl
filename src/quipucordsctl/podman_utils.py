@@ -48,17 +48,17 @@ def ensure_podman_socket(base_url: str | None = None):
     logger.debug(_("Ensuring Podman socket is available."))
 
     if sys.platform == "darwin":
-        try:
-            stdout, __, __ = shell_utils.run_command(
-                ["podman", "machine", "inspect", "--format", "{{.State}}"]
-            )
-        except Exception as e:  # noqa: BLE001
+        stdout, __, exit_code = shell_utils.run_command(
+            ["podman", "machine", "inspect", "--format", "{{.State}}"],
+            raise_error=False,
+        )
+        if exit_code != 0:
             raise PodmanIsNotReadyError(
                 _(
                     "Podman command failed unexpectedly. Please install Podman and "
                     "run `podman machine start` before using this command."
                 )
-            ) from e
+            )
         if stdout.strip() != "running":
             raise PodmanIsNotReadyError(
                 _(
