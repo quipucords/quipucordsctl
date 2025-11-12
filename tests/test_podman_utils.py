@@ -155,7 +155,7 @@ def test_ensure_podman_socket_macos(mock_shell_utils, mock_sys, tmp_path):
         podman_utils.ensure_podman_socket()
 
     mock_shell_utils.run_command.assert_called_once_with(
-        ["podman", "machine", "inspect", "--format", "{{.State}}"]
+        ["podman", "machine", "inspect", "--format", "{{.State}}"], raise_error=False
     )
 
 
@@ -179,7 +179,7 @@ def test_ensure_podman_socket_macos_not_running(mock_shell_utils, mock_sys, tmp_
             raise e
 
     mock_shell_utils.run_command.assert_called_once_with(
-        ["podman", "machine", "inspect", "--format", "{{.State}}"]
+        ["podman", "machine", "inspect", "--format", "{{.State}}"], raise_error=False
     )
 
 
@@ -188,7 +188,7 @@ def test_ensure_podman_socket_macos_not_running(mock_shell_utils, mock_sys, tmp_
 def test_ensure_podman_socket_macos_broken(mock_shell_utils, mock_sys, tmp_path):
     """Test ensure_podman_socket when podman command is broken on macOS/darwin."""
     mock_sys.platform = "darwin"
-    mock_shell_utils.run_command.side_effect = [Exception]
+    mock_shell_utils.run_command.return_value = None, None, 1
     mock_path = pathlib.Path(tmp_path / "podman.sock")
     mock_path.touch()
 
@@ -203,7 +203,7 @@ def test_ensure_podman_socket_macos_broken(mock_shell_utils, mock_sys, tmp_path)
             raise e
 
     mock_shell_utils.run_command.assert_called_once_with(
-        ["podman", "machine", "inspect", "--format", "{{.State}}"]
+        ["podman", "machine", "inspect", "--format", "{{.State}}"], raise_error=False
     )
 
 
