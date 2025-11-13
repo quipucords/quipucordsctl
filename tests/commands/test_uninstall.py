@@ -4,17 +4,8 @@ import argparse
 import pathlib
 from unittest import mock
 
-import pytest
-
 from quipucordsctl import settings
 from quipucordsctl.commands import uninstall
-
-
-@pytest.fixture
-def mock_shell_utils():
-    """Mock the entire shell_utils module to prevent external program execution."""
-    with mock.patch.object(uninstall, "shell_utils") as mock_shell_utils:
-        yield mock_shell_utils
 
 
 def test_get_help():
@@ -24,72 +15,13 @@ def test_get_help():
     )
 
 
-def test_stop_containers(mock_shell_utils):
-    """Test stop_containers invokes expected Podman commands."""
-    mock_shell_utils.run_command.side_effect = [
-        ["", "", 0],
-        ["", "", 1],
-        ["", "", 1],
-    ]
-
-    assert uninstall.stop_containers()
-    mock_shell_utils.run_command.assert_has_calls(
-        (
-            mock.call(settings.SYSTEMCTL_USER_LIST_QUIPUCORDS_APP, raise_error=False),
-            mock.call(settings.SYSTEMCTL_USER_STOP_QUIPUCORDS_APP),
-            mock.call(settings.SYSTEMCTL_USER_STOP_QUIPUCORDS_NETWORK),
-        )
-    )
-
-
-def test_stop_containers_failed_systemctl(mock_shell_utils):
-    """Test stop_containers to return false if systemctl failed."""
-    mock_shell_utils.run_command.side_effect = [
-        ["", "", 0],
-        ["", "", 1],
-        Exception("systemctl_failed"),
-    ]
-
-    assert not uninstall.stop_containers()
-    mock_shell_utils.run_command.assert_has_calls(
-        (
-            mock.call(settings.SYSTEMCTL_USER_LIST_QUIPUCORDS_APP, raise_error=False),
-            mock.call(settings.SYSTEMCTL_USER_STOP_QUIPUCORDS_APP),
-            mock.call(settings.SYSTEMCTL_USER_STOP_QUIPUCORDS_NETWORK),
-        )
-    )
-
-
 def test_remove_container_images(tmp_path: pathlib.Path, monkeypatch, faker):
     """Test remove_container_images invokes expected Podman commands."""
-    systemd_units_dir = tmp_path / "systemd"
-    monkeypatch.setattr(
-        "quipucordsctl.commands.install.settings.SYSTEMD_UNITS_DIR",
-        systemd_units_dir,
-    )
-    pathlib.Path.mkdir(systemd_units_dir)
-    # Let's create systemd unit files with container Image paths
-    container_images = []
-    for unit_file in settings.TEMPLATE_SYSTEMD_UNITS_FILENAMES:
-        unit_file_path = systemd_units_dir / unit_file
-        if unit_file_path.suffix == ".container":
-            container_image = f"quay.io/{faker.slug()}/{faker.slug()}:latest"
-            # let's create a bad unit file for testing Image skipping logic.
-            if unit_file == "quipucords-redis.container":
-                unit_file_content = f"Requires=podman.socket\nImage={container_image}\n"
-            else:
-                unit_file_content = (
-                    "\n"
-                    "[Unit]\n"
-                    "Requires=podman.socket\n"
-                    "\n"
-                    "[Container]\n"
-                    f"Image={container_image}\n"
-                )
-                container_images.append(container_image)
-            unit_file_path.write_text(unit_file_content)
-
+    container_images = {faker.slug(), faker.slug(), faker.slug()}
     with mock.patch.object(uninstall, "podman_utils") as mock_podman_utils:
+        mock_podman_utils.list_expected_podman_container_images.return_value = set(
+            container_images
+        )
         uninstall.remove_container_images()
         remove_image_calls = [
             mock.call(container_image) for container_image in container_images
@@ -146,17 +78,6 @@ def test_remove_services(mock_unlink, mock_exists, tmp_path: pathlib.Path, monke
     ) + len(settings.SYSTEMD_SERVICE_FILENAMES)
 
 
-def test_reload_daemon(mock_shell_utils):
-    """Test reload_daemon invokes expected shell commands."""
-    assert uninstall.reload_daemon()
-    mock_shell_utils.run_command.assert_has_calls(
-        (
-            mock.call(settings.SYSTEMCTL_USER_RESET_FAILED_CMD),
-            mock.call(settings.SYSTEMCTL_USER_DAEMON_RELOAD_CMD),
-        )
-    )
-
-
 @mock.patch("quipucordsctl.commands.uninstall.shutil.rmtree")
 def test_remove_data(mock_rmtree):
     """Test remove data invokes the expected shell utilities commands."""
@@ -193,16 +114,20 @@ def test_uninstall_run(capsys):
     """Test the command invokes the expected subcommands."""
     mock_args = argparse.Namespace()
     with (
-        mock.patch.object(uninstall, "stop_containers") as mock_stop_containers,
+        mock.patch.object(
+            uninstall.systemctl_utils, "stop_service"
+        ) as mock_stop_service,
         mock.patch.object(
             uninstall, "remove_container_images"
         ) as mock_remove_container_images,
         mock.patch.object(uninstall, "remove_services") as mock_remove_services,
-        mock.patch.object(uninstall, "reload_daemon") as mock_reload_daemon,
+        mock.patch.object(
+            uninstall.systemctl_utils, "reload_daemon"
+        ) as mock_reload_daemon,
         mock.patch.object(uninstall, "remove_data") as mock_remove_data,
         mock.patch.object(uninstall, "remove_secrets") as mock_remove_secrets,
     ):
-        mock_stop_containers.return_value = True
+        mock_stop_service.return_value = True
         mock_remove_container_images.return_value = True
         mock_remove_services.return_value = True
         mock_reload_daemon.return_value = True
@@ -212,7 +137,7 @@ def test_uninstall_run(capsys):
         mock_args.quiet = False
         assert uninstall.run(mock_args)
 
-        mock_stop_containers.assert_called_once()
+        mock_stop_service.assert_called_once()
         mock_remove_container_images.assert_called_once()
         mock_remove_services.assert_called_once()
         mock_reload_daemon.assert_called_once()
@@ -222,3 +147,36 @@ def test_uninstall_run(capsys):
         captured = capsys.readouterr()
         uninstall_message = f"{settings.SERVER_SOFTWARE_NAME} uninstalled successfully."
         assert captured.out.strip() == uninstall_message
+
+
+def test_uninstall_run_exits_early_if_cannot_stop(capsys):
+    """Test the command exits early if "stop_services" fails."""
+    mock_args = argparse.Namespace()
+    with (
+        mock.patch.object(
+            uninstall.systemctl_utils, "stop_service"
+        ) as mock_stop_service,
+        mock.patch.object(
+            uninstall, "remove_container_images"
+        ) as mock_remove_container_images,
+        mock.patch.object(uninstall, "remove_services") as mock_remove_services,
+        mock.patch.object(
+            uninstall.systemctl_utils, "reload_daemon"
+        ) as mock_reload_daemon,
+        mock.patch.object(uninstall, "remove_data") as mock_remove_data,
+        mock.patch.object(uninstall, "remove_secrets") as mock_remove_secrets,
+    ):
+        mock_stop_service.return_value = False
+
+        mock_args.quiet = False
+        assert not uninstall.run(mock_args)
+
+        mock_stop_service.assert_called_once()
+        mock_remove_container_images.assert_not_called()
+        mock_remove_services.assert_not_called()
+        mock_reload_daemon.assert_not_called()
+        mock_remove_data.assert_not_called()
+        mock_remove_secrets.assert_not_called()
+
+        captured = capsys.readouterr()
+        assert "uninstalled successfully" not in captured.out

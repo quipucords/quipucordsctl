@@ -333,3 +333,100 @@ def test_remove_image_already_removed(mock_run_command, faker, caplog):
 
     assert not podman_utils.remove_image(image_id)
     assert f"Podman failed to remove image '{image_id}'." == caplog.messages[-1]
+
+
+def test_list_expected_podman_container_images(
+    tmp_path: pathlib.Path, monkeypatch, faker
+):
+    """Test test_list_expected_podman_container_images returns expected values."""
+    systemd_units_dir = pathlib.Path(tmp_path) / "systemd"
+    monkeypatch.setattr(
+        "quipucordsctl.podman_utils.settings.SYSTEMD_UNITS_DIR",
+        systemd_units_dir,
+    )
+    pathlib.Path.mkdir(systemd_units_dir)
+    # Let's create systemd unit files with container Image paths
+    container_images = []
+    for unit_file in settings.TEMPLATE_SYSTEMD_UNITS_FILENAMES:
+        unit_file_path = systemd_units_dir / unit_file
+        if unit_file_path.suffix == ".container":
+            container_image = f"quay.io/{faker.slug()}/{faker.slug()}:latest"
+            # let's create a bad unit file for testing Image skipping logic.
+            if unit_file == "quipucords-redis.container":
+                unit_file_content = f"Requires=podman.socket\nImage={container_image}\n"
+            else:
+                unit_file_content = (
+                    "\n"
+                    "[Unit]\n"
+                    "Requires=podman.socket\n"
+                    "\n"
+                    "[Container]\n"
+                    f"Image={container_image}\n"
+                )
+                container_images.append(container_image)
+            unit_file_path.write_text(unit_file_content)
+
+    container_images = set(container_images)
+    assert len(container_images) > 1
+    actual_container_images = podman_utils.list_expected_podman_container_images()
+    assert actual_container_images == container_images
+
+
+@pytest.mark.parametrize(
+    "image_name,expected_registry",
+    (
+        ("example.com/foo/bar", "example.com"),
+        ("example.com/foo/bar:biz", "example.com"),
+        ("example.com/bar", "example.com"),
+        ("example.com/bar:biz", "example.com"),
+        ("example.com:8888/foo/bar", "example.com:8888"),
+        ("example.com:8888/foo/bar:biz", "example.com:8888"),
+        ("localhost/bar:biz", "localhost"),
+        ("bar:biz", settings.DEFAULT_PODMAN_REGISTRY),
+        ("bar", settings.DEFAULT_PODMAN_REGISTRY),
+    ),
+)
+def test_get_registry_from_image_name(image_name, expected_registry):
+    """Test get_registry_from_image_name returns expected values."""
+    registry = podman_utils.get_registry_from_image_name(image_name)
+    assert registry == expected_registry
+
+
+@mock.patch.object(podman_utils, "shell_utils")
+def test_pull_image(mock_shell_utils, faker):
+    """Test pull_image returns True on the happy path."""
+    mock_shell_utils.run_command.return_value = None, None, 0
+    image_name = faker.slug()
+    assert podman_utils.pull_image(image_name)
+
+
+@mock.patch.object(podman_utils, "shell_utils")
+def test_pull_image_error(mock_shell_utils, faker, caplog):
+    """Test pull_image logs an error and returns False returns when an error occurs."""
+    caplog.set_level(logging.ERROR)
+    mock_shell_utils.run_command.return_value = None, None, 1
+    image_name = faker.slug()
+    assert not podman_utils.pull_image(image_name)
+    assert image_name in caplog.messages[-1]
+
+
+def test_verify_podman_argument_string(faker):
+    """Test verify_podman_argument_string passes silently with valid inputs."""
+    podman_utils.verify_podman_argument_string(faker.word(), faker.word())
+    podman_utils.verify_podman_argument_string(faker.word(), faker.slug())
+    podman_utils.verify_podman_argument_string(faker.word(), faker.sentence())
+    assert True  # just to assert that no exceptions were raised
+
+
+@pytest.mark.parametrize("value", (["a"], {"a": "b"}, None, True, 1.0, 1e1, object))
+def test_verify_podman_argument_string_type_error(value):
+    """Test verify_podman_argument_string raises TypeError."""
+    with pytest.raises(TypeError):
+        podman_utils.verify_podman_argument_string("thing", value)
+
+
+@pytest.mark.parametrize("value", (" ", "\t", "\n", "    "))
+def test_verify_podman_argument_string_value_error(value):
+    """Test verify_podman_argument_string raises ValueError."""
+    with pytest.raises(ValueError):
+        podman_utils.verify_podman_argument_string("thing", value)

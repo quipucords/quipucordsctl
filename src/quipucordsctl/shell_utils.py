@@ -10,8 +10,6 @@ from quipucordsctl import settings
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_WAIT_TIMEOUT = 60  # in seconds
-
 
 def get_env(name: str) -> str | None:
     """Get the value of the specified environment variable."""
@@ -56,7 +54,7 @@ def run_command(
         raise TypeError(_("Command arguments must be strings. Got: %r") % command)
     logger.debug(_("Invoking subprocess: %s"), " ".join(map(shlex.quote, command)))
     if wait_timeout is None:
-        wait_timeout = DEFAULT_WAIT_TIMEOUT
+        wait_timeout = settings.DEFAULT_SUBPROCESS_WAIT_TIMEOUT
         logger.debug(
             _("Command has %(wait_timeout)s seconds timeout."),
             {"wait_timeout": wait_timeout},

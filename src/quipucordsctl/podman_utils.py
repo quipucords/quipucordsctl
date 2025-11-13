@@ -1,5 +1,6 @@
 """Functions to simplify interfacing with podman."""
 
+import configparser
 import json
 import logging
 import os
@@ -9,7 +10,7 @@ import textwrap
 from gettext import gettext as _
 from urllib import parse
 
-from quipucordsctl import settings, shell_utils
+from quipucordsctl import settings, shell_utils, systemdunitparser
 
 logger = logging.getLogger(__name__)
 MACOS_DEFAULT_PODMAN_URL = "unix:///var/run/docker.sock"
@@ -92,6 +93,24 @@ def ensure_podman_socket(base_url: str | None = None):
         )
 
 
+def get_registry_from_image_name(
+    image_name: str, default_registry: str | None = None
+) -> str:
+    """Get the registry, if set, from the given container image name."""
+    if not default_registry:
+        default_registry = settings.DEFAULT_PODMAN_REGISTRY
+    if "/" not in image_name:
+        return default_registry
+
+    first_part = image_name.split("/", 1)[0]
+    # Note that "localhost" is a known universal special case.
+    return (
+        first_part
+        if "." in first_part or ":" in first_part or first_part == "localhost"
+        else default_registry
+    )
+
+
 def ensure_cgroups_v2():
     """
     Ensure that cgroups v2 is enabled.
@@ -123,10 +142,63 @@ def ensure_cgroups_v2():
         raise PodmanIsNotReadyError(_("cgroups v2 is required but not available."))
 
 
+def list_expected_podman_container_images():
+    """List expected container images as defined by installed configs."""
+    unique_images = set()
+
+    unit_files = (
+        settings.SYSTEMD_UNITS_DIR / unit_file
+        for unit_file in settings.TEMPLATE_SYSTEMD_UNITS_FILENAMES
+    )
+    unit_files = (
+        unit_file
+        for unit_file in unit_files
+        if unit_file.exists() and unit_file.suffix == ".container"
+    )
+
+    for unit_file in unit_files:
+        unit_file_config = systemdunitparser.SystemdUnitParser()
+        try:
+            unit_file_config.read(unit_file)
+        except configparser.MissingSectionHeaderError:
+            logger.warning(
+                _(
+                    "Skipping the %(unit_file)s container file due to"
+                    " missing section headers."
+                ),
+                {"unit_file": unit_file.name},
+            )
+
+        if "Container" in unit_file_config.sections() and (
+            image := unit_file_config.get("Container", "Image")
+        ):
+            unique_images.add(image)
+
+    return unique_images
+
+
+def verify_podman_argument_string(name: str, value: object):
+    """
+    Verify the given value is a non-empty string.
+
+    This function exists to sanity-check dynamic values that would be passed
+    into podman subprocess calls such as image or secret names that we want
+    to ensure are always strings and never empty.
+    """
+    if not isinstance(value, str):
+        raise TypeError(
+            _("Unexpected type '%(type)s' for %(name)s with value %(value)r.")
+            % {"type": type(value).__name__, "name": name, "value": value},
+        )
+    if not value.strip():
+        raise ValueError(_("Missing value for %(name)s.") % {"name": name})
+
+
 def secret_exists(secret_name: str) -> bool:
     """Simply check if a secret exists."""
+    verify_podman_argument_string(_("podman secret name"), secret_name)
     __, __, exit_code = shell_utils.run_command(
-        ["podman", "secret", "exists", str(secret_name)], raise_error=False
+        ["podman", "secret", "exists", secret_name], raise_error=False
     )
     if exit_code == 0:
         logger.debug(
@@ -143,6 +215,7 @@ def secret_exists(secret_name: str) -> bool:
 
 def set_secret(secret_name: str, secret_value: str, allow_replace=True) -> bool:
     """Set or replace a podman secret."""
+    verify_podman_argument_string(_("podman secret name"), secret_name)
     exists = secret_exists(secret_name)
     if exists:
         if allow_replace:
@@ -169,7 +242,7 @@ def set_secret(secret_name: str, secret_value: str, allow_replace=True) -> bool:
     if exists:
         delete_secret(secret_name)
     __, __, exit_code = shell_utils.run_command(
-        ["podman", "secret", "create", str(secret_name), "-"],
+        ["podman", "secret", "create", secret_name, "-"],
         raise_error=False,
         stdin=secret_value,
     )
@@ -189,8 +262,9 @@ def set_secret(secret_name: str, secret_value: str, allow_replace=True) -> bool:
 
 def delete_secret(secret_name: str) -> bool:
     """Delete a podman secret."""
+    verify_podman_argument_string(_("podman secret name"), secret_name)
     __, __, exit_code = shell_utils.run_command(
-        ["podman", "secret", "rm", str(secret_name)], raise_error=False
+        ["podman", "secret", "rm", secret_name], raise_error=False
     )
     if exit_code == 0:
         logger.info(
@@ -207,8 +281,9 @@ def delete_secret(secret_name: str) -> bool:
 
 def remove_image(image_id: str) -> bool:
     """Remove a podman image ID."""
+    verify_podman_argument_string(_("podman image ID"), image_id)
     __, __, exit_code = shell_utils.run_command(
-        ["podman", "image", "rm", str(image_id)], raise_error=False
+        ["podman", "image", "rm", image_id], raise_error=False
     )
     if exit_code == 0:
         logger.info(
@@ -218,4 +293,18 @@ def remove_image(image_id: str) -> bool:
     logger.error(
         _("Podman failed to remove image '%(image_id)s'."), {"image_id": image_id}
     )
+    return False
+
+
+def pull_image(image_id: str, wait_timeout: int = None) -> bool:
+    """Pull the podman given container image name+tag."""
+    verify_podman_argument_string(_("podman image ID"), image_id)
+    if wait_timeout is None:
+        wait_timeout = settings.DEFAULT_PODMAN_PULL_TIMEOUT
+    __, __, exit_code = shell_utils.run_command(
+        ["podman", "pull", image_id], raise_error=False, wait_timeout=wait_timeout
+    )
+    if exit_code == 0:
+        return True
+    logger.error(_("Failed to pull image %(image)s."), {"image": image_id})
     return False
