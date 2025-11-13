@@ -2,9 +2,12 @@
 
 import logging
 import os
+import pathlib
 import shlex
 import subprocess
+import sys
 from gettext import gettext as _
+from importlib import resources
 
 from quipucordsctl import settings
 
@@ -42,6 +45,32 @@ def confirm(prompt: str | None = None) -> bool:
             print(_("Please answer with 'y' or 'n'."))
             user_input = None
     return False
+
+
+def is_rpm_exec() -> bool:
+    """Return True if we're running the RPM installed command."""
+    rpm_installed_exec = f"/usr/bin/{settings.PROGRAM_NAME}"
+    if pathlib.Path(rpm_installed_exec).exists():
+        return pathlib.Path(sys.argv[0]).samefile(rpm_installed_exec)
+    return False
+
+
+def template_dir() -> pathlib.Path:
+    """Return the template directory for the running command."""
+    if is_rpm_exec():
+        return pathlib.Path(f"/usr/share/{settings.PROGRAM_NAME}")
+    else:
+        return pathlib.Path(str(resources.files("quipucordsctl").joinpath("templates")))
+
+
+def systemd_template_dir() -> pathlib.Path:
+    """Return the systemd template directory for the running command."""
+    return template_dir().joinpath("config")
+
+
+def env_template_dir() -> pathlib.Path:
+    """Return the env template directory for the running command."""
+    return template_dir().joinpath("env")
 
 
 def run_command(
