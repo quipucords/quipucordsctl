@@ -44,16 +44,16 @@ def setup_parser(parser: argparse.ArgumentParser) -> None:
         "-t",
         "--timeout",
         type=argparse_utils.non_negative_integer,
-        default=podman_utils.DEFAULT_PODMAN_PULL_TIMEOUT,
+        default=settings.DEFAULT_PODMAN_PULL_TIMEOUT,
         help=_(
             "Maximum number of seconds to wait for `podman pull` to complete "
             "(default: %(default)s)"
         )
-        % {"default": podman_utils.DEFAULT_PODMAN_PULL_TIMEOUT},
+        % {"default": settings.DEFAULT_PODMAN_PULL_TIMEOUT},
     )
 
 
-def pull_latest_images():
+def pull_latest_images(timeout: int | None = None) -> bool:
     """
     Pull the images defined in the updated configs.
 
@@ -63,7 +63,7 @@ def pull_latest_images():
     """
     failures = []
     for image in podman_utils.list_expected_podman_container_images():
-        if not podman_utils.pull_image(image):
+        if not podman_utils.pull_image(image, timeout):
             failures.append(image)
     if failures:
         logger.error(
@@ -133,7 +133,7 @@ def run(args: argparse.Namespace) -> bool:
             ),
             {"server_software_name": settings.SERVER_SOFTWARE_NAME},
         )
-    elif not pull_latest_images():
+    elif not pull_latest_images(args.timeout):
         return False
 
     if not args.quiet:

@@ -6,6 +6,7 @@ from unittest import mock
 
 import pytest
 
+from quipucordsctl import settings
 from quipucordsctl.commands import upgrade
 
 
@@ -27,7 +28,7 @@ def test_get_description():
         ([], "no_pull", False),
         (["--timeout", "1701"], "timeout", 1701),
         (["-t", "1701"], "timeout", 1701),
-        ([], "timeout", upgrade.podman_utils.DEFAULT_PODMAN_PULL_TIMEOUT),
+        ([], "timeout", settings.DEFAULT_PODMAN_PULL_TIMEOUT),
     ),
 )
 def test_setup_parser(args, attr_name, expected):
