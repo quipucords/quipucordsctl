@@ -14,7 +14,6 @@ from quipucordsctl import settings, shell_utils, systemdunitparser
 
 logger = logging.getLogger(__name__)
 MACOS_DEFAULT_PODMAN_URL = "unix:///var/run/docker.sock"
-DEFAULT_PODMAN_PULL_TIMEOUT = 600  # seconds, or 10 minutes
 ENABLE_CGROUPS_V2_LONG_MESSAGE = _(
     textwrap.dedent(
         """
@@ -279,7 +278,7 @@ def remove_image(image_id: str) -> bool:
 def pull_image(nametag: str, wait_timeout: int = None) -> bool:
     """Pull the podman given container image name+tag."""
     if wait_timeout is None:
-        wait_timeout = DEFAULT_PODMAN_PULL_TIMEOUT
+        wait_timeout = settings.DEFAULT_PODMAN_PULL_TIMEOUT
     __, __, exit_code = shell_utils.run_command(
         ["podman", "pull", str(nametag)], raise_error=False, wait_timeout=wait_timeout
     )
