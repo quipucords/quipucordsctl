@@ -25,14 +25,17 @@ def remove_container_images():
         {"server_software_name": settings.SERVER_SOFTWARE_NAME},
     )
 
-    if unique_images := podman_utils.list_expected_podman_container_images():
-        if not all(podman_utils.remove_image(image) for image in unique_images):
-            logger.warning(
-                _(
-                    "Podman failed to remove at least one image. Please check logs "
-                    "and manually remove any remaining images if necessary."
-                ),
-            )
+    successes = [
+        podman_utils.remove_image(image)
+        for image in podman_utils.list_expected_podman_container_images()
+    ]
+    if not all(successes):
+        logger.warning(
+            _(
+                "Podman failed to remove at least one image. Please check logs "
+                "and manually remove any remaining images if necessary."
+            ),
+        )
 
 
 def remove_file(file_path: Path) -> bool:
