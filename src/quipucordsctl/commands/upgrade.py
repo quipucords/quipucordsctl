@@ -61,11 +61,11 @@ def pull_latest_images(timeout: int | None = None) -> bool:
     then log appropriate error messages and return False. Else, return True if all
     images pull successfully.
     """
-    failures = []
-    for image in podman_utils.list_expected_podman_container_images():
-        if not podman_utils.pull_image(image, timeout):
-            failures.append(image)
-    if failures:
+    successes = [
+        podman_utils.pull_image(image)
+        for image in podman_utils.list_expected_podman_container_images()
+    ]
+    if not all(successes):
         logger.error(
             _(
                 "Failed to pull at least one image. "
