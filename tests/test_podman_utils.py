@@ -382,8 +382,8 @@ def test_list_expected_podman_container_images(
         ("example.com:8888/foo/bar", "example.com:8888"),
         ("example.com:8888/foo/bar:biz", "example.com:8888"),
         ("localhost/bar:biz", "localhost"),
-        ("bar:biz", "registry.redhat.io"),
-        ("bar", "registry.redhat.io"),
+        ("bar:biz", settings.DEFAULT_PODMAN_REGISTRY),
+        ("bar", settings.DEFAULT_PODMAN_REGISTRY),
     ),
 )
 def test_get_registry_from_image_name(image_name, expected_registry):

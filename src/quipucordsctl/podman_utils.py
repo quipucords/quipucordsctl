@@ -95,9 +95,11 @@ def ensure_podman_socket(base_url: str | None = None):
 
 
 def get_registry_from_image_name(
-    image_name: str, default_registry: str = "registry.redhat.io"
+    image_name: str, default_registry: str | None = None
 ) -> str:
     """Get the registry, if set, from the given container image name."""
+    if not default_registry:
+        default_registry = settings.DEFAULT_PODMAN_REGISTRY
     if "/" not in image_name:
         return default_registry
 
