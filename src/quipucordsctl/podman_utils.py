@@ -177,10 +177,28 @@ def list_expected_podman_container_images():
     return unique_images
 
 
+def verify_podman_argument_string(name: str, value: object):
+    """
+    Verify the given value is a non-empty string.
+
+    This function exists to sanity-check dynamic values that would be passed
+    into podman subprocess calls such as image or secret names that we want
+    to ensure are always strings and never empty.
+    """
+    if not isinstance(value, str):
+        raise TypeError(
+            _("Unexpected type '%(type)s' for %(name)s with value %(value)r.")
+            % {"type": type(value).__name__, "name": name, "value": value},
+        )
+    if not value.strip():
+        raise ValueError(_("Missing value for %(name)s.") % {"name": name})
+
+
 def secret_exists(secret_name: str) -> bool:
     """Simply check if a secret exists."""
+    verify_podman_argument_string(_("podman secret name"), secret_name)
     __, __, exit_code = shell_utils.run_command(
-        ["podman", "secret", "exists", str(secret_name)], raise_error=False
+        ["podman", "secret", "exists", secret_name], raise_error=False
     )
     if exit_code == 0:
         logger.debug(
@@ -197,6 +215,7 @@ def secret_exists(secret_name: str) -> bool:
 
 def set_secret(secret_name: str, secret_value: str, allow_replace=True) -> bool:
     """Set or replace a podman secret."""
+    verify_podman_argument_string(_("podman secret name"), secret_name)
     exists = secret_exists(secret_name)
     if exists:
         if allow_replace:
@@ -223,7 +242,7 @@ def set_secret(secret_name: str, secret_value: str, allow_replace=True) -> bool:
     if exists:
         delete_secret(secret_name)
     __, __, exit_code = shell_utils.run_command(
-        ["podman", "secret", "create", str(secret_name), "-"],
+        ["podman", "secret", "create", secret_name, "-"],
         raise_error=False,
         stdin=secret_value,
     )
@@ -243,8 +262,9 @@ def set_secret(secret_name: str, secret_value: str, allow_replace=True) -> bool:
 
 def delete_secret(secret_name: str) -> bool:
     """Delete a podman secret."""
+    verify_podman_argument_string(_("podman secret name"), secret_name)
     __, __, exit_code = shell_utils.run_command(
-        ["podman", "secret", "rm", str(secret_name)], raise_error=False
+        ["podman", "secret", "rm", secret_name], raise_error=False
     )
     if exit_code == 0:
         logger.info(
@@ -261,8 +281,9 @@ def delete_secret(secret_name: str) -> bool:
 
 def remove_image(image_id: str) -> bool:
     """Remove a podman image ID."""
+    verify_podman_argument_string(_("podman image ID"), image_id)
     __, __, exit_code = shell_utils.run_command(
-        ["podman", "image", "rm", str(image_id)], raise_error=False
+        ["podman", "image", "rm", image_id], raise_error=False
     )
     if exit_code == 0:
         logger.info(
@@ -275,14 +296,15 @@ def remove_image(image_id: str) -> bool:
     return False
 
 
-def pull_image(nametag: str, wait_timeout: int = None) -> bool:
+def pull_image(image_id: str, wait_timeout: int = None) -> bool:
     """Pull the podman given container image name+tag."""
+    verify_podman_argument_string(_("podman image ID"), image_id)
     if wait_timeout is None:
         wait_timeout = settings.DEFAULT_PODMAN_PULL_TIMEOUT
     __, __, exit_code = shell_utils.run_command(
-        ["podman", "pull", str(nametag)], raise_error=False, wait_timeout=wait_timeout
+        ["podman", "pull", image_id], raise_error=False, wait_timeout=wait_timeout
     )
     if exit_code == 0:
         return True
-    logger.error(_("Failed to pull image %(image)s."), {"image": nametag})
+    logger.error(_("Failed to pull image %(image)s."), {"image": image_id})
     return False

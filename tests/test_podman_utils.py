@@ -408,3 +408,25 @@ def test_pull_image_error(mock_shell_utils, faker, caplog):
     image_name = faker.slug()
     assert not podman_utils.pull_image(image_name)
     assert image_name in caplog.messages[-1]
+
+
+def test_verify_podman_argument_string(faker):
+    """Test verify_podman_argument_string passes silently with valid inputs."""
+    podman_utils.verify_podman_argument_string(faker.word(), faker.word())
+    podman_utils.verify_podman_argument_string(faker.word(), faker.slug())
+    podman_utils.verify_podman_argument_string(faker.word(), faker.sentence())
+    assert True  # just to assert that no exceptions were raised
+
+
+@pytest.mark.parametrize("value", (["a"], {"a": "b"}, None, True, 1.0, 1e1, object))
+def test_verify_podman_argument_string_type_error(value):
+    """Test verify_podman_argument_string raises TypeError."""
+    with pytest.raises(TypeError):
+        podman_utils.verify_podman_argument_string("thing", value)
+
+
+@pytest.mark.parametrize("value", (" ", "\t", "\n", "    "))
+def test_verify_podman_argument_string_value_error(value):
+    """Test verify_podman_argument_string raises ValueError."""
+    with pytest.raises(ValueError):
+        podman_utils.verify_podman_argument_string("thing", value)
