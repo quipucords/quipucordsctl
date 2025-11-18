@@ -13,6 +13,7 @@ from gettext import gettext as _
 from typing import Optional
 
 from quipucordsctl import settings
+from quipucordsctl.systemctl_utils import check_service_running
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +25,7 @@ class StatusType(Enum):
     BAD_PERMISSIONS = "bad_permissions"
     WRONG_OWNER = "wrong_owner"
     MISSING = "missing"
+    OK_MISSING = "ok_missing"
 
 
 @dataclass
@@ -43,7 +45,9 @@ def get_help() -> str:
     ) % {"server_software_name": settings.SERVER_SOFTWARE_NAME}
 
 
-def check_directory_status(path: pathlib.Path) -> PathCheckResult:
+def check_directory_status(
+    path: pathlib.Path, missing_ok: bool = False
+) -> PathCheckResult:
     """
     Check the status of a directory.
 
@@ -52,11 +56,15 @@ def check_directory_status(path: pathlib.Path) -> PathCheckResult:
         missing.
     """
     try:
+        missing_status = StatusType.MISSING
+        if missing_ok:
+            missing_status = StatusType.OK_MISSING
+
         if not path.exists():
-            return PathCheckResult(StatusType.MISSING, path)
+            return PathCheckResult(missing_status, path)
 
         if not path.is_dir():
-            return PathCheckResult(StatusType.MISSING, path)
+            return PathCheckResult(missing_status, path)
 
         path_stat = path.stat()
 
@@ -75,7 +83,7 @@ def check_directory_status(path: pathlib.Path) -> PathCheckResult:
         return PathCheckResult(StatusType.BAD_PERMISSIONS, path)
 
 
-def check_file_status(path: pathlib.Path) -> PathCheckResult:
+def check_file_status(path: pathlib.Path, missing_ok: bool = False) -> PathCheckResult:
     """
     Check the status of a file.
 
@@ -84,11 +92,15 @@ def check_file_status(path: pathlib.Path) -> PathCheckResult:
         missing.
     """
     try:
+        missing_status = StatusType.MISSING
+        if missing_ok:
+            missing_status = StatusType.OK_MISSING
+
         if not path.exists():
-            return PathCheckResult(StatusType.MISSING, path)
+            return PathCheckResult(missing_status, path)
 
         if not path.is_file():
-            return PathCheckResult(StatusType.MISSING, path)
+            return PathCheckResult(missing_status, path)
 
         path_stat = path.stat()
 
@@ -186,31 +198,38 @@ def log_path_status(result: PathCheckResult) -> None:
         _log_wrong_owner_status(result)
     elif result.status == StatusType.MISSING:
         logger.error(_("%(path)s: ERROR: Missing"), {"path": result.path})
+    elif result.status == StatusType.OK_MISSING:
+        logger.info(
+            _("%(path)s: Missing, will be created during server startup"),
+            {"path": result.path},
+        )
     else:
         logger.error(_("%(path)s: ERROR: Unknown status"), {"path": result.path})
 
 
-def check_directory_and_print_status(path: pathlib.Path) -> bool:
+def check_directory_and_print_status(
+    path: pathlib.Path, missing_ok: bool = False
+) -> bool:
     """Check a directory status and print the result.
 
     Returns True if OK, False if there's an issue.
     """
-    result = check_directory_status(path)
+    result = check_directory_status(path, missing_ok=missing_ok)
     log_path_status(result)
-    return result.status == StatusType.OK
+    return result.status in (StatusType.OK, StatusType.OK_MISSING)
 
 
-def check_file_and_print_status(path: pathlib.Path) -> bool:
+def check_file_and_print_status(path: pathlib.Path, missing_ok: bool = False) -> bool:
     """Check a file status and print the result.
 
     Returns True if OK, False if there's an issue.
     """
-    result = check_file_status(path)
+    result = check_file_status(path, missing_ok=missing_ok)
     log_path_status(result)
-    return result.status == StatusType.OK
+    return result.status in (StatusType.OK, StatusType.OK_MISSING)
 
 
-def _check_data_directories() -> int:
+def _check_data_directories(server_running: bool = True) -> int:
     """Check main data directory and subdirectories. Returns error count."""
     error_count = 0
 
@@ -225,13 +244,15 @@ def _check_data_directories() -> int:
 
     # Check database userdata directory (special case)
     db_userdata_dir = settings.SERVER_DATA_DIR / "db" / "userdata"
-    if not check_directory_and_print_status(db_userdata_dir):
+    if not check_directory_and_print_status(
+        db_userdata_dir, missing_ok=not server_running
+    ):
         error_count += 1
 
     return error_count
 
 
-def _check_required_files() -> int:
+def _check_required_files(server_running: bool = True) -> int:
     """Check specific files that should exist. Returns error count."""
     error_count = 0
 
@@ -241,7 +262,7 @@ def _check_required_files() -> int:
     ]
 
     for file_path in specific_files:
-        if not check_file_and_print_status(file_path):
+        if not check_file_and_print_status(file_path, missing_ok=not server_running):
             error_count += 1
 
     return error_count
@@ -285,10 +306,11 @@ def run(args: argparse.Namespace) -> bool:
         _("Checking %(server_software_name)s setup and configurations."),
         {"server_software_name": settings.SERVER_SOFTWARE_NAME},
     )
+    server_running = check_service_running()
 
     error_count = 0
-    error_count += _check_data_directories()
-    error_count += _check_required_files()
+    error_count += _check_data_directories(server_running=server_running)
+    error_count += _check_required_files(server_running=server_running)
     error_count += _check_configuration_directories()
     error_count += _check_configuration_files()
 

@@ -12,11 +12,20 @@ from quipucordsctl.commands import check
 from quipucordsctl.commands.check import PathCheckResult, StatusType
 
 
-def test_check_directory_status_missing(tmp_path: pathlib.Path):
+@pytest.mark.parametrize(
+    "missing_ok,expected_status",
+    (
+        (False, StatusType.MISSING),
+        (True, StatusType.OK_MISSING),
+    ),
+)
+def test_check_directory_status_missing(
+    tmp_path: pathlib.Path, missing_ok, expected_status
+):
     """Test check_directory_status returns MISSING for missing directory."""
     missing_dir = tmp_path / "missing_directory"
-    result = check.check_directory_status(missing_dir)
-    assert result.status == StatusType.MISSING
+    result = check.check_directory_status(missing_dir, missing_ok=missing_ok)
+    assert result.status == expected_status
     assert result.path == missing_dir
     assert result.stat_info is None
 
@@ -56,11 +65,18 @@ def test_check_directory_status_bad_permissions(tmp_path: pathlib.Path):
         bad_perms_dir.chmod(0o755)
 
 
-def test_check_file_status_missing(tmp_path: pathlib.Path):
+@pytest.mark.parametrize(
+    "missing_ok,expected_status",
+    (
+        (False, StatusType.MISSING),
+        (True, StatusType.OK_MISSING),
+    ),
+)
+def test_check_file_status_missing(tmp_path: pathlib.Path, missing_ok, expected_status):
     """Test check_file_status returns MISSING for missing file."""
     missing_file = tmp_path / "missing_file.txt"
-    result = check.check_file_status(missing_file)
-    assert result.status == StatusType.MISSING
+    result = check.check_file_status(missing_file, missing_ok=missing_ok)
+    assert result.status == expected_status
     assert result.path == missing_file
     assert result.stat_info is None
 
@@ -124,6 +140,19 @@ def test_log_path_status_missing(caplog, tmp_path: pathlib.Path):
 
     assert len(caplog.messages) == 1
     assert "ERROR: Missing" in caplog.messages[0]
+    assert str(test_path) in caplog.messages[0]
+
+
+def test_log_path_status_ok_missing(caplog, tmp_path: pathlib.Path):
+    """Test log_path_status with OK_MISSING status."""
+    caplog.set_level(logging.INFO)
+    test_path = tmp_path / "missing_path"
+
+    result = PathCheckResult(StatusType.OK_MISSING, test_path)
+    check.log_path_status(result)
+
+    assert len(caplog.messages) == 1
+    assert "Missing, will be created during server startup" in caplog.messages[0]
     assert str(test_path) in caplog.messages[0]
 
 
@@ -199,12 +228,14 @@ def create_full_quipucords_structure(temp_dirs: dict[str, pathlib.Path]) -> None
         (temp_dirs["SYSTEMD_UNITS_DIR"] / unit_filename).touch()
 
 
+@mock.patch.object(check, "check_service_running")
 def test_run_all_files_missing(
-    temp_config_directories: dict[str, pathlib.Path], caplog
+    mock_check_running, temp_config_directories: dict[str, pathlib.Path], caplog
 ):
     """Test run when all files and directories are missing."""
     caplog.set_level(logging.INFO)
     mock_args = mock.Mock()
+    mock_check_running.side_effect = [True]
 
     with pytest.raises(SystemExit) as exc_info:
         check.run(mock_args)
@@ -285,35 +316,53 @@ def test_run_permission_issues(
         server_key.chmod(0o644)
 
 
+@pytest.mark.parametrize(
+    "missing_ok,expected_status",
+    (
+        (False, StatusType.MISSING),
+        (True, StatusType.OK_MISSING),
+    ),
+)
 def test_check_directory_and_print_status_returns_correct_status(
-    tmp_path: pathlib.Path,
+    tmp_path: pathlib.Path, missing_ok, expected_status
 ):
     """Test that check_directory_and_print_status returns False for missing dir."""
     missing_dir = tmp_path / "missing"
 
     with mock.patch.object(check, "log_path_status") as mock_log:
-        result = check.check_directory_and_print_status(missing_dir)
+        result = check.check_directory_and_print_status(
+            missing_dir, missing_ok=missing_ok
+        )
 
-        assert result is False  # Missing directory should return False
+        assert result is missing_ok  # Missing directory should return False
         mock_log.assert_called_once()
         # Verify the PathCheckResult passed to log_path_status
         call_args = mock_log.call_args[0][0]
-        assert call_args.status == StatusType.MISSING
+        assert call_args.status == expected_status
         assert call_args.path == missing_dir
 
 
-def test_check_file_and_print_status_returns_correct_status(tmp_path: pathlib.Path):
+@pytest.mark.parametrize(
+    "missing_ok,expected_status",
+    (
+        (False, StatusType.MISSING),
+        (True, StatusType.OK_MISSING),
+    ),
+)
+def test_check_file_and_print_status_returns_correct_status(
+    tmp_path: pathlib.Path, missing_ok, expected_status
+):
     """Test that check_file_and_print_status returns False for missing file."""
     missing_file = tmp_path / "missing.txt"
 
     with mock.patch.object(check, "log_path_status") as mock_log:
-        result = check.check_file_and_print_status(missing_file)
+        result = check.check_file_and_print_status(missing_file, missing_ok=missing_ok)
 
-        assert result is False  # Missing file should return False
+        assert result is missing_ok  # Missing file should return False
         mock_log.assert_called_once()
         # Verify the PathCheckResult passed to log_path_status
         call_args = mock_log.call_args[0][0]
-        assert call_args.status == StatusType.MISSING
+        assert call_args.status == expected_status
         assert call_args.path == missing_file
 
 

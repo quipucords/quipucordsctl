@@ -43,3 +43,24 @@ def reload_daemon() -> bool:
     shell_utils.run_command(settings.SYSTEMCTL_USER_RESET_FAILED_CMD)
     shell_utils.run_command(settings.SYSTEMCTL_USER_DAEMON_RELOAD_CMD)
     return True
+
+
+def check_service_running() -> bool:
+    """Check if quipucords-app service is currently running."""
+    logger.debug(
+        _("Checking if %(server_software_name)s service is active"),
+        {
+            "server_software_name": settings.SERVER_SOFTWARE_NAME,
+        },
+    )
+    __, __, status_exit = shell_utils.run_command(
+        [
+            "systemctl",
+            "-q",
+            "--user",
+            "is-active",
+            f"{settings.SERVER_SOFTWARE_PACKAGE}-app.service",
+        ],
+        raise_error=False,
+    )
+    return status_exit == 0
