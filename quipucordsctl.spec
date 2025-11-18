@@ -1,9 +1,13 @@
+###############################################################
 %global product_name_lower quipucords
 %global product_name_title Quipucords
-%global version_ctl 2.2.0
 %global server_image quay.io/quipucords/quipucords:2.2
 %global ui_image quay.io/quipucords/quipucords-ui:2.2
+###############################################################
+
+%global version_ctl 2.2.0
 %global templates_dir src/quipucordsctl/templates
+%global product_name_upper %(echo %{product_name_lower} | tr '[:lower:]' '[:upper:]')
 
 ###############################################################
 # Build notes:
@@ -55,23 +59,31 @@ BuildRequires:  pyproject-rpm-macros
 BuildRequires:  python%{python3_pkgversion}-devel
 BuildRequires:  python%{python3_pkgversion}-wheel
 BuildRequires:  python%{python3_pkgversion}-setuptools
-# Note: default python3-babel /usr/bin/pybabel cannot compile uninstalled
-#       locales, so 'test' could not be compiled.
 %if 0%{?rhel} == 8
+# Note: On RHEL 8, the default python3-babel's /usr/bin/pybabel command cannot
+#       compile uninstalled locales, so 'test' could not be compiled.
+#       A newer version of pybabel (2.7.0+) needs to be installed and that
+#       is available via the python38-babel RPM.
+#
+#       The /usr/bin/pybabel-3.8 command is in the python38-babel RPM and there
+#       is no corresponding babel RPM to install.
 BuildRequires:  python38-babel
+%global __pybabel /usr/bin/pybabel-3.8
 %else
 BuildRequires:  python3-babel
-%endif
-# Note: python3-babel was not providing the /usr/bin/pybabel
-#       binary outside a virtual environment when building in COPR
-#       for all releases. Including the following package
-#       enabled this for us.
+# Note: python3-babel does not provide the /usr/bin/pybabel binary outside
+#       a virtual environment when building in COPR for all releases.
+#
+#       We need to include the babel package to enable this for us.
 BuildRequires:  babel
+%global __pybabel /usr/bin/pybabel
+%endif
 
 Requires:       bash
 Requires:       coreutils
 Requires:       podman >= 4.9.4
 Requires:       python%{python3_pkgversion}
+Requires:       python%{python3_pkgversion}-setuptools
 
 
 %description
@@ -87,14 +99,15 @@ sed -i \
   -e 's/^quipucordsctl = "quipucordsctl.__main__:main"$/%{name} = "quipucordsctl.__main__:main"/' \
   -e 's/^version = "0.1.0"$/version = "%{version}"/' \
   %{_builddir}/quipucordsctl-%{version}/pyproject.toml
+sed -i -E \
+  -e 's/^(PROGRAM_NAME\s*=\s*)"[^\"]*"(.*)$/\1"%{name}"\2/' \
+  -e 's/^(SERVER_SOFTWARE_PACKAGE\s*=\s*)"[^\"]*"(.*)$/\1"%{product_name_lower}"\2/' \
+  -e 's/^(SERVER_SOFTWARE_NAME\s*=\s*)"[^\"]*"(.*)$/\1"%{product_name_title}"\2/' \
+  -e 's/^(ENV_VAR_PREFIX\s*=\s*)"[^\"]*"(.*)$/\1"%{product_name_upper}_"\2/' \
+  %{_builddir}/quipucordsctl-%{version}/src/quipucordsctl/settings.py
 python%{python3_pkgversion} -m ensurepip
 python%{python3_pkgversion} -m pip install wheel setuptools
-
-%if 0%{?rhel} == 8
-python3 scripts/translations.py --pybabel /usr/bin/pybabel-3.8 compile
-%else
-python3 scripts/translations.py --pybabel /usr/bin/pybabel compile
-%endif
+python3 scripts/translations.py --pybabel %{__pybabel} compile
 
 %if 0%{?rhel} == 8 || 0%{?rhel} == 9
     %py3_build
@@ -147,11 +160,11 @@ sed -i 's#^Image=.*#Image=%{ui_image}#g' %{buildroot}/%{_datadir}/%{name}/config
 %{_datadir}/%{name}/env/env-db.env
 %{_datadir}/%{name}/env/env-redis.env
 %{_datadir}/%{name}/env/env-server.env
-%{python3_sitelib}/%{name}/
+%{python3_sitelib}/quipucordsctl/
 %if 0%{?rhel} == 8 || 0%{?rhel} == 9
-  %{python3_sitelib}/%{name}-*.egg-info/
+  %{python3_sitelib}/quipucordsctl-*.egg-info/
 %else
-  %{python3_sitelib}/%{name}-*.dist-info/
+  %{python3_sitelib}/quipucordsctl-*.dist-info/
 %endif
 
 %changelog
