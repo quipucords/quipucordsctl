@@ -36,6 +36,10 @@ sudo firewall-cmd --reload  # optional if you want external access
 
 # quipucordsctl
 
+## Contributing
+
+**Note**: If you use AI tools to generate code, please review our [Policy for AI-Generated Code](AI_POLICY.md) for disclosure and quality requirements.
+
 ## setup
 
 ```sh
