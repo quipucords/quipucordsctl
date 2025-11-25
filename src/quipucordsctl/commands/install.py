@@ -11,7 +11,7 @@ import types
 from datetime import datetime
 from gettext import gettext as _
 
-from quipucordsctl import podman_utils, settings, shell_utils
+from quipucordsctl import podman_utils, settings, shell_utils, systemctl_utils
 from quipucordsctl.commands import (
     reset_admin_password,
     reset_database_password,
@@ -312,6 +312,7 @@ def run(args: argparse.Namespace) -> bool:
     logger.debug("Starting install command")
     podman_utils.ensure_podman_socket()
     podman_utils.ensure_cgroups_v2()
+    systemctl_utils.ensure_systemd_user_session()
 
     if not reset_secrets(args):
         return False

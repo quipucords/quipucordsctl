@@ -61,6 +61,7 @@ def test_install_run(
     systemd_dir = temp_config_directories["SYSTEMD_UNITS_DIR"]
     with (
         mock.patch.object(install, "podman_utils") as podman_utils,
+        mock.patch.object(install, "systemctl_utils") as systemctl_utils,
         mock.patch.object(install, "reset_secrets") as reset_secrets,
         mock.patch.object(install, "systemctl_reload") as systemctl_reload,
     ):
@@ -70,6 +71,7 @@ def test_install_run(
 
         podman_utils.ensure_podman_socket.assert_called_once()
         podman_utils.ensure_cgroups_v2.assert_called_once()
+        systemctl_utils.ensure_systemd_user_session.assert_called_once()
         reset_secrets.assert_called_once_with(mock_args)
         systemctl_reload.assert_called_once()
 

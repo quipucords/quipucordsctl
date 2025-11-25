@@ -8,7 +8,7 @@ import sys
 from gettext import gettext as _
 from types import ModuleType
 
-from . import podman_utils, settings
+from . import podman_utils, settings, systemctl_utils
 
 logger = logging.getLogger(__name__)
 
@@ -134,6 +134,11 @@ def run():
             sys.exit(1)
         except podman_utils.PodmanIsNotReadyError as e:
             # can occur if podman is not available or running
+            print()
+            logger.error(e)
+            sys.exit(1)
+        except systemctl_utils.NoSystemdUserSessionError as e:
+            # systemctl user session is not available
             print()
             logger.error(e)
             sys.exit(1)
