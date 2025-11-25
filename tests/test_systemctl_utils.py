@@ -1,5 +1,6 @@
 """Test the systemctl_utils module."""
 
+import os
 from unittest import mock
 
 import pytest
@@ -58,4 +59,34 @@ def test_stop_service_failed_systemctl(mock_shell_utils):
             mock.call(settings.SYSTEMCTL_USER_STOP_QUIPUCORDS_APP),
             mock.call(settings.SYSTEMCTL_USER_STOP_QUIPUCORDS_NETWORK),
         )
+    )
+
+
+@mock.patch.dict(os.environ, {"XDG_RUNTIME_DIR": "/run/user/1234"}, clear=True)
+def test_valid_systemd_user_session(mock_shell_utils):
+    """Test ensure_systemd_user_session - happy path."""
+    mock_shell_utils.run_command.return_value = ("", "", 0)
+    assert not systemctl_utils.ensure_systemd_user_session()
+    mock_shell_utils.run_command.assert_called_once_with(
+        settings.SYSTEMCTL_USER_IS_SYSTEM_RUNNING_CMD
+    )
+
+
+@mock.patch.dict(os.environ, {}, clear=True)
+def test_invalid_systemd_user_session_no_env(mock_shell_utils):
+    """Test ensure_systemd_user_session - environment variable not set."""
+    mock_shell_utils.run_command.return_value = ("", "", 0)
+    with pytest.raises(systemctl_utils.NoSystemdUserSessionError):
+        assert not systemctl_utils.ensure_systemd_user_session()
+    mock_shell_utils.run_command.assert_not_called()
+
+
+@mock.patch.dict(os.environ, {"XDG_RUNTIME_DIR": "/run/user/1234"}, clear=True)
+def test_invalid_systemd_user_session_systemctl_error(mock_shell_utils):
+    """Test ensure_systemd_user_session - systemctl returned non-0 exit code."""
+    mock_shell_utils.run_command.return_value = ("", "", 1)
+    with pytest.raises(systemctl_utils.NoSystemdUserSessionError):
+        assert not systemctl_utils.ensure_systemd_user_session()
+    mock_shell_utils.run_command.assert_called_once_with(
+        settings.SYSTEMCTL_USER_IS_SYSTEM_RUNNING_CMD
     )

@@ -1,11 +1,46 @@
 """Shared systemctl helper functions."""
 
 import logging
+import os
 from gettext import gettext as _
 
 from quipucordsctl import settings, shell_utils
 
 logger = logging.getLogger(__name__)
+
+
+class NoSystemdUserSessionError(Exception):
+    """Exception raised when there is no systemd user session."""
+
+
+def ensure_systemd_user_session():
+    """Ensure that systemd user session is enabled."""
+    logger.debug(_("Ensuring systemd user session is enabled."))
+    if not os.getenv("XDG_RUNTIME_DIR"):
+        raise NoSystemdUserSessionError(
+            _(
+                "XDG_RUNTIME_DIR variable is not set. User systemd session will not "
+                "work properly and you will encounter issues when trying to start "
+                "%(server_software_name)s. If this is a remote machine, please SSH "
+                "directly as the current user (instead of using sudo or su)."
+            )
+            % {"server_software_name": settings.SERVER_SOFTWARE_NAME}
+        )
+
+    __, stderr, exit_code = shell_utils.run_command(
+        settings.SYSTEMCTL_USER_IS_SYSTEM_RUNNING_CMD
+    )
+    logger.debug(stderr)
+
+    if exit_code != 0:
+        raise NoSystemdUserSessionError(
+            _(
+                "systemctl self-check reported problems. "
+                "System is probably misconfigured and you are likely to encounter "
+                "issues when trying to start %(server_software_name)s."
+            )
+            % {"server_software_name": settings.SERVER_SOFTWARE_NAME}
+        )
 
 
 def stop_service() -> bool:

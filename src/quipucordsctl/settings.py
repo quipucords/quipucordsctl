@@ -62,6 +62,7 @@ SYSTEMD_SERVICE_FILENAMES = (
 # System commands commonly run
 SYSTEMCTL_USER_RESET_FAILED_CMD = ["systemctl", "--user", "reset-failed"]
 SYSTEMCTL_USER_DAEMON_RELOAD_CMD = ["systemctl", "--user", "daemon-reload"]
+SYSTEMCTL_USER_IS_SYSTEM_RUNNING_CMD = ["systemctl", "--user", "is-system-running"]
 SYSTEMCTL_USER_LIST_QUIPUCORDS_APP = [
     "systemctl",
     "-q",
