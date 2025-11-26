@@ -6,7 +6,13 @@ import shutil
 from gettext import gettext as _
 from pathlib import Path
 
-from quipucordsctl import podman_utils, settings, shell_utils, systemctl_utils
+from quipucordsctl import (
+    loginctl_utils,
+    podman_utils,
+    settings,
+    shell_utils,
+    systemctl_utils,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -151,6 +157,8 @@ def run(args: argparse.Namespace) -> bool:  # noqa: PLR0911
         return False
     remove_data()
     if not remove_secrets():
+        return False
+    if not loginctl_utils.check_linger():
         return False
     if not args.quiet:
         print(
