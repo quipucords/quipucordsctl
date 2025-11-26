@@ -56,8 +56,8 @@ def get_description() -> str:
             `--quiet` flags to bypass these required prompts.
             Please review the `--help` output for each of the `reset_*` commands for
             more details.
-            The `%(command_name)s` command will setup Linger for the current user, this can be
-            overridden with the `--no-linger` option.
+            The `%(command_name)s` command will setup Linger for the current user,
+            this can be overridden with the `--no-linger` option.
             """
         )
     ) % {

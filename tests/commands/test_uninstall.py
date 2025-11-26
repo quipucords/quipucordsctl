@@ -126,6 +126,9 @@ def test_uninstall_run(capsys):
         ) as mock_reload_daemon,
         mock.patch.object(uninstall, "remove_data") as mock_remove_data,
         mock.patch.object(uninstall, "remove_secrets") as mock_remove_secrets,
+        mock.patch.object(
+            uninstall.loginctl_utils, "check_linger"
+        ) as mock_check_linger,
     ):
         mock_stop_service.return_value = True
         mock_remove_container_images.return_value = True
@@ -133,6 +136,7 @@ def test_uninstall_run(capsys):
         mock_reload_daemon.return_value = True
         mock_remove_data.return_value = True
         mock_remove_secrets.return_value = True
+        mock_check_linger.return_value = True
 
         mock_args.quiet = False
         assert uninstall.run(mock_args)
