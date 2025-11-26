@@ -11,7 +11,13 @@ import types
 from datetime import datetime
 from gettext import gettext as _
 
-from quipucordsctl import podman_utils, settings, shell_utils, systemctl_utils
+from quipucordsctl import (
+    loginctl_utils,
+    podman_utils,
+    settings,
+    shell_utils,
+    systemctl_utils,
+)
 from quipucordsctl.commands import (
     reset_admin_password,
     reset_database_password,
@@ -19,7 +25,6 @@ from quipucordsctl.commands import (
     reset_redis_password,
     reset_session_secret,
 )
-from quipucordsctl.loginctl_utils import enable_linger
 from quipucordsctl.systemdunitparser import SystemdUnitParser
 
 INSTALL_SUCCESS_LONG_MESSAGE = _(
@@ -56,7 +61,7 @@ def get_description() -> str:
             `--quiet` flags to bypass these required prompts.
             Please review the `--help` output for each of the `reset_*` commands for
             more details.
-            The `%(command_name)s` command will setup Linger for the current user,
+            The `%(command_name)s` command will set up Linger for the current user,
             this can be overridden with the `--no-linger` option.
             """
         )
@@ -74,7 +79,7 @@ def setup_parser(parser: argparse.ArgumentParser) -> None:
         "--no-linger",
         action="store_true",
         help=_(
-            "Do not automatically setup Linger for the current user"
+            "Do not automatically set up Linger for the current user"
             " (default: False, Linger will be enabled)",
         ),
     )
@@ -352,7 +357,7 @@ def run(args: argparse.Namespace) -> bool:
         logger.error(_("systemctl reload failed unexpectedly. Please check logs."))
         return False
 
-    if not enable_linger(args.no_linger):
+    if not loginctl_utils.enable_linger(args.no_linger):
         return False
 
     if not args.quiet:

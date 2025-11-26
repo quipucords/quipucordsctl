@@ -184,3 +184,28 @@ def test_uninstall_run_exits_early_if_cannot_stop(capsys):
 
         captured = capsys.readouterr()
         assert "uninstalled successfully" not in captured.out
+
+
+def test_uninstall_run_fails_if_linger_check_fails(capsys):
+    """Test the command exits early if "stop_services" fails."""
+    mock_args = argparse.Namespace()
+    with (
+        mock.patch.object(uninstall.systemctl_utils, "stop_service"),
+        mock.patch.object(uninstall, "remove_container_images"),
+        mock.patch.object(uninstall, "remove_services"),
+        mock.patch.object(uninstall.systemctl_utils, "reload_daemon"),
+        mock.patch.object(
+            uninstall.loginctl_utils, "check_linger"
+        ) as mock_check_linger,
+        mock.patch.object(uninstall, "remove_data"),
+        mock.patch.object(uninstall, "remove_secrets"),
+    ):
+        mock_check_linger.return_value = False
+
+        mock_args.quiet = False
+        assert not uninstall.run(mock_args)
+
+        mock_check_linger.assert_called_once()
+
+        captured = capsys.readouterr()
+        assert "uninstalled successfully" not in captured.out
