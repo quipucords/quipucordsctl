@@ -19,6 +19,7 @@ from quipucordsctl.commands import (
     reset_redis_password,
     reset_session_secret,
 )
+from quipucordsctl.loginctl_utils import enable_linger
 from quipucordsctl.systemdunitparser import SystemdUnitParser
 
 INSTALL_SUCCESS_LONG_MESSAGE = _(
@@ -55,6 +56,8 @@ def get_description() -> str:
             `--quiet` flags to bypass these required prompts.
             Please review the `--help` output for each of the `reset_*` commands for
             more details.
+            The `%(command_name)s` command will setup Linger for the current user, this can be
+            overridden with the `--no-linger` option.
             """
         )
     ) % {
@@ -62,6 +65,19 @@ def get_description() -> str:
         "server_software_name": settings.SERVER_SOFTWARE_NAME,
         "admin_password_env_var": reset_admin_password.ENV_VAR_NAME,
     }
+
+
+def setup_parser(parser: argparse.ArgumentParser) -> None:
+    """Add arguments to this command's argparse subparser."""
+    parser.add_argument(
+        "-L",
+        "--no-linger",
+        action="store_true",
+        help=_(
+            "Do not automatically setup Linger for the current user"
+            " (default: False, Linger will be enabled)",
+        ),
+    )
 
 
 def mkdirs():
@@ -334,6 +350,9 @@ def run(args: argparse.Namespace) -> bool:
         systemctl_reload()
     except subprocess.CalledProcessError:
         logger.error(_("systemctl reload failed unexpectedly. Please check logs."))
+        return False
+
+    if not enable_linger(args.no_linger):
         return False
 
     if not args.quiet:
