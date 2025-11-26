@@ -235,7 +235,7 @@ def test_run_all_files_missing(
     """Test run when all files and directories are missing."""
     caplog.set_level(logging.INFO)
     mock_args = mock.Mock()
-    mock_check_running.side_effect = [True]
+    mock_check_running.return_value = True
 
     with pytest.raises(SystemExit) as exc_info:
         check.run(mock_args)
@@ -250,12 +250,14 @@ def test_run_all_files_missing(
     assert f"Found {expected_error_count} issues" in error_messages[0]
 
 
+@mock.patch.object(check, "check_service_running")
 def test_run_all_files_present_and_valid(
-    temp_config_directories: dict[str, pathlib.Path], caplog
+    mock_check_running, temp_config_directories: dict[str, pathlib.Path], caplog
 ):
     """Test run when all files and directories are present and valid."""
     caplog.set_level(logging.INFO)
     mock_args = mock.Mock()
+    mock_check_running.return_value = True
 
     create_full_quipucords_structure(temp_config_directories)
 
@@ -269,12 +271,14 @@ def test_run_all_files_present_and_valid(
     assert len(success_messages) == 1
 
 
+@mock.patch.object(check, "check_service_running")
 def test_run_some_files_missing(
-    temp_config_directories: dict[str, pathlib.Path], caplog
+    mock_check_running, temp_config_directories: dict[str, pathlib.Path], caplog
 ):
     """Test run when some files are missing."""
     caplog.set_level(logging.INFO)
     mock_args = mock.Mock()
+    mock_check_running.return_value = True
 
     temp_config_directories["SERVER_DATA_DIR"].mkdir(parents=True, exist_ok=True)
     (temp_config_directories["SERVER_DATA_DIR"] / "certs").mkdir(
@@ -290,12 +294,14 @@ def test_run_some_files_missing(
     assert len(error_messages) > 0
 
 
+@mock.patch.object(check, "check_service_running")
 def test_run_permission_issues(
-    temp_config_directories: dict[str, pathlib.Path], caplog
+    mock_check_running, temp_config_directories: dict[str, pathlib.Path], caplog
 ):
     """Test run when files exist but have permission issues."""
     caplog.set_level(logging.INFO)
     mock_args = mock.Mock()
+    mock_check_running.return_value = True
 
     create_full_quipucords_structure(temp_config_directories)
 
