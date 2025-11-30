@@ -74,6 +74,10 @@ class ResetSecretMessages:
     check_failed_too_similar: str = _(
         "The value you provided is too similar to another secret's value."
     )
+    check_failed_empty: str = _("The value cannot be empty.")
+    check_failed_required_quiet_mode: str = _(
+        "This value is required but cannot be prompted in quiet mode."
+    )
     result_updated: str = _("The secret was successfully updated.")
     result_not_updated: str = _("The secret was not updated.")
 
@@ -96,6 +100,17 @@ def prompt_secret(messages: ResetSecretMessages | None = None) -> str | None:
         logger.error(messages.prompt_values_no_match)
         return None
     return new_secret
+
+
+def prompt_username(messages: ResetSecretMessages | None = None) -> str | None:
+    """Prompt the user to enter a username with visible input."""
+    if settings.runtime.quiet:
+        return None
+
+    if not messages:
+        messages = _default_reset_secret_messages
+
+    return input(messages.prompt_enter_value)
 
 
 def generate_random_secret(**check_args) -> str:
@@ -169,6 +184,83 @@ def reset_secret(
 
     logger.error(messages.result_not_updated)
     return False
+
+
+def reset_username(
+    podman_secret_name: str,
+    messages: ResetSecretMessages | None = None,
+    must_confirm_replace_existing: bool = False,
+    **kwargs,
+) -> bool:
+    """
+    Reset the admin login username.
+
+    Unlike reset_secret(), this function requires explicit user input and does not
+    generate random values. Usernames must be provided either via environment variable
+    or interactive prompt.
+
+    Returns True if everything succeeded, else False because some input validation
+    failed or the user declined a confirmation prompt. The functions called by this
+    function log appropriate messages to explain any potential failures whenever
+    they may occur.
+    """
+    if not messages:
+        messages = _default_reset_secret_messages
+
+    already_exists = podman_utils.secret_exists(podman_secret_name)
+    new_username = get_new_username_value(
+        messages=messages,
+        must_confirm_replace_existing=must_confirm_replace_existing and already_exists,
+        **kwargs,
+    )
+
+    if new_username and podman_utils.set_secret(
+        podman_secret_name, new_username, already_exists
+    ):
+        logger.debug(messages.result_updated)
+        return True
+
+    logger.error(messages.result_not_updated)
+    return False
+
+
+def get_new_username_value(
+    messages: ResetSecretMessages | None = None,
+    *,
+    env_var_name: str | None = None,
+    must_confirm_replace_existing: bool = False,
+    must_prompt_interactive_input: bool = False,
+) -> str | None:
+    """
+    Return a new username value from environment variable or interactive prompt.
+
+    Unlike get_new_secret_value(), this function requires explicit user input and
+    does not generate random values. Usernames must be provided either via environment
+    variable or interactive prompt.
+
+    Returns the new username value if everything succeeded, else None.
+    """
+    if must_confirm_replace_existing and not confirm_replace_existing(messages):
+        return None
+
+    new_username = None
+
+    if not must_prompt_interactive_input and env_var_name:
+        if new_username := shell_utils.get_env(env_var_name):
+            if not new_username.strip():
+                logger.error(messages.check_failed_empty)
+                return None
+
+    if not new_username:
+        if settings.runtime.quiet:
+            logger.error(messages.check_failed_required_quiet_mode)
+            return None
+
+        if not (new_username := prompt_username(messages)) or not new_username.strip():
+            logger.error(messages.check_failed_empty)
+            return None
+
+    return new_username
 
 
 def get_new_secret_value(  # noqa: PLR0911, PLR0913, C901

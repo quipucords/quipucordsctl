@@ -232,3 +232,87 @@ def test_get_new_secret_value(
         assert result == input_value
     else:
         assert result is None
+
+
+@mock.patch("builtins.input")
+def test_prompt_username_success(mock_input):
+    """Test prompt_username returns user input."""
+    test_username = "new-admin-username"
+    mock_input.return_value = test_username
+    messages = mock.Mock()
+
+    assert secrets.prompt_username(messages) == test_username
+    mock_input.assert_called_once_with(messages.prompt_enter_value)
+
+
+def test_reset_username_success(mocker, caplog):
+    """Test reset_username succeeds with valid username."""
+    caplog.set_level(logging.DEBUG)
+    test_username = "new-admin-username"
+    podman_secret_name = "quipucords-server-username"
+
+    mocker.patch.object(secrets.podman_utils, "secret_exists", return_value=False)
+    mocker.patch.object(secrets, "get_new_username_value", return_value=test_username)
+    mock_set_secret = mocker.patch.object(
+        secrets.podman_utils, "set_secret", return_value=True
+    )
+
+    result = secrets.reset_username(podman_secret_name)
+
+    assert result is True
+    mock_set_secret.assert_called_once_with(podman_secret_name, test_username, False)
+
+
+def test_reset_username_fails_when_no_username_provided(mocker, caplog):
+    """Test reset_username fails when get_new_username_value returns None."""
+    caplog.set_level(logging.ERROR)
+    podman_secret_name = "quipucords-server-username"
+
+    mocker.patch.object(secrets.podman_utils, "secret_exists", return_value=False)
+    mocker.patch.object(secrets, "get_new_username_value", return_value=None)
+    mock_set_secret = mocker.patch.object(secrets.podman_utils, "set_secret")
+
+    result = secrets.reset_username(podman_secret_name)
+
+    assert result is False
+    mock_set_secret.assert_not_called()
+
+
+def test_reset_username_replaces_existing_secret(mocker, caplog):
+    """Test reset_username replaces existing secret when confirmed."""
+    caplog.set_level(logging.DEBUG)
+    test_username = "replaceduser"
+    podman_secret_name = "quipucords-server-username"
+
+    mocker.patch.object(secrets.podman_utils, "secret_exists", return_value=True)
+    mocker.patch.object(secrets, "get_new_username_value", return_value=test_username)
+    mock_set_secret = mocker.patch.object(
+        secrets.podman_utils, "set_secret", return_value=True
+    )
+
+    result = secrets.reset_username(podman_secret_name)
+
+    assert result is True
+    # already_exists=True should be passed to set_secret
+    mock_set_secret.assert_called_once_with(podman_secret_name, test_username, True)
+
+
+def test_reset_username_confirms_before_replacing(mocker, caplog):
+    """Test reset_username passes must_confirm_replace_existing."""
+    caplog.set_level(logging.DEBUG)
+    test_username = "confirmeduser"
+    podman_secret_name = "quipucords-server-username"
+
+    mocker.patch.object(secrets.podman_utils, "secret_exists", return_value=True)
+    mock_get_new_username = mocker.patch.object(
+        secrets, "get_new_username_value", return_value=test_username
+    )
+    mocker.patch.object(secrets.podman_utils, "set_secret", return_value=True)
+
+    result = secrets.reset_username(
+        podman_secret_name, must_confirm_replace_existing=True
+    )
+
+    assert result is True
+    call_kwargs = mock_get_new_username.call_args.kwargs
+    assert call_kwargs.get("must_confirm_replace_existing") is True
