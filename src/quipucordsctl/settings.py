@@ -90,6 +90,7 @@ QUIPUCORDS_SECRETS = {
     "redis": f"{SERVER_SOFTWARE_PACKAGE}-redis-password",
     "server": f"{SERVER_SOFTWARE_PACKAGE}-server-password",
     "session": f"{SERVER_SOFTWARE_PACKAGE}-session-secret-key",
+    "username": f"{SERVER_SOFTWARE_PACKAGE}-server-username",
 }
 
 QUIPUCORDS_SECRET_KEYS = QUIPUCORDS_SECRETS.values()
