@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-09-12 12:26-0400\n"
+"POT-Creation-Date: 2025-11-30 20:38-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,428 +17,1037 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/cli.py:37
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/argparse_utils.py:9
+#, python-format
+msgid "invalid non-negative integer value: '%(value)s'"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/cli.py:35
 msgid "Increase verbose output"
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/cli.py:45
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/cli.py:43
+msgid "Automatically answer 'y' to all confirmation prompts"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/cli.py:51
 msgid "Quiet output (overrides `-v`/`--verbose`)"
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/cli.py:52
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/cli.py:58
 msgid "Override configuration directory"
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/cli.py:101
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/cli.py:129
 msgid "Exiting due to keyboard interrupt."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/cli.py:105
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/cli.py:133
 msgid "Input closed unexpectedly."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/cli.py:110
-msgid "Communication with podman failed unexpectedly."
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:49
+msgid "Ensuring Podman socket is available."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/podman_utils.py:39
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/podman_utils.py:44
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:59
+msgid ""
+"Podman command failed unexpectedly. Please install Podman and run `podman"
+" machine start` before using this command."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:66
+msgid ""
+"Podman machine is not running. Please install Podman and run `podman "
+"machine start` before using this command."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:79
+msgid ""
+"The 'podman.socket' service failed to start. Please check logs and ensure"
+" that Podman is correctly installed."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:89
 #, python-format
-msgid "A podman secret %(secret_name)s already exists."
+msgid ""
+"Podman socket does not exist at expected path (%(socket_path)s). Please "
+"check logs and ensure that Podman is correctly installed.socket_path"
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/podman_utils.py:50
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:121
+msgid "Ensuring cgroups v2 is enabled."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:126
+msgid "Podman info command failed unexpectedly."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:133
+msgid "Podman info failed to return valid JSON."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:142
+msgid "cgroups v2 is required but not available."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:166
 #, python-format
-msgid "Old podman secret %(secret_name)s was removed."
+msgid "Skipping the %(unit_file)s container file due to missing section headers."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/podman_utils.py:55
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:190
 #, python-format
-msgid "New podman secret %(secret_name)s was set."
+msgid "Unexpected type '%(type)s' for %(name)s with value %(value)r."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/secrets.py:28
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:194
 #, python-format
-msgid "Enter new %(secret_name)s: "
+msgid "Missing value for %(name)s."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/secrets.py:31
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:199
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:218
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:265
+msgid "podman secret name"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:205
 #, python-format
-msgid "Confirm new %(secret_name)s: "
+msgid "Podman secret '%(secret_name)s' exists."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/secrets.py:35
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:210
 #, python-format
-msgid "Your %(secret_name)s inputs do not match."
+msgid "Podman secret '%(secret_name)s' does not exist."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/secrets.py:64
-msgid "secret"
-msgstr ""
-
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/secrets.py:78
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:224
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:232
 #, python-format
-msgid "Your %(secret_name)s must be at least %(min_length)s characters long."
+msgid "Podman secret '%(secret_name)s' already exists before setting a new value."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/secrets.py:84
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:251
 #, python-format
-msgid "Your %(secret_name)s must contain a number."
+msgid "Podman secret '%(secret_name)s' was set."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/secrets.py:90
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:257
 #, python-format
-msgid "Your %(secret_name)s must contain a letter."
+msgid "Podman failed to set secret '%(secret_name)s'."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/secrets.py:97
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:271
 #, python-format
-msgid "Your %(secret_name)s cannot be entirely numeric."
+msgid "Podman secret '%(secret_name)s' was removed."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/secrets.py:104
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:276
 #, python-format
-msgid "Your %(secret_name)s cannot be used because it is blocked."
+msgid "Podman failed to remove secret '%(secret_name)s'."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/secrets.py:114
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:284
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:301
+msgid "podman image ID"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:290
 #, python-format
-msgid "Your %(secret_name)s is too similar to your %(similar_name)s."
+msgid "Podman image '%(image_id)s' was removed."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/shell_utils.py:12
-msgid "Do you want to continue? [y/n] "
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:294
+#, python-format
+msgid "Podman failed to remove image '%(image_id)s'."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/shell_utils.py:18
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/podman_utils.py:309
+#, python-format
+msgid "Failed to pull image %(image)s."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/secrets.py:34
+msgid ""
+"You should only manually reset this secret if you understand how it is "
+"used, and you are addressing a specific issue. We strongly recommend "
+"using the automatically generated value for this secret instead of "
+"manually entering one."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/secrets.py:40
+msgid "Are you sure you want to manually reset this secret?"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/secrets.py:44
+#, python-format
+msgid ""
+"This secret already exists with a value. Resetting this secret to a new "
+"value may result in data loss if you have already installed and run "
+"%(SERVER_SOFTWARE_NAME)s on this system."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/secrets.py:52
+msgid "Are you sure you want to replace the existing secret?"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/secrets.py:54
+msgid "Enter new secret value: "
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/secrets.py:55
+msgid "Confirm new secret value: "
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/secrets.py:56
+msgid "Your inputs do not match."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/secrets.py:57
+msgid "This secret was not updated."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/secrets.py:60
+#, python-format
+msgid "The value for this secret must be at least %(min_length)s characters long."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/secrets.py:63
+msgid "The value for this secret must contain a number."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/secrets.py:66
+msgid "The value for this secret must contain a letter."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/secrets.py:69
+msgid "The value for this secret cannot by entirely numeric."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/secrets.py:72
+msgid "The value you provided cannot be used because it is blocked."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/secrets.py:75
+msgid "The value you provided is too similar to another secret's value."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/secrets.py:77
+msgid "The value cannot be empty."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/secrets.py:79
+msgid "This value is required but cannot be prompted in quiet mode."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/secrets.py:81
+msgid "The secret was successfully updated."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/secrets.py:82
+msgid "The secret was not updated."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/secrets.py:302
+#, python-format
+msgid ""
+"New value for podman secret '%(PODMAN_SECRET_NAME)s' was randomly "
+"generated."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/shell_utils.py:20
+#, python-format
+msgid "Environment variable '%(name)s' found."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/shell_utils.py:23
+#, python-format
+msgid "Environment variable '%(name)s' not found."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/shell_utils.py:36
+msgid "Do you want to continue?"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/shell_utils.py:38
+#, python-format
+msgid "%(question)s [y/n] "
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/shell_utils.py:40
+msgid "y"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/shell_utils.py:42
+msgid "n"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/shell_utils.py:43
 msgid "Please answer with 'y' or 'n'."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/install.py:25
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/shell_utils.py:83
+#, python-format
+msgid "Command arguments must be strings. Got: %r"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/shell_utils.py:84
+#, python-format
+msgid "Invoking subprocess: %s"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/shell_utils.py:88
+#, python-format
+msgid "Command has %(wait_timeout)s seconds timeout."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/shell_utils.py:109
+#, python-format
+msgid ""
+"Subprocess with arguments %(command)s timed out after %(wait_timeout)s "
+"seconds."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/shell_utils.py:117
+#, python-format
+msgid "Subprocess with arguments %(command)s failed due to unexpected error."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/shell_utils.py:133
+#, python-format
+msgid "Subprocess with arguments %(command)s failed with exit code %(exit_code)s"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/systemctl_utils.py:14
+#, python-format
+msgid "Stopping the %(server_software_name)s server."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/systemctl_utils.py:26
+#, python-format
+msgid "Could not stop the %(server_software_name)s server."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/systemctl_utils.py:30
+#, python-format
+msgid "Error stopping %(server_software_name)s: %(error)s"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/uninstall.py:105
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/systemctl_utils.py:42
+msgid "Reloading the systemctl daemon."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/systemctl_utils.py:51
+#, python-format
+msgid "Checking if %(server_software_name)s service is active"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/check.py:43
+#, python-format
+msgid ""
+"Check that all necessary files and directories exist for running "
+"%(server_software_name)s."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/check.py:127
+#, python-format
+msgid "%(path)s: OK: %(perms)s %(owner)s"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/check.py:137
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/check.py:157
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/check.py:182
+#, python-format
+msgid "Unexpected error reporting status of %(path)s: %(error)s"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/check.py:140
+#, python-format
+msgid "%(path)s: OK"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/check.py:148
+#, python-format
+msgid "%(path)s: ERROR: Incorrect permission(s): %(perms)s"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/check.py:160
+#, python-format
+msgid "%(path)s: ERROR: Incorrect permissions"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/check.py:169
+#, python-format
+msgid "%(path)s: ERROR: Not owned by you (incorrect ownership): %(uid)s %(owner)s"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/check.py:186
+#, python-format
+msgid "%(path)s: ERROR: Not owned by you (incorrect ownership)"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/check.py:200
+#, python-format
+msgid "%(path)s: ERROR: Missing"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/check.py:203
+#, python-format
+msgid "%(path)s: Missing, will be created during server startup"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/check.py:207
+#, python-format
+msgid "%(path)s: ERROR: Unknown status"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/check.py:306
+#, python-format
+msgid "Checking %(server_software_name)s setup and configurations."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/check.py:321
+msgid "All checks passed successfully."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/check.py:324
+#, python-format
+msgid "Found %(error_count)d issues."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/install.py:41
 #, python-format
 msgid "Install the %(server_software_name)s server."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/install.py:35
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/install.py:76
 #, python-format
-msgid "Ensuring data directory exists: %(dir_path)s"
+msgid "Ensuring directory exists: %(dir_path)s"
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/install.py:41
-#, python-format
-msgid "%(dir_path)s exists but is not a directory."
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/install.py:88
+msgid "The install command failed to reset encryption secret."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/install.py:46
-#, python-format
-msgid "Ensuring config directory exists: %(config_dir)s"
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/install.py:90
+msgid "The install command failed to reset session secret."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/install.py:52
-#, python-format
-msgid "%(config_dir)s exists but is not a directory."
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/install.py:91
+msgid "The install command failed to reset admin username."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/install.py:75
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/install.py:85
-#, python-format
-msgid "Copying %(template_path)s to %(destination)s"
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/install.py:92
+msgid "The install command failed to reset admin password."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/install.py:94
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/install.py:94
+msgid "The install command failed to reset database password."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/install.py:96
+msgid "The install command failed to reset redis password."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/install.py:118
+#, python-format
+msgid "No override file found at: %(override_conf_path)s"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/install.py:126
+#, python-format
+msgid ""
+"Please check file permissions. Cannot read override file at: "
+"%(override_conf_path)s"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/install.py:135
+#, python-format
+msgid ""
+"Please check file permissions. Cannot access override file at: "
+"%(override_conf_path)s"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/install.py:142
+#, python-format
+msgid "Override file found at: %(override_conf_path)s"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/install.py:171
+#, python-format
+msgid ""
+"Skipping overrides for %(template_filename)s due to missing section "
+"headers in your override file. Please check %(override_conf_path)s for "
+"any typos or errors."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/install.py:198
+#, python-format
+msgid ""
+"Overriding %(template_filename)s %(section)s.%(option)s from "
+"%(old_value)s to %(value)s"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/install.py:232
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/install.py:277
+#, python-format
+msgid "Writing config to %(destination)s"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/install.py:253
+#, python-format
+msgid ""
+"Appending overrides (%(line_count)s lines) to template for "
+"%(template_filename)s before writing."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/install.py:262
+#, python-format
+msgid ""
+"The following 'override' content was added by the user during "
+"installation at %(now)s"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/install.py:269
+#, python-format
+msgid ""
+"Override file for %(template_filename)s appears to be empty and will be "
+"skipped."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/install.py:305
 #, python-format
 msgid "Reloading systemctl to recognize %(server_software_name)s units"
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_admin_password.py:20
-msgid "Reset the admin login password."
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/install.py:328
+#, python-format
+msgid ""
+"The specified override configuration directory ('%(override_conf_dir)s') "
+"does not exist."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_admin_password.py:37
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/install.py:337
+msgid "systemctl reload failed unexpectedly. Please check logs."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_admin_password.py:28
 msgid "admin login username"
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_admin_password.py:42
-msgid "admin login password"
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_admin_password.py:36
+msgid "Reset the admin login password."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_admin_password.py:46
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_admin_password.py:63
+msgid "Enter new admin login password: "
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_admin_password.py:64
+msgid "Confirm new admin login password: "
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_admin_password.py:65
+msgid "The admin login password was successfully updated."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_admin_password.py:66
 msgid "The admin login password was not updated."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:21
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_admin_username.py:22
+msgid "Reset the admin login username."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_admin_username.py:50
+msgid ""
+"Prompt for admin username (default: use environment variable or prompt if"
+" not set)"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_admin_username.py:62
+msgid "Enter admin login username: "
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_admin_username.py:63
+msgid "Confirm admin login username: "
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_admin_username.py:65
+msgid ""
+"The admin login username has already been set. Resetting the admin login "
+"username to a new value may prevent you from logging in with the old "
+"username."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_admin_username.py:70
+msgid "Are you sure you want to replace the existing admin login username?"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_admin_username.py:72
+msgid "Username cannot be empty."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_admin_username.py:74
+msgid "Username is required but cannot be prompted in quiet mode."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_admin_username.py:76
+msgid "The admin login username was successfully updated."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_admin_username.py:77
+msgid "The admin login username was not updated."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_database_password.py:24
+msgid "Reset the database password."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_database_password.py:54
+msgid ""
+"Prompt for custom database password (default: no prompt, generate a "
+"random value)"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_database_password.py:67
+msgid ""
+"You should only manually reset the database password if you understand "
+"how it is used, and you are addressing a specific issue. We strongly "
+"recommend using the automatically generated value for the database "
+"password instead of manually entering one."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_database_password.py:73
+msgid "Are you sure you want to manually set a custom database password?"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_database_password.py:76
+#, python-format
+msgid ""
+"The database password has already been set. Resetting the database "
+"password to a new value may result in data loss if you have already "
+"installed and run %(SERVER_SOFTWARE_NAME)s on this system."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_database_password.py:83
+msgid "Are you sure you want to replace the existing database password?"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_database_password.py:85
+msgid "The database password was successfully updated."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_database_password.py:86
+msgid "The database password was not updated."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:24
 msgid "Reset the encryption secret key."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:31
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:55
 msgid ""
 "Prompt for custom encryption secret key (default: no prompt, generate a "
 "random value)"
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:59
-#, python-format
-msgid ""
-"The encryption secret key already exists. Resetting the encryption secret"
-" key to a new value may result in data loss if you have already installed"
-" and run %(SERVER_SOFTWARE_NAME)s on this system."
-msgstr ""
-
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:68
-msgid ""
-"Are you sure you want to replace the existing encryption secret key? "
-"[y/n] "
-msgstr ""
-
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:76
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:68
 msgid ""
 "You should only manually reset the encryption secret key if you "
-"understand how it it used and you are addressing a specific issue. We "
-"strongly recommend using the automatically generated encryption secret "
-"key instead of manually entering one."
+"understand how it is used, and you are addressing a specific issue. We "
+"strongly recommend using the automatically generated value for the "
+"encryption secret key instead of manually entering one."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:85
-msgid "Are you sure you want to manually reset the encryption secret key? [y/n] "
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:74
+msgid "Are you sure you want to manually set an encryption secret key?"
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:92
-msgid "encryption secret key"
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:77
+#, python-format
+msgid ""
+"The encryption secret key has already been set. Resetting the encryption "
+"secret key to a new value may result in data loss if you have already "
+"installed and run %(SERVER_SOFTWARE_NAME)s on this system."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:96
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:110
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:84
+msgid "Are you sure you want to replace the existing encryption secret key?"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:86
+msgid "The encryption secret key was successfully updated."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:87
 msgid "The encryption secret key was not updated."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_encryption_secret.py:102
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_session_secret.py:77
-#, python-format
-msgid "New value for podman secret %(PODMAN_SECRET_NAME)s was randomly generated."
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_redis_password.py:24
+msgid "Reset the Redis password."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_session_secret.py:22
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_redis_password.py:54
+msgid ""
+"Prompt for custom Redis password (default: no prompt, generate a random "
+"value)"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_redis_password.py:67
+msgid ""
+"You should only manually reset the Redis password if you understand how "
+"it is used, and you are addressing a specific issue. We strongly "
+"recommend using the automatically generated value for the Redis password "
+"instead of manually entering one."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_redis_password.py:73
+msgid "Are you sure you want to manually set a custom Redis password?"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_redis_password.py:75
+msgid "The Redis password was successfully updated."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_redis_password.py:76
+msgid "The Redis password was not updated."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_session_secret.py:25
 msgid "Reset the session secret key."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_session_secret.py:32
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_session_secret.py:57
 msgid ""
 "Prompt for custom session secret key (default: no prompt, generate a "
 "random value)"
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_session_secret.py:56
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_session_secret.py:70
 msgid ""
 "You should only manually reset the session secret key if you understand "
-"how it it used and you are addressing a specific issue. We strongly "
-"recommend using the automatically generated session secret key instead of"
-" manually entering one."
+"how it is used, and you are addressing a specific issue. We strongly "
+"recommend using the automatically generated value for the session secret "
+"key instead of manually entering one."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_session_secret.py:63
-msgid "Are you sure you want to manually reset the session secret key? [y/n] "
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_session_secret.py:76
+msgid "Are you sure you want to manually set a custom session secret key?"
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_session_secret.py:68
-msgid "session secret key"
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_session_secret.py:79
+#, python-format
+msgid ""
+"The session secret key has already been set. Resetting the session secret"
+" key to a new value may result in data loss if you have already installed"
+" and run %(SERVER_SOFTWARE_NAME)s on this system."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_session_secret.py:71
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_session_secret.py:83
-msgid "The session secret key was not updated."
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_session_secret.py:86
+msgid "Are you sure you want to replace the session secret key?"
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/reset_session_secret.py:85
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_session_secret.py:88
 msgid "The session secret key was successfully updated."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/uninstall.py:15
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/reset_session_secret.py:89
+msgid "The session secret key was not updated."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/uninstall.py:16
 #, python-format
 msgid "Uninstall the %(server_software_name)s server."
 msgstr ""
 
-#: /Users/brasmith/projects/redhat/quipucordsctl/src/quipucordsctl/commands/uninstall.py:22
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/uninstall.py:24
 #, python-format
-msgid "%(command)s is not yet implemented."
+msgid "Removing the %(server_software_name)s container images."
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:228
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/uninstall.py:35
+msgid ""
+"Podman failed to remove at least one image. Please check logs and "
+"manually remove any remaining images if necessary."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/uninstall.py:44
+#, python-format
+msgid "Removing the %(server_software_name)s file %(file_path)s."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/uninstall.py:58
+#, python-format
+msgid "The uninstall command failed to remove the file %(file_path)s - %(error)s."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/uninstall.py:67
+#, python-format
+msgid ""
+"The uninstall command did not find the file %(file_path)s which it "
+"expected to remove."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/uninstall.py:78
+#, python-format
+msgid "Removing the %(server_software_name)s services."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/uninstall.py:114
+#, python-format
+msgid "Removing the %(server_software_name)s data."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/uninstall.py:124
+#, python-format
+msgid "Removing the %(server_software_name)s secrets."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/uninstall.py:135
+msgid ""
+"Podman failed to remove at least one secret. Please check logs and "
+"manually remove any remaining secrets if necessary."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/uninstall.py:157
+#, python-format
+msgid "%(server_software_name)s uninstalled successfully."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/upgrade.py:16
+#, python-format
+msgid "Upgrade the %(server_software_name)s server."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/upgrade.py:24
+#, python-format
+msgid ""
+"The `%(command_name)s` command upgrades the %(server_software_name)s "
+"server if it is already installed or installs the software if not already"
+" installed."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/upgrade.py:39
+msgid ""
+"Do not automatically pull the latest podman images (default: pull, "
+"requires network connection)"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/upgrade.py:49
+#, python-format
+msgid ""
+"Maximum number of seconds to wait for `podman pull` to complete (default:"
+" %(default)s)"
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/upgrade.py:71
+msgid ""
+"Failed to pull at least one image. Please review the logs, check network "
+"connectivity, and verify your podman credentials before trying again."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/upgrade.py:105
+#, python-format
+msgid ""
+"Could not upgrade the %(server_software_name)s software because the "
+"service failed to stop normally."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/upgrade.py:119
+#, python-format
+msgid ""
+"Could not upgrade the %(server_software_name)s software because the "
+"software failed to install normally."
+msgstr ""
+
+#: /home/naragao/work/quipucordsctl/src/quipucordsctl/commands/upgrade.py:129
+#, python-format
+msgid ""
+"You requested an upgrade without pulling the latest podman images. Please"
+" verify that you have the latest podman images before you restart the "
+"%(server_software_name)s software, or the software may not run correctly."
+msgstr ""
+
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:228
 #, python-format
 msgid "%(heading)s:"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:300
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:300
 msgid "usage: "
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:726
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:726
 #, python-format
 msgid " (default: %(default)s)"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:780
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:780
 #, python-format
 msgid "argument %(argument_name)s: %(message)s"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:886
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:886
 msgid ".__call__() not defined"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1157
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:1157
 msgid "show program's version number and exit"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1219
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:1219
 #, python-format
 msgid "conflicting subparser: %s"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1223
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:1223
 #, python-format
 msgid "conflicting subparser alias: %s"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1258
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:1258
 #, python-format
 msgid "unknown parser %(parser_name)r (choices: %(choices)s)"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1318
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:1318
 #, python-format
 msgid "argument \"-\" with mode %r"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1327
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:1327
 #, python-format
 msgid "can't open '%(filename)s': %(error)s"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1536
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:1536
 #, python-format
 msgid "cannot merge actions - two groups are named %r"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1574
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:1574
 msgid "'required' is an invalid argument for positionals"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1596
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:1596
 #, python-format
 msgid ""
 "invalid option string %(option)r: must start with a character "
 "%(prefix_chars)r"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1614
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:1614
 #, python-format
 msgid "dest= is required for options like %r"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1631
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:1631
 #, python-format
 msgid "invalid conflict_resolution value: %r"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1649
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:1649
 #, python-format
 msgid "conflicting option string: %s"
 msgid_plural "conflicting option strings: %s"
 msgstr[0] ""
 msgstr[1] ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1723
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:1723
 msgid "mutually exclusive arguments must be optional"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1799
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:1799
 msgid "positional arguments"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1800
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:1800
 msgid "options"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1815
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:1815
 msgid "show this help message and exit"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1846
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:1846
 msgid "cannot have multiple subparser arguments"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:1898
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2421
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:1898
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:2421
 #, python-format
 msgid "unrecognized arguments: %s"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2001
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:2001
 #, python-format
 msgid "not allowed with argument %s"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2043
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2074
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:2043
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:2074
 #, python-format
 msgid "ignored explicit argument %r"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2181
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:2181
 #, python-format
 msgid "the following arguments are required: %s"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2196
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:2196
 #, python-format
 msgid "one of the arguments %s is required"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2240
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:2240
 msgid "expected one argument"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2241
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:2241
 msgid "expected at most one argument"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2242
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:2242
 msgid "expected at least one argument"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2246
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:2246
 #, python-format
 msgid "expected %s argument"
 msgid_plural "expected %s arguments"
 msgstr[0] ""
 msgstr[1] ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2303
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:2303
 #, python-format
 msgid "ambiguous option: %(option)s could match %(matches)s"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2364
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:2364
 #, python-format
 msgid "unexpected option string: %s"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2566
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:2566
 #, python-format
 msgid "%r is not callable"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2582
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:2582
 #, python-format
 msgid "invalid %(type)s value: %(value)r"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2593
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:2593
 #, python-format
 msgid "invalid choice: %(value)r (choose from %(choices)s)"
 msgstr ""
 
-#: ../../../.local/share/uv/python/cpython-3.12.5-macos-aarch64-none/lib/python3.12/argparse.py:2671
+#: ../../.local/share/uv/python/cpython-3.12.5-linux-x86_64-gnu/lib/python3.12/argparse.py:2671
 #, python-format
 msgid "%(prog)s: error: %(message)s\n"
 msgstr ""

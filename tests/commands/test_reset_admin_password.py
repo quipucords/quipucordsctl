@@ -4,57 +4,31 @@ import argparse
 import logging
 from unittest import mock
 
-import pytest
-
 from quipucordsctl.commands import reset_admin_password
-
-
-class MysteryError(Exception):
-    """Something completely unexpected happened."""
-
-    def __str__(self):
-        """Get string representation."""
-        return self.__doc__
+from tests.conftest import assert_reset_command_help
 
 
 def test_get_help():
-    """Test the get_help returns an appropriate string."""
-    assert "admin login password" in reset_admin_password.get_help()
-
-
-def test_get_description():
-    """Test the get_description returns an appropriate string."""
-    assert "`reset_admin_password`" in reset_admin_password.get_description()
+    """Test the get_help and get_description return appropriate strings."""
+    assert_reset_command_help(reset_admin_password, "admin login password")
 
 
 @mock.patch.object(reset_admin_password.podman_utils, "secret_exists")
 def test_admin_password_is_set(mock_secret_exists):
-    """Test admin_password_is_set just wraps secret_exists."""
+    """Test is_set just wraps secret_exists."""
     assert reset_admin_password.is_set() == mock_secret_exists.return_value
     mock_secret_exists.assert_called_once_with(reset_admin_password.PODMAN_SECRET_NAME)
 
 
-@pytest.fixture
-def first_time_run(mocker):
-    """Mock certain behaviors to act like this is a first-time default run."""
-    mocker.patch.object(
-        reset_admin_password.podman_utils,
-        "secret_exists",
-        return_value=False,
-    )
-    mocker.patch.object(
-        reset_admin_password.secrets.shell_utils,
-        "get_env",
-        return_value=None,
-    )
-
-
-def test_reset_admin_password_run_success(first_time_run, good_secret, mocker, caplog):
+def test_reset_admin_password_run_success(
+    mock_first_time_run, good_secret, mocker, caplog
+):
     """Test reset_admin_password.run succeeds in the default happy path."""
+    mock_first_time_run(reset_admin_password)
     mocker.patch.object(
         reset_admin_password.secrets,
         "prompt_secret",
-        return_value=good_secret,  # simulate user input
+        return_value=good_secret,
     )
     mocker.patch.object(
         reset_admin_password.podman_utils, "set_secret", return_value=True
@@ -90,18 +64,19 @@ def test_reset_admin_password_run_uses_env_var(good_secret, mocker, caplog):
 
 
 def test_reset_admin_password_run_unexpected_failure(
-    first_time_run, good_secret, mocker, caplog
+    mock_first_time_run, good_secret, mocker, caplog
 ):
     """Test reset_admin_password.run when set_secret fails unexpectedly."""
+    mock_first_time_run(reset_admin_password)
     mocker.patch.object(
         reset_admin_password.secrets,
         "prompt_secret",
-        return_value=good_secret,  # simulate user input
+        return_value=good_secret,
     )
     mocker.patch.object(
         reset_admin_password.podman_utils,
         "set_secret",
-        return_value=False,  # something broke unexpectedly
+        return_value=False,
     )
 
     caplog.set_level(logging.ERROR)
