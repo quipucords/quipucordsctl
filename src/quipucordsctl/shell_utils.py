@@ -71,12 +71,15 @@ def env_template_dir() -> pathlib.Path:
     return template_dir().joinpath("env")
 
 
-def run_command(
+def run_command(  # noqa: C901, PLR0913
     command: list[str],
     *,
     raise_error: bool = True,
     wait_timeout: int | None = None,
     stdin: str | None = None,
+    stdout=None,
+    stderr=None,
+    **kwargs,
 ) -> tuple[str, str, int]:
     """Run an external program."""
     if not all(isinstance(arg, str) for arg in command):
@@ -84,18 +87,25 @@ def run_command(
     logger.debug(_("Invoking subprocess: %s"), " ".join(map(shlex.quote, command)))
     if wait_timeout is None:
         wait_timeout = settings.DEFAULT_SUBPROCESS_WAIT_TIMEOUT
-        logger.debug(
-            _("Command has %(wait_timeout)s seconds timeout."),
-            {"wait_timeout": wait_timeout},
-        )
+    logger.debug(
+        _("Command has %(wait_timeout)s seconds timeout."),
+        {"wait_timeout": wait_timeout},
+    )
+
+    if not stdout:
+        stdout = subprocess.PIPE
+    if not stderr:
+        stderr = subprocess.PIPE
+
     try:
         process = subprocess.Popen(
             args=command,  # a list like ["systemctl", "--user", "reset-failed"]
             stdin=subprocess.PIPE if stdin else subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stdout=stdout,
+            stderr=stderr,
             text=True,  # we always expect input/output text, not byte strings
             shell=False,  # redundant, but a safe precaution in case defaults change
+            **kwargs,
         )
 
         # TODO figure out how we want to handle stdout/stderr
@@ -122,10 +132,12 @@ def run_command(
     # make stdout and stderr noisier if the process did not exit cleanly
     stdout_logger = logger.debug if exit_code == 0 else logger.info
     stderr_logger = logger.debug if exit_code == 0 else logger.error
-    for line in stdout.strip().splitlines():
-        stdout_logger(line)
-    for line in stderr.strip().splitlines():
-        stderr_logger(line)
+    if stdout == subprocess.PIPE:
+        for line in stdout.strip().splitlines():
+            stdout_logger(line)
+    if stderr == subprocess.PIPE:
+        for line in stderr.strip().splitlines():
+            stderr_logger(line)
 
     if raise_error and exit_code != 0:
         logger.error(
