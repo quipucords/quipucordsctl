@@ -32,9 +32,9 @@ def test_get_description():
 @pytest.mark.parametrize(
     "args,attr_name,expected",
     (
-        (["--no-linger"], "no_linger", True),
-        (["-L"], "no_linger", True),
-        ([], "no_linger", False),
+        (["--linger"], "linger", True),
+        (["--no-linger"], "linger", False),
+        ([], "linger", True),
     ),
 )
 def test_setup_parser(args, attr_name, expected):

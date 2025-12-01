@@ -18,7 +18,8 @@ def test_is_linger_enabled_yes(faker):
         mock_run_command.return_value = ["Linger=yes", "", 0]
         return_value = loginctl_utils.is_linger_enabled(username)
         mock_run_command.assert_called_once_with(
-            ["loginctl", "show-user", username, "--property=Linger"]
+            ["loginctl", "show-user", username, "--property=Linger"],
+            env=mock.ANY,
         )
         assert return_value
 
@@ -34,7 +35,8 @@ def test_is_linger_enabled_no(faker):
         mock_run_command.return_value = ["Linger=no", "", 0]
         return_value = loginctl_utils.is_linger_enabled(username)
         mock_run_command.assert_called_once_with(
-            ["loginctl", "show-user", username, "--property=Linger"]
+            ["loginctl", "show-user", username, "--property=Linger"],
+            env=mock.ANY,
         )
         assert not return_value
 
@@ -50,7 +52,8 @@ def test_is_linger_enabled_loginctl_fails(faker):
         mock_run_command.return_value = ["", "error message", 1]
         return_value = loginctl_utils.is_linger_enabled(username)
         mock_run_command.assert_called_once_with(
-            ["loginctl", "show-user", username, "--property=Linger"]
+            ["loginctl", "show-user", username, "--property=Linger"],
+            env=mock.ANY,
         )
         assert not return_value
 
@@ -105,7 +108,7 @@ def test_enable_linger_with_nolinger(faker, caplog):
     ):
         caplog.set_level(logging.INFO)
         mock_getuser.return_value = username
-        return_value = loginctl_utils.enable_linger(True)
+        return_value = loginctl_utils.enable_linger(False)
         message = f"Linger will not be enabled for user '{username}'"
         assert message in caplog.messages[0]
         assert return_value
@@ -123,7 +126,7 @@ def test_enable_linger_already_enabled(faker, caplog):
         caplog.set_level(logging.INFO)
         mock_getuser.return_value = username
         mock_is_linger_enabled.return_value = True
-        return_value = loginctl_utils.enable_linger(False)
+        return_value = loginctl_utils.enable_linger(True)
         message = f"Linger is enabled for user '{username}'"
         assert message in caplog.messages[0]
         assert return_value
@@ -144,7 +147,7 @@ def test_enable_linger(faker, caplog):
         caplog.set_level(logging.INFO)
         mock_getuser.return_value = username
         mock_is_linger_enabled.return_value = False
-        return_value = loginctl_utils.enable_linger(False)
+        return_value = loginctl_utils.enable_linger(True)
         mock_run_command.assert_called_once_with(
             [
                 "loginctl",
@@ -175,7 +178,7 @@ def test_enable_linger_returns_false_if_loginctl_raises_exception(faker, caplog)
         mock_run_command.side_effect = subprocess.CalledProcessError(
             returncode=1, cmd="/bin/false"
         )
-        return_value = loginctl_utils.enable_linger(False)
+        return_value = loginctl_utils.enable_linger(True)
         mock_run_command.assert_called_once_with(
             [
                 "loginctl",

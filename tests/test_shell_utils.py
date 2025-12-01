@@ -95,6 +95,7 @@ def test_run_command():
         stderr=mock_subprocess.PIPE,
         text=True,
         shell=False,
+        env=None,
     )
     mock_subprocess.Popen.return_value.communicate.assert_called_once()
 

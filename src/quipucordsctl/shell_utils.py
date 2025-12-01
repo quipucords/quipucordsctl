@@ -79,6 +79,7 @@ def run_command(  # noqa: C901, PLR0913
     stdin: str | None = None,
     stdout=None,
     stderr=None,
+    env: dict[str, str] | None = None,
     **kwargs,
 ) -> tuple[str, str, int]:
     """Run an external program."""
@@ -105,6 +106,7 @@ def run_command(  # noqa: C901, PLR0913
             stderr=stderr,
             text=True,  # we always expect input/output text, not byte strings
             shell=False,  # redundant, but a safe precaution in case defaults change
+            env=env,
             **kwargs,
         )
 

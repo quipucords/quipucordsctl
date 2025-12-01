@@ -213,6 +213,9 @@ def test_uninstall_run_keep_data_dirs(capsys):
         mock.patch.object(
             uninstall.systemctl_utils, "reload_daemon"
         ) as mock_reload_daemon,
+        mock.patch.object(
+            uninstall.loginctl_utils, "check_linger"
+        ) as mock_check_linger,
         mock.patch.object(uninstall, "remove_data") as mock_remove_data,
         mock.patch.object(uninstall, "remove_secrets") as mock_remove_secrets,
     ):
@@ -221,6 +224,7 @@ def test_uninstall_run_keep_data_dirs(capsys):
         mock_remove_services.return_value = True
         mock_reload_daemon.return_value = True
         mock_remove_secrets.return_value = True
+        mock_check_linger.return_value = True
 
         mock_args.quiet = False
         assert uninstall.run(mock_args)
@@ -254,6 +258,7 @@ def test_uninstall_run_fails_if_linger_check_fails(capsys):
         mock_check_linger.return_value = False
 
         mock_args.quiet = False
+        mock_args.keep_data_dirs = False
         assert not uninstall.run(mock_args)
 
         mock_check_linger.assert_called_once()

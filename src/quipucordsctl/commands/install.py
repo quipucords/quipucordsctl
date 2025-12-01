@@ -59,10 +59,12 @@ def get_description() -> str:
             login password, but you may set environment variables
             (e.g. `%(admin_password_env_var)s`) and/or use the global `--yes` and
             `--quiet` flags to bypass these required prompts.
+            By default, the `%(command_name)s` command will set up Linger for the
+            current user, this can be overridden with the `--no-linger` option.
+            With the Linger feature enabled, the %(server_software_name)s services
+            persist even when the user is logged out of the system.
             Please review the `--help` output for each of the `reset_*` commands for
             more details.
-            The `%(command_name)s` command will set up Linger for the current user,
-            this can be overridden with the `--no-linger` option.
             """
         )
     ) % {
@@ -75,12 +77,12 @@ def get_description() -> str:
 def setup_parser(parser: argparse.ArgumentParser) -> None:
     """Add arguments to this command's argparse subparser."""
     parser.add_argument(
-        "-L",
-        "--no-linger",
-        action="store_true",
+        "--linger",
+        default=True,
+        action=argparse.BooleanOptionalAction,
         help=_(
-            "Do not automatically set up Linger for the current user"
-            " (default: False, Linger will be enabled)",
+            "Automatically set up Linger for the current user"
+            " (default: --linger, Linger will be enabled)",
         ),
     )
 
@@ -357,7 +359,7 @@ def run(args: argparse.Namespace) -> bool:
         logger.error(_("systemctl reload failed unexpectedly. Please check logs."))
         return False
 
-    if not loginctl_utils.enable_linger(args.no_linger):
+    if not loginctl_utils.enable_linger(args.linger):
         return False
 
     if not args.quiet:
