@@ -18,6 +18,16 @@ def get_help() -> str:
     }
 
 
+def setup_parser(parser: argparse.ArgumentParser) -> None:
+    """Add arguments to this command's argparse subparser."""
+    parser.add_argument(
+        "--keep-data-dirs",
+        action="store_true",
+        help=_("Do not remove instance data in %(pathname)s (default: remove it)")
+        % {"pathname": settings.SERVER_DATA_DIR},
+    )
+
+
 def remove_container_images():
     """Remove container images."""
     logger.info(
@@ -108,8 +118,18 @@ def reload_daemon() -> bool:
     return True
 
 
-def remove_data():
-    """Remove the quipucords data."""
+def remove_data(keep_data_dirs=False):
+    """Remove the quipucords data, or tell the user it was not removed."""
+    if keep_data_dirs:
+        logger.info(
+            _(
+                "Not removing the %(server_software_name)s data "
+                "because --keep-data-dirs flag was passed."
+            ),
+            {"server_software_name": settings.SERVER_SOFTWARE_NAME},
+        )
+        return
+
     logger.info(
         _("Removing the %(server_software_name)s data."),
         {"server_software_name": settings.SERVER_SOFTWARE_NAME},
@@ -149,7 +169,7 @@ def run(args: argparse.Namespace) -> bool:  # noqa: PLR0911
         return False
     if not systemctl_utils.reload_daemon():
         return False
-    remove_data()
+    remove_data(args.keep_data_dirs)
     if not remove_secrets():
         return False
     if not args.quiet:

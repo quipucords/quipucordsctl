@@ -1,6 +1,7 @@
 """Test the "uninstall" command."""
 
 import argparse
+import logging
 import pathlib
 from unittest import mock
 
@@ -88,6 +89,15 @@ def test_remove_data(mock_rmtree):
     mock_rmtree.assert_has_calls(expected_calls)
 
 
+@mock.patch("quipucordsctl.commands.uninstall.shutil.rmtree")
+def test_remove_data_keep_dirs(mock_rmtree, caplog):
+    """Test remove data only prints when keep_data_dirs=True."""
+    caplog.set_level(logging.INFO)
+    uninstall.remove_data(True)
+    mock_rmtree.assert_not_called()
+    assert "Not removing the" in caplog.text
+
+
 def test_remove_secrets():
     """Test removes secrets invokes the expected Podman utilities commands."""
     with mock.patch.object(uninstall, "podman_utils") as mock_podman_utils:
@@ -113,6 +123,7 @@ def test_remove_secrets_failure():
 def test_uninstall_run(capsys):
     """Test the command invokes the expected subcommands."""
     mock_args = argparse.Namespace()
+    mock_args.keep_data_dirs = False
     with (
         mock.patch.object(
             uninstall.systemctl_utils, "stop_service"
@@ -152,6 +163,7 @@ def test_uninstall_run(capsys):
 def test_uninstall_run_exits_early_if_cannot_stop(capsys):
     """Test the command exits early if "stop_services" fails."""
     mock_args = argparse.Namespace()
+    mock_args.keep_data_dirs = False
     with (
         mock.patch.object(
             uninstall.systemctl_utils, "stop_service"
@@ -180,3 +192,42 @@ def test_uninstall_run_exits_early_if_cannot_stop(capsys):
 
         captured = capsys.readouterr()
         assert "uninstalled successfully" not in captured.out
+
+
+def test_uninstall_run_keep_data_dirs(capsys):
+    """Test the command invokes the expected subcommands when flag is passed."""
+    mock_args = argparse.Namespace()
+    mock_args.keep_data_dirs = True
+    with (
+        mock.patch.object(
+            uninstall.systemctl_utils, "stop_service"
+        ) as mock_stop_service,
+        mock.patch.object(
+            uninstall, "remove_container_images"
+        ) as mock_remove_container_images,
+        mock.patch.object(uninstall, "remove_services") as mock_remove_services,
+        mock.patch.object(
+            uninstall.systemctl_utils, "reload_daemon"
+        ) as mock_reload_daemon,
+        mock.patch.object(uninstall, "remove_data") as mock_remove_data,
+        mock.patch.object(uninstall, "remove_secrets") as mock_remove_secrets,
+    ):
+        mock_stop_service.return_value = True
+        mock_remove_container_images.return_value = True
+        mock_remove_services.return_value = True
+        mock_reload_daemon.return_value = True
+        mock_remove_secrets.return_value = True
+
+        mock_args.quiet = False
+        assert uninstall.run(mock_args)
+
+        mock_stop_service.assert_called_once()
+        mock_remove_container_images.assert_called_once()
+        mock_remove_services.assert_called_once()
+        mock_reload_daemon.assert_called_once()
+        mock_remove_data.assert_called_once_with(True)
+        mock_remove_secrets.assert_called_once()
+
+        captured = capsys.readouterr()
+        uninstall_message = f"{settings.SERVER_SOFTWARE_NAME} uninstalled successfully."
+        assert captured.out.strip() == uninstall_message
