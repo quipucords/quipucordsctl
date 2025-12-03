@@ -13,6 +13,7 @@ EnvironmentFile=%h/.config/quipucords/env/env-db.env
 EnvironmentFile=%h/.config/quipucords/env/env-redis.env
 EnvironmentFile=%h/.config/quipucords/env/env-ansible.env
 EnvironmentFile=%h/.config/quipucords/env/env-server.env
+Secret=quipucords-server-username,type=env,target=QUIPUCORDS_SERVER_USERNAME
 Secret=quipucords-server-password,type=env,target=QUIPUCORDS_SERVER_PASSWORD
 Secret=quipucords-session-secret-key,type=env,target=QUIPUCORDS_SESSION_SECRET_KEY
 Secret=quipucords-encryption-secret-key,type=env,target=QUIPUCORDS_ENCRYPTION_SECRET_KEY
