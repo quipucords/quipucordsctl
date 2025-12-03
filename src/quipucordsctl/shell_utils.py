@@ -77,7 +77,8 @@ def run_command(
     raise_error: bool = True,
     wait_timeout: int | None = None,
     stdin: str | None = None,
-) -> tuple[str, str, int]:
+    env: dict[str, str] | None = None,
+) -> tuple[str, str, int]:  # sourcery skip
     """Run an external program."""
     if not all(isinstance(arg, str) for arg in command):
         raise TypeError(_("Command arguments must be strings. Got: %r") % command)
@@ -89,13 +90,14 @@ def run_command(
             {"wait_timeout": wait_timeout},
         )
     try:
-        process = subprocess.Popen(
+        process = subprocess.Popen(  # sourcery skip
             args=command,  # a list like ["systemctl", "--user", "reset-failed"]
             stdin=subprocess.PIPE if stdin else subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,  # we always expect input/output text, not byte strings
             shell=False,  # redundant, but a safe precaution in case defaults change
+            env=env,
         )
 
         # TODO figure out how we want to handle stdout/stderr
