@@ -98,6 +98,10 @@ def run_command(  # noqa: C901, PLR0913
     if not stderr:
         stderr = subprocess.PIPE
 
+    cmd_env = None
+    if env:
+        cmd_env = os.environ.copy()
+        cmd_env.update(env)
     try:
         process = subprocess.Popen(
             args=command,  # a list like ["systemctl", "--user", "reset-failed"]
@@ -106,7 +110,7 @@ def run_command(  # noqa: C901, PLR0913
             stderr=stderr,
             text=True,  # we always expect input/output text, not byte strings
             shell=False,  # redundant, but a safe precaution in case defaults change
-            env=env,
+            env=cmd_env,
             **kwargs,
         )
 

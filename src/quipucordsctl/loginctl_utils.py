@@ -2,7 +2,6 @@
 
 import getpass
 import logging
-import os
 import subprocess
 from gettext import gettext as _
 
@@ -13,9 +12,10 @@ logger = logging.getLogger(__name__)
 
 def is_linger_enabled(username):
     """Determine if Linger is enabled for a user."""
-    cmd_env = os.environ.copy()
-    cmd_env["LANG"] = "C"
-    cmd_env["LC_ALL"] = "C"
+    cmd_env = {
+        "LANG": "C",
+        "LC_ALL": "C",
+    }
     cmd = ["loginctl", "show-user", username, "--property=Linger"]
     cmd_result, __, exit_code = shell_utils.run_command(cmd, env=cmd_env)
     return cmd_result.strip().split("=")[1] == "yes" if exit_code == 0 else False
