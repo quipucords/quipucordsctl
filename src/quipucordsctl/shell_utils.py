@@ -89,14 +89,13 @@ def run_command(
             {"wait_timeout": wait_timeout},
         )
     try:
-        safe_command = [shlex.quote(c) for c in command]
         process = subprocess.Popen(
-            args=safe_command,  # a list like ["systemctl", "--user", "reset-failed"]
+            args=shlex.join(command),  # a list like ["systemctl", "--user", "reset-failed"]
             stdin=subprocess.PIPE if stdin else subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,  # we always expect input/output text, not byte strings
-            shell=False,  # redundant, but a safe precaution in case defaults change
+            shell=True,  # redundant, but a safe precaution in case defaults change
         )
 
         # TODO figure out how we want to handle stdout/stderr
