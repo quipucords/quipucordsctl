@@ -89,8 +89,9 @@ def run_command(
             {"wait_timeout": wait_timeout},
         )
     try:
+        safe_command = [shlex.quote(c) for c in command]
         process = subprocess.Popen(
-            args=command,  # a list like ["systemctl", "--user", "reset-failed"]
+            args=safe_command,  # a list like ["systemctl", "--user", "reset-failed"]
             stdin=subprocess.PIPE if stdin else subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
