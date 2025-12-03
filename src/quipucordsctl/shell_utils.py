@@ -96,6 +96,7 @@ def run_command(
             stderr=subprocess.PIPE,
             text=True,  # we always expect input/output text, not byte strings
             shell=False,  # redundant, but a safe precaution in case defaults change
+            env={},
         )
 
         # TODO figure out how we want to handle stdout/stderr
