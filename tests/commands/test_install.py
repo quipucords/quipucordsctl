@@ -1,5 +1,6 @@
 """Test the "install" command."""
 
+import argparse
 import logging
 import pathlib
 from unittest import mock
@@ -26,6 +27,26 @@ def test_get_help():
 def test_get_description():
     """Test the get_description returns an appropriate string."""
     assert "`install`" in install.get_description()
+
+
+@pytest.mark.parametrize(
+    "args,attr_name,expected",
+    (
+        (["--linger"], "linger", True),
+        (["--no-linger"], "linger", False),
+        ([], "linger", True),
+    ),
+)
+def test_setup_parser(args, attr_name, expected):
+    """Test the setup_parser configures parser as expected."""
+    parser = argparse.ArgumentParser()
+    install.setup_parser(parser)
+
+    value = getattr(parser.parse_args(args), attr_name)
+    if type(expected) is bool:
+        assert value is expected
+    else:
+        assert value == expected
 
 
 def test_install_run(
@@ -64,8 +85,10 @@ def test_install_run(
         mock.patch.object(install, "systemctl_utils") as systemctl_utils,
         mock.patch.object(install, "reset_secrets") as reset_secrets,
         mock.patch.object(install, "systemctl_reload") as systemctl_reload,
+        mock.patch.object(install, "loginctl_utils") as loginctl_utils,
     ):
         reset_secrets.return_value = True
+        loginctl_utils.enable_linger.return_value = True
 
         install.run(mock_args)
 
@@ -74,6 +97,7 @@ def test_install_run(
         systemctl_utils.ensure_systemd_user_session.assert_called_once()
         reset_secrets.assert_called_once_with(mock_args)
         systemctl_reload.assert_called_once()
+        loginctl_utils.enable_linger.assert_called_once()
 
         # Spot-check only a few paths that should now exist.
         assert (data_dir / "data").is_dir()
