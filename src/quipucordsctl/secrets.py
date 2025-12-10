@@ -74,6 +74,10 @@ class ResetSecretMessages:
     check_failed_too_similar: str = _(
         "The value you provided is too similar to another secret's value."
     )
+    check_failed_empty: str = _("The value cannot be empty.")
+    check_failed_required_quiet_mode: str = _(
+        "This value is required but cannot be prompted in quiet mode."
+    )
     result_updated: str = _("The secret was successfully updated.")
     result_not_updated: str = _("The secret was not updated.")
 
@@ -163,6 +167,64 @@ def reset_secret(
 
     if new_secret and podman_utils.set_secret(
         podman_secret_name, new_secret, already_exists
+    ):
+        logger.debug(messages.result_updated)
+        return True
+
+    logger.error(messages.result_not_updated)
+    return False
+
+
+def reset_username(  # noqa: C901, PLR0911
+    podman_secret_name: str,
+    messages: ResetSecretMessages | None = None,
+    must_confirm_replace_existing: bool = False,
+    must_prompt_interactive_input: bool = False,
+    env_var_name: str | None = None,
+) -> bool:
+    """
+    Reset the admin login username.
+
+    Unlike reset_secret(), this function requires explicit user input and does not
+    generate random values. Usernames must be provided either via environment variable
+    or interactive prompt.
+
+    Returns True if everything succeeded, else False because some input validation
+    failed or the user declined a confirmation prompt.
+    """
+    if not messages:
+        messages = _default_reset_secret_messages
+
+    already_exists = podman_utils.secret_exists(podman_secret_name)
+
+    if must_confirm_replace_existing and already_exists:
+        if not confirm_replace_existing(messages):
+            logger.error(messages.result_not_updated)
+            return False
+
+    new_username = None
+
+    if not must_prompt_interactive_input and env_var_name:
+        if new_username := shell_utils.get_env(env_var_name):
+            if not new_username.strip():
+                logger.error(messages.check_failed_empty)
+                return False
+
+    if not new_username:
+        if settings.runtime.quiet:
+            logger.error(messages.check_failed_required_quiet_mode)
+            return False
+
+        if not (new_username := prompt_secret(messages)):
+            logger.error(messages.result_not_updated)
+            return False
+
+        if not new_username.strip():
+            logger.error(messages.check_failed_empty)
+            return False
+
+    if new_username and podman_utils.set_secret(
+        podman_secret_name, new_username, already_exists
     ):
         logger.debug(messages.result_updated)
         return True
