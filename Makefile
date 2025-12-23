@@ -23,11 +23,8 @@ clean:
 check-requirements:
 	uv lock --check
 
-lock-requirements: lock-main-requirements
-
-lock-main-requirements:
+lock-requirements:
 	uv lock
-	uv export --no-emit-project --no-dev --frozen --no-hashes -o lockfiles/requirements.txt
 
 update-requirements:
 	uv lock --upgrade
