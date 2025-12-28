@@ -20,6 +20,7 @@ from quipucordsctl import (
 )
 from quipucordsctl.commands import (
     reset_admin_password,
+    reset_admin_username,
     reset_database_password,
     reset_encryption_secret,
     reset_redis_password,
@@ -110,6 +111,7 @@ _RESET_SECRETS_MODULE_ERROR_MESSAGE: dict[types.ModuleType, str] = {
         "The install command failed to reset encryption secret."
     ),
     reset_session_secret: _("The install command failed to reset session secret."),
+    reset_admin_username: _("The install command failed to reset admin username."),
     reset_admin_password: _("The install command failed to reset admin password."),
     reset_database_password: _(
         "The install command failed to reset database password."

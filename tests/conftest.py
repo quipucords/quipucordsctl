@@ -70,3 +70,28 @@ def bad_secret(faker):
         upper_case=False,  # should have a letter
         lower_case=False,  # should have a letter
     )
+
+
+@pytest.fixture
+def mock_first_time_run(mocker):
+    """Mock behaviors for a first-time run (secret doesn't exist, no env var)."""
+
+    def _mock_for_module(reset_module):
+        mocker.patch.object(
+            reset_module.podman_utils,
+            "secret_exists",
+            return_value=False,
+        )
+        mocker.patch.object(
+            reset_module.secrets.shell_utils,
+            "get_env",
+            return_value=None,
+        )
+
+    return _mock_for_module
+
+
+def assert_reset_command_help(reset_module, expected_keyword):
+    """Assert that reset command has appropriate help text."""
+    assert expected_keyword in reset_module.get_help()
+    assert f"`{reset_module.__name__.split('.')[-1]}`" in reset_module.get_description()
