@@ -5,7 +5,7 @@
 %global ui_image quay.io/quipucords/quipucords-ui:2.4
 ###############################################################
 
-%global version_ctl 2.4.0
+%global version_ctl 2.4.1
 %global templates_dir src/quipucordsctl/templates
 %global product_name_upper %(echo %{product_name_lower} | tr '[:lower:]' '[:upper:]')
 
