@@ -19,7 +19,7 @@ quipucordsctl = "quipucordsctl.__main__:main"
 
 [project]
 name = "quipucordsctl"
-version = "0.1.0"
+version = "2.4.1"
 description = "Utility for installing and managing a local quipucords server."
 requires-python = "<3.14,>=3.12"
 authors = [
