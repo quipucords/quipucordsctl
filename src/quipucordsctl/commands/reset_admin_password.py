@@ -15,20 +15,10 @@ from quipucordsctl import podman_utils, secrets, settings
 logger = logging.getLogger(__name__)
 
 PODMAN_SECRET_NAME = settings.QUIPUCORDS_SECRETS["server"]
+USERNAME_SECRET_NAME = settings.QUIPUCORDS_SECRETS["username"]
 ENV_VAR_NAME = f"{settings.ENV_VAR_PREFIX}SERVER_PASSWORD"
 MIN_LENGTH = 10
 BLOCKLIST = ["dscpassw0rd", "qpcpassw0rd"]
-SIMILAR_VALUE = "admin"
-MAX_SIMILARITY = 0.7
-REQUIREMENTS = {
-    "min_length": MIN_LENGTH,
-    "blocklist": BLOCKLIST,
-    "check_similar": secrets.SimilarValueCheck(
-        value=SIMILAR_VALUE,
-        name=_("admin login username"),
-        max_similarity=MAX_SIMILARITY,
-    ),
-}
 
 
 def get_help() -> str:
@@ -74,6 +64,17 @@ def run(args: argparse.Namespace) -> bool:
     Read from the environment variable or prompt the user for input.
     No need to give warnings or prompt for extra confirmation.
     """
+    check_requirements = {
+        "min_length": MIN_LENGTH,
+        "blocklist": BLOCKLIST,
+    }
+
+    if similar_check := secrets.build_similar_value_check(
+        secret_name=USERNAME_SECRET_NAME,
+        display_name=_("admin login username"),
+    ):
+        check_requirements["check_similar"] = similar_check
+
     return secrets.reset_secret(
         podman_secret_name=PODMAN_SECRET_NAME,
         messages=reset_secret_messages,
@@ -82,5 +83,5 @@ def run(args: argparse.Namespace) -> bool:
         must_prompt_interactive_input=False,
         may_prompt_interactive_input=True,
         env_var_name=ENV_VAR_NAME,
-        check_requirements=REQUIREMENTS,
+        check_requirements=check_requirements,
     )
