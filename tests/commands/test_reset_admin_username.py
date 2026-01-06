@@ -219,3 +219,111 @@ def test_reset_admin_username_prompt_returns_none(mocker, caplog):
     assert not reset_admin_username.run(argparse.Namespace())
     assert "Username cannot be empty." == caplog.messages[0]
     assert "The admin login username was not updated." == caplog.messages[1]
+
+
+@mock.patch.object(reset_admin_username.secrets, "build_similar_value_check")
+@mock.patch.object(reset_admin_username.secrets, "reset_username")
+def test_reset_admin_username_builds_similarity_check_when_password_exists(
+    mock_reset_username, mock_build_check
+):
+    """Test run() builds similarity check when password secret exists."""
+    mock_similar_check = mock.Mock()
+    mock_build_check.return_value = mock_similar_check
+    mock_reset_username.return_value = True
+
+    reset_admin_username.run(argparse.Namespace())
+
+    mock_build_check.assert_called_once_with(
+        secret_name=reset_admin_username.PASSWORD_SECRET_NAME,
+        display_name="admin login password",
+    )
+
+    call_kwargs = mock_reset_username.call_args.kwargs
+    assert call_kwargs["check_requirements"]["check_similar"] == mock_similar_check
+
+
+@mock.patch.object(reset_admin_username.secrets, "build_similar_value_check")
+@mock.patch.object(reset_admin_username.secrets, "reset_username")
+def test_reset_admin_username_skips_similarity_check_when_password_not_exists(
+    mock_reset_username, mock_build_check
+):
+    """Test run() skips similarity check when password secret doesn't exist."""
+    mock_build_check.return_value = None
+    mock_reset_username.return_value = True
+
+    reset_admin_username.run(argparse.Namespace())
+
+    call_kwargs = mock_reset_username.call_args.kwargs
+    assert "check_similar" not in call_kwargs["check_requirements"]
+
+
+@mock.patch.object(reset_admin_username.secrets, "build_similar_value_check")
+@mock.patch.object(reset_admin_username.secrets, "reset_username")
+def test_reset_admin_username_disables_password_validations(
+    mock_reset_username, mock_build_check
+):
+    """Test run() disables password-style validations for usernames."""
+    mock_build_check.return_value = None
+    mock_reset_username.return_value = True
+
+    reset_admin_username.run(argparse.Namespace())
+
+    call_kwargs = mock_reset_username.call_args.kwargs
+    reqs = call_kwargs["check_requirements"]
+
+    assert reqs["min_length"] == 1
+    assert reqs["digits"] is False
+    assert reqs["letters"] is False
+    assert reqs["not_isdigit"] is False
+
+
+def test_reset_admin_username_rejects_similar_to_password(
+    mock_first_time_run, mocker, caplog
+):
+    """Test username is rejected when too similar to existing password."""
+    mock_first_time_run(reset_admin_username)
+
+    mocker.patch.object(
+        reset_admin_username.secrets.podman_utils,
+        "get_secret_value",
+        return_value="secretpass",
+    )
+    mocker.patch.object(
+        reset_admin_username.secrets,
+        "prompt_username",
+        return_value="secretpass",
+    )
+
+    caplog.set_level(logging.ERROR)
+    result = reset_admin_username.run(argparse.Namespace())
+
+    assert not result
+    assert "too similar" in caplog.text.lower()
+
+
+def test_reset_admin_username_accepts_different_from_password(
+    mock_first_time_run, mocker, caplog
+):
+    """Test username is accepted when sufficiently different from password."""
+    mock_first_time_run(reset_admin_username)
+
+    mocker.patch.object(
+        reset_admin_username.secrets.podman_utils,
+        "get_secret_value",
+        return_value="Xk9#mP2$vL5@",
+    )
+    mocker.patch.object(
+        reset_admin_username.secrets,
+        "prompt_username",
+        return_value="shadowman",
+    )
+    mocker.patch.object(
+        reset_admin_username.podman_utils,
+        "set_secret",
+        return_value=True,
+    )
+
+    caplog.set_level(logging.DEBUG)
+    result = reset_admin_username.run(argparse.Namespace())
+
+    assert result

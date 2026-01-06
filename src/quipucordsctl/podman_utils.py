@@ -215,7 +215,6 @@ def secret_exists(secret_name: str) -> bool:
 
 def set_secret(secret_name: str, secret_value: str, allow_replace=True) -> bool:
     """Set or replace a podman secret."""
-    verify_podman_argument_string(_("podman secret name"), secret_name)
     exists = secret_exists(secret_name)
     if exists:
         if allow_replace:
@@ -308,3 +307,33 @@ def pull_image(image_id: str, wait_timeout: int = None) -> bool:
         return True
     logger.error(_("Failed to pull image %(image)s."), {"image": image_id})
     return False
+
+
+def get_secret_value(secret_name: str) -> str | None:
+    """
+    Get the value of an existing podman secret.
+
+    Returns the secret value if it exists, otherwise None.
+    """
+    if not secret_exists(secret_name):
+        return None
+    stdout, __, exit_code = shell_utils.run_command(
+        [
+            "podman",
+            "secret",
+            "inspect",
+            "--showsecret",
+            "--format",
+            "{{.SecretData}}",
+            secret_name,
+        ],
+        raise_error=False,
+        redact_output=True,
+    )
+    if exit_code == 0:
+        return stdout
+    logger.debug(
+        _("Failed to retrieve podman secret '%(secret_name)s'."),
+        {"secret_name": secret_name},
+    )
+    return None

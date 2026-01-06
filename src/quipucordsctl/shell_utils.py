@@ -71,7 +71,7 @@ def env_template_dir() -> pathlib.Path:
     return template_dir().joinpath("env")
 
 
-def run_command(  # noqa: C901, PLR0913
+def run_command(  # noqa: C901, PLR0913, PLR0912
     command: list[str],
     *,
     raise_error: bool = True,
@@ -80,6 +80,7 @@ def run_command(  # noqa: C901, PLR0913
     stdout=None,
     stderr=None,
     env: dict[str, str] | None = None,
+    redact_output: bool = False,
     **kwargs,
 ) -> tuple[str, str, int]:
     """Run an external program."""
@@ -139,11 +140,17 @@ def run_command(  # noqa: C901, PLR0913
     stdout_logger = logger.debug if exit_code == 0 else logger.info
     stderr_logger = logger.debug if exit_code == 0 else logger.error
     if stdout == subprocess.PIPE:
-        for line in stdout.strip().splitlines():
-            stdout_logger(line)
+        if redact_output:
+            stdout_logger(_("[output redacted for security]"))
+        else:
+            for line in stdout.strip().splitlines():
+                stdout_logger(line)
     if stderr == subprocess.PIPE:
-        for line in stderr.strip().splitlines():
-            stderr_logger(line)
+        if redact_output:
+            stderr_logger(_("[output redacted for security]"))
+        else:
+            for line in stderr.strip().splitlines():
+                stderr_logger(line)
 
     if raise_error and exit_code != 0:
         logger.error(
