@@ -190,6 +190,7 @@ def reset_username(
     podman_secret_name: str,
     messages: ResetSecretMessages | None = None,
     must_confirm_replace_existing: bool = False,
+    check_requirements: dict | None = None,
     **kwargs,
 ) -> bool:
     """
@@ -211,6 +212,7 @@ def reset_username(
     new_username = get_new_username_value(
         messages=messages,
         must_confirm_replace_existing=must_confirm_replace_existing and already_exists,
+        check_requirements=check_requirements,
         **kwargs,
     )
 
@@ -224,12 +226,13 @@ def reset_username(
     return False
 
 
-def get_new_username_value(
+def get_new_username_value(  # noqa: C901, PLR0911
     messages: ResetSecretMessages | None = None,
     *,
     env_var_name: str | None = None,
     must_confirm_replace_existing: bool = False,
     must_prompt_interactive_input: bool = False,
+    check_requirements: dict | None = None,
 ) -> str | None:
     """
     Return a new username value from environment variable or interactive prompt.
@@ -243,12 +246,17 @@ def get_new_username_value(
     if must_confirm_replace_existing and not confirm_replace_existing(messages):
         return None
 
+    if not check_requirements:
+        check_requirements = {}
+
     new_username = None
 
     if not must_prompt_interactive_input and env_var_name:
         if new_username := shell_utils.get_env(env_var_name):
             if not new_username.strip():
                 logger.error(messages.check_failed_empty)
+                return None
+            if not check_secret(new_username, messages, **check_requirements):
                 return None
 
     if not new_username:
@@ -258,6 +266,9 @@ def get_new_username_value(
 
         if not (new_username := prompt_username(messages)) or not new_username.strip():
             logger.error(messages.check_failed_empty)
+            return None
+
+        if not check_secret(new_username, messages, **check_requirements):
             return None
 
     return new_username

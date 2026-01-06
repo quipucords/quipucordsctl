@@ -14,6 +14,7 @@ from quipucordsctl import podman_utils, secrets, settings
 logger = logging.getLogger(__name__)
 
 PODMAN_SECRET_NAME = settings.QUIPUCORDS_SECRETS["username"]
+PASSWORD_SECRET_NAME = settings.QUIPUCORDS_SECRETS["server"]
 ENV_VAR_NAME = f"{settings.ENV_VAR_PREFIX}SERVER_USERNAME"
 
 
@@ -71,10 +72,24 @@ def run(args: argparse.Namespace) -> bool:
     Read from the environment variable or prompt the user for input.
     Require confirmation when replacing an existing username to prevent lockout.
     """
+    check_requirements = {
+        "min_length": 1,
+        "digits": False,
+        "letters": False,
+        "not_isdigit": False,
+    }
+
+    if similar_check := secrets.build_similar_value_check(
+        secret_name=PASSWORD_SECRET_NAME,
+        display_name=_("admin login password"),
+    ):
+        check_requirements["check_similar"] = similar_check
+
     return secrets.reset_username(
         podman_secret_name=PODMAN_SECRET_NAME,
         messages=reset_username_messages,
         must_confirm_replace_existing=True,
         must_prompt_interactive_input=False,
         env_var_name=ENV_VAR_NAME,
+        check_requirements=check_requirements,
     )
