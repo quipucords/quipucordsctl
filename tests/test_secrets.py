@@ -346,3 +346,55 @@ def test_build_similar_value_check_secret_not_exists(mock_get_secret_value, fake
 
     assert result is None
     mock_get_secret_value.assert_called_once_with(secret_name)
+
+
+def test_get_new_username_value_from_env_var(mocker, faker):
+    """Test get_new_username_value returns value from environment variable."""
+    test_username = "valid-user-123"
+    env_var_name = faker.slug()
+
+    mocker.patch.object(secrets.shell_utils, "get_env", return_value=test_username)
+    mocker.patch.object(secrets, "check_secret", return_value=test_username)
+
+    result = secrets.get_new_username_value(
+        env_var_name=env_var_name,
+    )
+
+    assert result == test_username
+
+
+def test_get_new_username_value_env_var_fails_check_secret(mocker, faker):
+    """Test get_new_username_value returns None when env var value fails validation."""
+    test_username = "invalid-username"
+    env_var_name = faker.slug()
+    messages = secrets.ResetSecretMessages()
+
+    mocker.patch.object(secrets.shell_utils, "get_env", return_value=test_username)
+    mocker.patch.object(secrets, "check_secret", return_value=None)
+
+    result = secrets.get_new_username_value(
+        messages=messages,
+        env_var_name=env_var_name,
+    )
+
+    assert result is None
+
+
+def test_get_new_username_value_with_check_requirements(mocker, faker):
+    """Test get_new_username_value passes check_requirements to check_secret."""
+    test_username = "valid-user-456"
+    env_var_name = faker.slug()
+    check_requirements = {"min_length": 8, "blocklist": ["admin"]}
+
+    mocker.patch.object(secrets.shell_utils, "get_env", return_value=test_username)
+    mock_check = mocker.patch.object(
+        secrets, "check_secret", return_value=test_username
+    )
+
+    result = secrets.get_new_username_value(
+        env_var_name=env_var_name,
+        check_requirements=check_requirements,
+    )
+
+    assert result == test_username
+    mock_check.assert_called_once_with(test_username, None, **check_requirements)
