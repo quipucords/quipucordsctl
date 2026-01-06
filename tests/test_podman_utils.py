@@ -430,3 +430,106 @@ def test_verify_podman_argument_string_value_error(value):
     """Test verify_podman_argument_string raises ValueError."""
     with pytest.raises(ValueError):
         podman_utils.verify_podman_argument_string("thing", value)
+
+
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_get_secret_value_success(mock_run_command, faker):
+    """Test get_secret_value returns the secret value when it exists."""
+    secret_name = faker.slug()
+    secret_value = faker.password()
+    mock_run_command.side_effect = [
+        [None, None, 0],
+        [secret_value, None, 0],
+    ]
+
+    result = podman_utils.get_secret_value(secret_name)
+    assert result == secret_value
+
+
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_get_secret_value_not_exists(mock_run_command, faker):
+    """Test get_secret_value returns None when secret does not exist."""
+    secret_name = faker.slug()
+    mock_run_command.side_effect = [
+        [None, None, 1],
+    ]
+
+    result = podman_utils.get_secret_value(secret_name)
+    assert result is None
+
+
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_get_secret_value_inspect_fails(mock_run_command, faker, caplog):
+    """Test get_secret_value returns None when inspect command fails unexpectedly."""
+    caplog.set_level(logging.DEBUG)
+    secret_name = faker.slug()
+    mock_run_command.side_effect = [
+        [None, None, 0],
+        [None, None, 1],  # "inspect" command failed
+    ]
+
+    result = podman_utils.get_secret_value(secret_name)
+    assert result is None
+    assert f"Failed to retrieve podman secret '{secret_name}'." in caplog.messages[-1]
+
+
+@pytest.mark.parametrize("value", (None, 123, ["list"], {"dict": "value"}))
+def test_get_secret_value_invalid_type(value):
+    """Test get_secret_value raises TypeError for non-string inputs."""
+    with pytest.raises(TypeError):
+        podman_utils.get_secret_value(value)
+
+
+@pytest.mark.parametrize("value", ("", " ", "\t", "\n", "   "))
+def test_get_secret_value_empty_string(value):
+    """Test get_secret_value raises ValueError for empty/whitespace strings."""
+    with pytest.raises(ValueError):
+        podman_utils.get_secret_value(value)
+
+
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_get_secret_value_calls_correct_command(mock_run_command, faker):
+    """Test get_secret_value calls podman with correct arguments."""
+    secret_name = faker.slug()
+    mock_run_command.side_effect = [
+        [None, None, 0],
+        ["secret_data", None, 0],
+    ]
+
+    podman_utils.get_secret_value(secret_name)
+
+    inspect_call = mock_run_command.call_args_list[1]
+    assert inspect_call.args[0] == [
+        "podman",
+        "secret",
+        "inspect",
+        "--showsecret",
+        "--format",
+        "{{.SecretData}}",
+        secret_name,
+    ]
+    assert inspect_call.kwargs.get("raise_error") is False
+    assert inspect_call.kwargs.get("redact_output") is True
+
+
+@pytest.mark.parametrize(
+    "secret_value",
+    [
+        " password_with_leading_space",
+        "password_with_trailing_space ",
+        " password_with_both_spaces ",
+        "  password  ",
+        "\tpassword_with_tab",
+    ],
+)
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_get_secret_value_preserves_whitespace(mock_run_command, secret_value):
+    """Test get_secret_value preserves leading/trailing whitespace in secret values."""
+    secret_name = "test-secret"
+    mock_run_command.side_effect = [
+        [None, None, 0],
+        [secret_value, None, 0],
+    ]
+
+    result = podman_utils.get_secret_value(secret_name)
+    assert result == secret_value
