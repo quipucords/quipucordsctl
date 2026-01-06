@@ -316,3 +316,33 @@ def test_reset_username_confirms_before_replacing(mocker, caplog):
     assert result is True
     call_kwargs = mock_get_new_username.call_args.kwargs
     assert call_kwargs.get("must_confirm_replace_existing") is True
+
+
+@mock.patch.object(secrets.podman_utils, "get_secret_value")
+def test_build_similar_value_check_secret_exists(mock_get_secret_value, faker):
+    """Test build_similar_value_check returns SimilarValueCheck when secret exists."""
+    secret_name = faker.slug()
+    secret_value = faker.password()
+    display_name = faker.sentence()
+    mock_get_secret_value.return_value = secret_value
+
+    result = secrets.build_similar_value_check(secret_name, display_name)
+
+    assert result is not None
+    assert result.value == secret_value
+    assert result.name == display_name
+    assert result.max_similarity == 0.7
+    mock_get_secret_value.assert_called_once_with(secret_name)
+
+
+@mock.patch.object(secrets.podman_utils, "get_secret_value")
+def test_build_similar_value_check_secret_not_exists(mock_get_secret_value, faker):
+    """Test build_similar_value_check returns None when secret doesn't exist."""
+    secret_name = faker.slug()
+    display_name = faker.sentence()
+    mock_get_secret_value.return_value = None
+
+    result = secrets.build_similar_value_check(secret_name, display_name)
+
+    assert result is None
+    mock_get_secret_value.assert_called_once_with(secret_name)
