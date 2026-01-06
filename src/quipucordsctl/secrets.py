@@ -340,11 +340,40 @@ def get_new_secret_value(  # noqa: PLR0911, PLR0913, C901
 
 @dataclasses.dataclass
 class SimilarValueCheck:
-    """Class for defining an optional value to check for secret similarity."""
+    """
+    Class for defining an optional value to check for secret similarity.
+
+    Uses difflib.SequenceMatcher.quick_ratio() with max_similarity as threshold.
+    The ratio is based on character frequency, so passwords reusing the same
+    characters, even reversed or shuffled are rejected. To pass, use
+    substantially different characters; longer passwords with fewer shared
+    chars pass as the ratio drops below max_similarity.
+    """
 
     value: str
     name: str
     max_similarity: float = 1.0
+
+
+def build_similar_value_check(
+    secret_name: str,
+    display_name: str,
+    max_similarity: float = 0.7,
+) -> SimilarValueCheck | None:
+    """
+    Fetch a podman secret and wrap it for similarity checking.
+
+    Returns None if the secret doesn't exist, allowing callers to skip
+    the similarity check gracefully.
+    """
+    secret_value = podman_utils.get_secret_value(secret_name)
+    if secret_value:
+        return SimilarValueCheck(
+            value=secret_value,
+            name=display_name,
+            max_similarity=max_similarity,
+        )
+    return None
 
 
 def check_secret(  # noqa: PLR0913
