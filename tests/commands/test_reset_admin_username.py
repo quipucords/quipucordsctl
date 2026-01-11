@@ -115,10 +115,10 @@ def test_reset_admin_username_requires_confirmation_when_replacing(mocker, caplo
     )
 
     caplog.set_level(logging.ERROR)
-    expected_last_log_message = "The admin login username was not updated."
+    expected_log_message = "The admin login username was not updated."
 
     assert not reset_admin_username.run(argparse.Namespace())
-    assert expected_last_log_message == caplog.messages[0]
+    assert expected_log_message in caplog.messages
 
 
 def test_reset_admin_username_succeeds_with_confirmation(mocker, caplog):

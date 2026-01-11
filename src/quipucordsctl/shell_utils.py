@@ -99,6 +99,10 @@ def run_command(  # noqa: C901, PLR0913, PLR0912
     if not stderr:
         stderr = subprocess.PIPE
 
+    capture_stdout = stdout == subprocess.PIPE
+    capture_stderr = stderr == subprocess.PIPE
+    # TODO check is there is a better way to simplify this function
+
     cmd_env = None
     if env:
         cmd_env = os.environ.copy()
@@ -118,7 +122,9 @@ def run_command(  # noqa: C901, PLR0913, PLR0912
         # TODO figure out how we want to handle stdout/stderr
         # TODO maybe support "realtime" stdout display instead of capturing at the end
         # TODO should these *always* go to our stdout/stderr or use the logger?
-        stdout, stderr = process.communicate(input=stdin, timeout=wait_timeout)
+        process_stdout, process_stderr = process.communicate(
+            input=stdin, timeout=wait_timeout
+        )
         exit_code = process.returncode
     except subprocess.TimeoutExpired as error:
         logger.error(
@@ -139,17 +145,17 @@ def run_command(  # noqa: C901, PLR0913, PLR0912
     # make stdout and stderr noisier if the process did not exit cleanly
     stdout_logger = logger.debug if exit_code == 0 else logger.info
     stderr_logger = logger.debug if exit_code == 0 else logger.error
-    if stdout == subprocess.PIPE:
+    if capture_stdout:
         if redact_output:
-            stdout_logger(_("[output redacted for security]"))
+            stdout_logger(_("[REDACTED]"))
         else:
-            for line in stdout.strip().splitlines():
+            for line in process_stdout.strip().splitlines():
                 stdout_logger(line)
-    if stderr == subprocess.PIPE:
+    if capture_stderr:
         if redact_output:
-            stderr_logger(_("[output redacted for security]"))
+            stderr_logger(_("[REDACTED]"))
         else:
-            for line in stderr.strip().splitlines():
+            for line in process_stderr.strip().splitlines():
                 stderr_logger(line)
 
     if raise_error and exit_code != 0:
@@ -160,6 +166,8 @@ def run_command(  # noqa: C901, PLR0913, PLR0912
             ),
             {"command": command, "exit_code": exit_code},
         )
-        raise subprocess.CalledProcessError(exit_code, command, stdout, stderr)
+        raise subprocess.CalledProcessError(
+            exit_code, command, process_stdout, process_stderr
+        )
 
-    return stdout, stderr, exit_code
+    return process_stdout, process_stderr, exit_code

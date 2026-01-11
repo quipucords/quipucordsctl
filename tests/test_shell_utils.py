@@ -1,5 +1,6 @@
 """Test the shell_utils module."""
 
+import logging
 import pathlib
 import subprocess
 from unittest import mock
@@ -119,3 +120,99 @@ def test_template_dir():
         assert shell_utils.template_dir() == pathlib.Path(
             f"/usr/share/{settings.PROGRAM_NAME}"
         )
+
+
+def test_run_command_logs_stdout_on_success(caplog):
+    """Test stdout is logged at DEBUG level when command succeeds."""
+    with caplog.at_level(logging.DEBUG):
+        with mock.patch("quipucordsctl.shell_utils.subprocess") as mock_subprocess:
+            mock_popen = mock_subprocess.Popen.return_value
+            mock_popen.communicate.return_value = ("line1\nline2", "")
+            mock_popen.returncode = 0
+            mock_subprocess.PIPE = subprocess.PIPE
+
+            shell_utils.run_command(["echo", "test"])
+
+    assert "line1" in caplog.text
+    assert "line2" in caplog.text
+
+
+def test_run_command_logs_stderr_on_failure(caplog):
+    """Test stderr is logged at ERROR level when command fails."""
+    with caplog.at_level(logging.DEBUG):
+        with mock.patch("quipucordsctl.shell_utils.subprocess") as mock_subprocess:
+            mock_popen = mock_subprocess.Popen.return_value
+            mock_popen.communicate.return_value = ("", "error line1\nerror line2")
+            mock_popen.returncode = 1
+            mock_subprocess.PIPE = subprocess.PIPE
+            mock_subprocess.CalledProcessError = subprocess.CalledProcessError
+
+            with pytest.raises(subprocess.CalledProcessError):
+                shell_utils.run_command(["failing", "cmd"])
+
+    assert "error line1" in caplog.text
+    assert "error line2" in caplog.text
+
+
+def test_run_command_with_stdin():
+    """Test run_command passes stdin to subprocess."""
+    with mock.patch("quipucordsctl.shell_utils.subprocess") as mock_subprocess:
+        mock_popen = mock_subprocess.Popen.return_value
+        mock_popen.communicate.return_value = ("output", "")
+        mock_popen.returncode = 0
+        mock_subprocess.PIPE = subprocess.PIPE
+
+        shell_utils.run_command(["cat"], stdin="input data")
+
+    mock_subprocess.Popen.assert_called_once()
+    call_kwargs = mock_subprocess.Popen.call_args[1]
+    assert call_kwargs["stdin"] == subprocess.PIPE
+    mock_popen.communicate.assert_called_once_with(input="input data", timeout=mock.ANY)
+
+
+def test_run_command_redact_output_hides_stdout(caplog):
+    """Test redact_output=True hides actual stdout content."""
+    with caplog.at_level(logging.DEBUG):
+        with mock.patch("quipucordsctl.shell_utils.subprocess") as mock_subprocess:
+            mock_popen = mock_subprocess.Popen.return_value
+            mock_popen.communicate.return_value = ("secret_password_123", "")
+            mock_popen.returncode = 0
+            mock_subprocess.PIPE = subprocess.PIPE
+
+            shell_utils.run_command(["echo", "secret"], redact_output=True)
+
+    assert "secret_password_123" not in caplog.text
+    assert "[REDACTED]" in caplog.text
+
+
+def test_run_command_redact_output_hides_stderr(caplog):
+    """Test redact_output=True hides actual stderr content."""
+    with caplog.at_level(logging.DEBUG):
+        with mock.patch("quipucordsctl.shell_utils.subprocess") as mock_subprocess:
+            mock_popen = mock_subprocess.Popen.return_value
+            mock_popen.communicate.return_value = ("", "secret_error_info")
+            mock_popen.returncode = 1
+            mock_subprocess.PIPE = subprocess.PIPE
+            mock_subprocess.CalledProcessError = subprocess.CalledProcessError
+
+            with pytest.raises(subprocess.CalledProcessError):
+                shell_utils.run_command(["cmd"], redact_output=True)
+
+    assert "secret_error_info" not in caplog.text
+    assert "[REDACTED]" in caplog.text
+
+
+def test_run_command_raise_error_false_allows_failure():
+    """Test run_command with raise_error=False returns exit code without raising."""
+    with mock.patch("quipucordsctl.shell_utils.subprocess") as mock_subprocess:
+        mock_popen = mock_subprocess.Popen.return_value
+        mock_popen.communicate.return_value = ("", "error")
+        mock_popen.returncode = 42
+        mock_subprocess.PIPE = subprocess.PIPE
+
+        stdout, stderr, exit_code = shell_utils.run_command(
+            ["failing", "cmd"], raise_error=False
+        )
+
+    assert exit_code == 42
+    assert stderr == "error"
