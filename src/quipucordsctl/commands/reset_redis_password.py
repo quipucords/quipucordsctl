@@ -21,7 +21,7 @@ REQUIREMENTS = {"min_length": MIN_LENGTH}
 
 def get_help() -> str:
     """Get the help/docstring for this command."""
-    return _("Reset the Redis password.")
+    return _("Reset the Redis password")
 
 
 def get_description() -> str:
@@ -29,12 +29,12 @@ def get_description() -> str:
     return _(
         textwrap.dedent(
             """
-            The `%(command_name)s` command resets the %(server_software_name)s
-            Redis password. This password is used only by the
-            %(server_software_name)s server to communicate with its local
-            Redis server, and as a user, you never need to use this value directly.
+            Reset the %(server_software_name)s Redis password.
+            The %(server_software_name)s server internally uses this password
+            to communicate with its local Redis server.
+            As a user, you should never need to use this value directly.
             The `%(command_name)s` command will try to use the value from
-            the environment variable `%(env_var_name)s` if you have set one.
+            the environment variable `%(env_var_name)s` if it exists.
             """
         )
     ) % {
