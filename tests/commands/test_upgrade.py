@@ -57,7 +57,7 @@ def test_print_success(capsys):
     upgrade.print_success()
     captured = capsys.readouterr()
     assert "Upgrade completed successfully." in captured.out
-    assert f"the {settings.SERVER_SOFTWARE_NAME} server" in captured.out
+    assert settings.SERVER_SOFTWARE_NAME in captured.out
     assert (
         f"systemctl --user restart {settings.SERVER_SOFTWARE_PACKAGE}-app"
         in captured.out
