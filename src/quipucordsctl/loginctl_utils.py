@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def is_linger_enabled(username):
-    """Determine if Linger is enabled for a user."""
+    """Check if the 'Linger' property is enabled for the given user."""
     cmd_env = {
         "LANG": "C",
         "LC_ALL": "C",
@@ -22,20 +22,20 @@ def is_linger_enabled(username):
 
 
 def check_linger():
-    """Check if Linger is enabled for the current user."""
+    """Check if the 'Linger' property is enabled for the current user."""
     username = getpass.getuser()
     try:
         if is_linger_enabled(username):
             logger.info(
-                _("Linger is enabled for user '%(username)s'"),
+                _("'Linger' is enabled for user '%(username)s'"),
                 {"username": username},
             )
         return True
     except subprocess.CalledProcessError:
         logger.error(
             _(
-                "loginctl failed unexpectedly, unable to check Linger"
-                " for user '%(username)s'. Please check logs."
+                "loginctl failed unexpectedly. Unable to check 'Linger' property "
+                "for user '%(username)s'. Please check logs."
             ),
             {"username": username},
         )
@@ -43,23 +43,23 @@ def check_linger():
 
 
 def enable_linger(linger: bool):
-    """Enable Linger for the current user."""
+    """Enable the 'Linger' property for the current user."""
     username = getpass.getuser()
     if not linger:
         logger.info(
-            _("Linger will not be enabled for user '%(username)s'."),
+            _("'Linger' will not be checked or enabled for user '%(username)s'."),
             {"username": username},
         )
         return True
     try:
         if is_linger_enabled(username):
             logger.info(
-                _("Linger is enabled for user '%(username)s'"),
+                _("'Linger' is enabled for user '%(username)s'"),
                 {"username": username},
             )
             return True
         logger.info(
-            _("Enabling Linger for user '%(username)s'"),
+            _("Enabling 'Linger' for user '%(username)s'"),
             {"username": username},
         )
         cmd = ["loginctl", "enable-linger", username]
@@ -68,8 +68,8 @@ def enable_linger(linger: bool):
     except subprocess.CalledProcessError:
         logger.error(
             _(
-                "loginctl failed unexpectedly, unable to enable Linger"
-                " for user '%(username)s'. Please check logs."
+                "loginctl failed unexpectedly. Failed to enable 'Linger' "
+                "for user '%(username)s'. Please check logs."
             ),
             {"username": username},
         )
