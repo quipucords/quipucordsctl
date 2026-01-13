@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 def get_help() -> str:
     """Get the help/docstring for this command."""
-    return _("Upgrade the %(server_software_name)s server.") % {
+    return _("Upgrade the %(server_software_name)s server") % {
         "server_software_name": settings.SERVER_SOFTWARE_NAME
     }
 
@@ -21,8 +21,18 @@ def get_help() -> str:
 def get_description() -> str:
     """Get the longer description of this command."""
     return _(
-        "The `%(command_name)s` command upgrades the %(server_software_name)s server "
-        "if it is already installed or installs the software if not already installed."
+        textwrap.dedent(
+            """
+            Upgrade the %(server_software_name)s software if it is already installed,
+            or install the software if it is not present.
+            The `%(command_name)s` command will stop any currently running
+            %(server_software_name)s services before attempting to upgrade them.
+            The `%(command_name)s` command may attempt to pull new images from
+            the remote container registry, and that operation may require you to
+            run a `podman login` command separately to refresh your registry
+            credentials.
+            """
+        )
     ) % {
         "command_name": __name__.rpartition(".")[-1],
         "server_software_name": settings.SERVER_SOFTWARE_NAME,
@@ -84,7 +94,8 @@ def print_success():
             textwrap.dedent(
                 """
                 Upgrade completed successfully.
-                Please run the following command to restart the %(server_software_name)s server:
+                Please run the following command to restart the
+                %(server_software_name)s server:
 
                     systemctl --user restart %(server_software_package)s-app
                 """  # noqa: E501
