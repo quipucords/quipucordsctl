@@ -31,10 +31,9 @@ class ResetSecretMessages:
     """User-facing strings that may be different for each secret being reset."""
 
     manual_reset_warning: str = _(
-        "You should only manually reset this secret if you "
-        "understand how it is used, and you are addressing a specific issue. "
-        "We strongly recommend using the automatically generated value for "
-        "this secret instead of manually entering one."
+        "%(program_name)s generates cryptographically strong random passwords by "
+        "default. You should manually reset the this secret only if "
+        "your environment specifically requires a custom value."
     )
     manual_reset_question: str = _(
         "Are you sure you want to manually reset this secret?"
@@ -43,7 +42,8 @@ class ResetSecretMessages:
         _(
             "This secret already exists with a value. "
             "Resetting this secret to a new value "
-            "may result in data loss if you have already installed "
+            "may break %(SERVER_SOFTWARE_NAME)s or result in "
+            "data loss if you have already installed "
             "and run %(SERVER_SOFTWARE_NAME)s on this system."
         )
         % {"SERVER_SOFTWARE_NAME": settings.SERVER_SOFTWARE_NAME},
@@ -142,7 +142,10 @@ def confirm_allow_nonrandom(messages: ResetSecretMessages | None = None) -> bool
     if not messages:
         messages = _default_reset_secret_messages
 
-    logger.warning(messages.manual_reset_warning)
+    logger.warning(
+        messages.manual_reset_warning,
+        {"program_name": settings.PROGRAM_NAME},
+    )
     return shell_utils.confirm(messages.manual_reset_question)
 
 
