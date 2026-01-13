@@ -3,6 +3,7 @@
 import argparse
 import logging
 import shutil
+import textwrap
 from gettext import gettext as _
 from pathlib import Path
 
@@ -19,8 +20,26 @@ logger = logging.getLogger(__name__)
 
 def get_help() -> str:
     """Get the help/docstring for this command."""
-    return _("Uninstall the %(server_software_name)s server.") % {
+    return _("Uninstall the %(server_software_name)s server") % {
         "server_software_name": settings.SERVER_SOFTWARE_NAME
+    }
+
+
+def get_description() -> str:
+    """Get the longer description of this command."""
+    return _(
+        textwrap.dedent(
+            """
+            Completely uninstall the %(server_software_name)s software.
+            The `%(command_name)s` command will stop any currently running
+            %(server_software_name)s services and remove their container images,
+            secrets, configuration files, logs, and other
+            %(server_software_name)s-specific data files from your home directory.
+            """
+        )
+    ) % {
+        "command_name": __name__.rpartition(".")[-1],
+        "server_software_name": settings.SERVER_SOFTWARE_NAME,
     }
 
 
