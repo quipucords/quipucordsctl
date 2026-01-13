@@ -12,7 +12,7 @@ from quipucordsctl.commands import uninstall
 def test_get_help():
     """Mocks the get_help method of the "uninstall" command."""
     assert (
-        uninstall.get_help() == f"Uninstall the {settings.SERVER_SOFTWARE_NAME} server."
+        uninstall.get_help() == f"Uninstall the {settings.SERVER_SOFTWARE_NAME} server"
     )
 
 
