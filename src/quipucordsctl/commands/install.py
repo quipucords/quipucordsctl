@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 
 def get_help() -> str:
     """Get the help/docstring for this command."""
-    return _("Install the %(server_software_name)s server.") % {
+    return _("Install the %(server_software_name)s server") % {
         "server_software_name": settings.SERVER_SOFTWARE_NAME
     }
 
@@ -54,18 +54,17 @@ def get_description() -> str:
     return _(
         textwrap.dedent(
             """
-            The `%(command_name)s` command configures and installs the
-            %(server_software_name)s software on this system. The `%(command_name)s`
-            command may prompt you to enter some required values, such as the admin
-            login password, but you may set environment variables
-            (e.g. `%(admin_password_env_var)s`) and/or use the global `--yes` and
-            `--quiet` flags to bypass these required prompts.
-            By default, the `%(command_name)s` command will set up Linger for the
-            current user, this can be overridden with the `--no-linger` option.
-            With the Linger feature enabled, the %(server_software_name)s services
-            persist even when the user is logged out of the system.
-            Please review the `--help` output for each of the `reset_*` commands for
-            more details.
+            Configure and install the %(server_software_name)s software on this system.
+            The `%(command_name)s` command may prompt you to enter some required values,
+            such as a new username and password for admin login, but you may set
+            environment variables (e.g. `%(admin_password_env_var)s`) and/or use the
+            global `--yes` and `--quiet` flags to bypass some prompts.
+            Please see the help text for each `reset_*` command for more details.
+            By default, the `%(command_name)s` command also enables lingering for the
+            current user, but you may skip that setting with the `--no-linger` option.
+            With lingering enabled, the %(server_software_name)s software may continue
+            running when the user who installed %(server_software_name)s is not
+            logged in. See `man loginctl` for more information about user lingering.
             """
         )
     ) % {
@@ -82,8 +81,7 @@ def setup_parser(parser: argparse.ArgumentParser) -> None:
         default=True,
         action=argparse.BooleanOptionalAction,
         help=_(
-            "Automatically set up Linger for the current user"
-            " (default: --linger, Linger will be enabled)",
+            "Automatically enable lingering for the current user (default: --linger)",
         ),
     )
 

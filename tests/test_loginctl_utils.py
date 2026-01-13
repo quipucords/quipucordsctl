@@ -73,7 +73,7 @@ def test_check_linger_logs_message_if_enabled(faker, caplog):
         return_value = loginctl_utils.check_linger()
 
         mock_is_linger_enabled.assert_called_once_with(username)
-        message = f"Linger is enabled for user '{username}'"
+        message = f"'Linger' is enabled for user '{username}'"
         assert message in caplog.messages
         assert return_value
 
@@ -95,8 +95,7 @@ def test_check_linger_returns_failure_if_is_linger_enabled_errors(faker, caplog)
         return_value = loginctl_utils.check_linger()
 
         mock_is_linger_enabled.assert_called_once_with(username)
-        assert f"Linger is enabled for user '{username}'" not in caplog.messages[0]
-        assert "loginctl failed unexpectedly" in caplog.messages[0]
+        assert "loginctl failed unexpectedly." in caplog.messages[0]
         assert not return_value
 
 
@@ -109,7 +108,7 @@ def test_enable_linger_with_nolinger(faker, caplog):
         caplog.set_level(logging.INFO)
         mock_getuser.return_value = username
         return_value = loginctl_utils.enable_linger(False)
-        message = f"Linger will not be enabled for user '{username}'"
+        message = f"'Linger' will not be checked or enabled for user '{username}'"
         assert message in caplog.messages[0]
         assert return_value
 
@@ -127,7 +126,7 @@ def test_enable_linger_already_enabled(faker, caplog):
         mock_getuser.return_value = username
         mock_is_linger_enabled.return_value = True
         return_value = loginctl_utils.enable_linger(True)
-        message = f"Linger is enabled for user '{username}'"
+        message = f"'Linger' is enabled for user '{username}'"
         assert message in caplog.messages[0]
         assert return_value
 
@@ -155,7 +154,7 @@ def test_enable_linger(faker, caplog):
                 username,
             ]
         )
-        message = f"Enabling Linger for user '{username}'"
+        message = f"Enabling 'Linger' for user '{username}'"
         assert message in caplog.messages[0]
         assert return_value
 
@@ -187,8 +186,8 @@ def test_enable_linger_returns_false_if_loginctl_raises_exception(faker, caplog)
             ]
         )
         message = (
-            "loginctl failed unexpectedly,"
-            f" unable to enable Linger for user '{username}'"
+            "loginctl failed unexpectedly."
+            f" Failed to enable 'Linger' for user '{username}'"
         )
         assert message in caplog.messages[-1]
         assert not return_value
