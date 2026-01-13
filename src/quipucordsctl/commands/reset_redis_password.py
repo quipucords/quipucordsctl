@@ -21,7 +21,7 @@ REQUIREMENTS = {"min_length": MIN_LENGTH}
 
 def get_help() -> str:
     """Get the help/docstring for this command."""
-    return _("Reset the Redis password.")
+    return _("Reset the Redis password")
 
 
 def get_description() -> str:
@@ -29,12 +29,14 @@ def get_description() -> str:
     return _(
         textwrap.dedent(
             """
-            The `%(command_name)s` command resets the %(server_software_name)s
-            Redis password. This password is used only by the
-            %(server_software_name)s server to communicate with its local
-            Redis server, and as a user, you never need to use this value directly.
-            The `%(command_name)s` command will try to use the value from
-            the environment variable `%(env_var_name)s` if you have set one.
+            Reset the %(server_software_name)s Redis password.
+            The %(server_software_name)s server internally uses this password
+            to communicate with its local Redis server.
+            The `%(command_name)s` command uses the value of the `%(env_var_name)s`
+            environment variable or generates a cryptographically strong random value.
+            Use `--prompt` only if you need to manually enter a value.
+            Resetting the Redis password after running the
+            %(server_software_name)s server may break the system or result in data loss.
             """
         )
     ) % {
@@ -64,10 +66,9 @@ def is_set() -> bool:
 
 reset_secret_messages = secrets.ResetSecretMessages(
     manual_reset_warning=_(
-        "You should only manually reset the Redis password if you "
-        "understand how it is used, and you are addressing a specific issue. "
-        "We strongly recommend using the automatically generated value for "
-        "the Redis password instead of manually entering one."
+        "%(program_name)s generates cryptographically strong random passwords by "
+        "default. You should manually reset the Redis password only if "
+        "your environment specifically requires a custom value."
     ),
     manual_reset_question=_(
         "Are you sure you want to manually set a custom Redis password?"
