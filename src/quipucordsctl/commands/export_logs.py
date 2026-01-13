@@ -24,7 +24,9 @@ class PreconditionsNotMetError(Exception):
 
 def get_help() -> str:
     """Get the help/docstring for this command."""
-    return _("Export container logs.")
+    return _("Export %(server_software_name)s logs") % {
+        "server_software_name": settings.SERVER_SOFTWARE_NAME,
+    }
 
 
 def get_description() -> str:
@@ -32,13 +34,12 @@ def get_description() -> str:
     return _(
         textwrap.dedent(
             """
-            The `%(command_name)s` command exports logs of %(server_software_name)s
-            components. The logs are compressed and archived in a single file. They
-            can be provided to Red Hat support to help debugging issues.
+            Export %(server_software_name)s logs and save to a single compressed
+            `.tar.gz` file. If you open a support case to get help with
+            %(server_software_name)s, you may need to provide this file.
             """
         )
     ) % {
-        "command_name": __name__.rpartition(".")[-1],
         "server_software_name": settings.SERVER_SOFTWARE_NAME,
     }
 
@@ -111,15 +112,27 @@ def export_container_logs(dest: Path):
                     stderr=subprocess.STDOUT,
                 )
         except OSError as e:
-            msg = _("Failed to save data in %(filepath)s. Logs may not be complete.")
-            logger.error(msg, {"filepath": dest_filename.resolve().as_posix()})
+            msg = _(
+                "Failed to save logs for %(service_name)s to %(filepath)s. "
+                "Exported logs may be incomplete."
+            )
+            logger.error(
+                msg,
+                {
+                    "filepath": dest_filename.resolve().as_posix(),
+                    "service_name": service,
+                },
+            )
             logger.debug(e)
         except (subprocess.TimeoutExpired, subprocess.CalledProcessError):
             # run_command already prints the relevant messages. We just tell the user
             # logs may not be complete and continue in a vain hope that was
             # intermittent issue and we can still export something.
-            msg = _("Failed to run a command. Logs may not be complete.")
-            logger.error(msg)
+            msg = _(
+                "Failed to export logs for %(service_name)s. "
+                "Exported logs may be incomplete."
+            )
+            logger.error(msg, {"service_name": service})
 
 
 def copy_qpc_log(dest: Path):
@@ -128,7 +141,7 @@ def copy_qpc_log(dest: Path):
     try:
         shutil.copy(source, dest, follow_symlinks=True)
     except (FileNotFoundError, PermissionError) as e:
-        msg = _("Failed to copy a file: %(filepath)s. Logs may not be complete.")
+        msg = _("Failed to copy a file: %(filepath)s. Exported logs may be incomplete.")
         logger.error(msg, {"filepath": source.resolve().as_posix()})
         logger.debug(e)
 
