@@ -11,6 +11,11 @@ from quipucordsctl.commands import install
 logger = logging.getLogger(__name__)
 
 
+def get_display_group() -> argparse_utils.DisplayGroups:
+    """Get the group identifier for displaying this command in CLI help text."""
+    return argparse_utils.DisplayGroups.MAIN
+
+
 def get_help() -> str:
     """Get the help/docstring for this command."""
     return _("Upgrade the %(server_software_name)s server") % {

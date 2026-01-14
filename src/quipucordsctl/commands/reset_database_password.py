@@ -10,13 +10,18 @@ import logging
 import textwrap
 from gettext import gettext as _
 
-from quipucordsctl import podman_utils, secrets, settings
+from quipucordsctl import argparse_utils, podman_utils, secrets, settings
 
 logger = logging.getLogger(__name__)
 PODMAN_SECRET_NAME = settings.QUIPUCORDS_SECRETS["db"]
 ENV_VAR_NAME = f"{settings.ENV_VAR_PREFIX}DBMS_PASSWORD"
 MIN_LENGTH = 16
 REQUIREMENTS = {"min_length": MIN_LENGTH}
+
+
+def get_display_group() -> argparse_utils.DisplayGroups:
+    """Get the group identifier for displaying this command in CLI help text."""
+    return argparse_utils.DisplayGroups.CONFIG
 
 
 def get_help() -> str:

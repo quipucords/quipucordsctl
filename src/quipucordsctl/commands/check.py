@@ -13,10 +13,15 @@ from enum import Enum
 from gettext import gettext as _
 from typing import Optional
 
-from quipucordsctl import settings
+from quipucordsctl import argparse_utils, settings
 from quipucordsctl.systemctl_utils import check_service_running
 
 logger = logging.getLogger(__name__)
+
+
+def get_display_group() -> argparse_utils.DisplayGroups:
+    """Get the group identifier for displaying this command in CLI help text."""
+    return argparse_utils.DisplayGroups.DIAGNOSTICS
 
 
 class StatusType(Enum):

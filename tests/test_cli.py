@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from quipucordsctl import cli
+from quipucordsctl import argparse_utils, cli
 
 
 def test_load_commands():
@@ -29,8 +29,27 @@ def test_create_parser_and_parse(faker):
     mock_command_doc = faker.sentence()
     mock_command = mock.Mock()
     mock_command.__doc__ = mock_command_doc
+    mock_command.get_display_group = mock.Mock(
+        return_value=argparse_utils.DisplayGroups.OTHER
+    )
 
     parser = cli.create_parser({mock_command_name: mock_command})
+
+    # Check that the mock_command was created under the "other" group.
+    argparse_group = next(
+        filter(
+            lambda _group: _group.title == argparse_utils.DisplayGroups.OTHER.value,
+            parser._action_groups,
+        )
+    )
+    action = next(
+        filter(
+            lambda _action: _action.dest == mock_command_name,
+            argparse_group._group_actions,
+        )
+    )
+    assert action is not None
+    # If action exists in the filtered group, then it was added correctly.
 
     # Simplest no-arg invocation.
     parsed_args = parser.parse_args([])
