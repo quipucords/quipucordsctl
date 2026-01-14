@@ -8,7 +8,7 @@ import sys
 from gettext import gettext as _
 from types import ModuleType
 
-from . import podman_utils, settings, systemctl_utils
+from . import argparse_utils, podman_utils, settings, systemctl_utils
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +27,7 @@ def create_parser(commands: dict[str, ModuleType]) -> argparse.ArgumentParser:
     """Create the argument parser for the CLI."""
     parser = argparse.ArgumentParser(
         prog=settings.PROGRAM_NAME,
+        usage=_("%(prog)s [OPTIONS...] COMMAND [COMMAND OPTIONS...]"),
         description=_("Configure and manage local %(server_software_name)s services.")
         % {"server_software_name": settings.SERVER_SOFTWARE_NAME},
     )
@@ -54,7 +55,6 @@ def create_parser(commands: dict[str, ModuleType]) -> argparse.ArgumentParser:
         default=False,
         help=_("Quiet output (overrides `-v`/`--verbose`)"),
     )
-
     parser.add_argument(
         "-c",
         "--override-conf-dir",
@@ -63,9 +63,36 @@ def create_parser(commands: dict[str, ModuleType]) -> argparse.ArgumentParser:
         # TODO specify a type that enforces a valid directory path.
     )
 
-    subparsers = parser.add_subparsers(dest="command")
+    subparsers = parser.add_subparsers(
+        dest="command", help=argparse.SUPPRESS, metavar=""
+    )
+    argparse_display_groups = {
+        argparse_utils.DisplayGroups.MAIN: parser.add_argument_group(
+            argparse_utils.DisplayGroups.MAIN.value
+        ),
+        argparse_utils.DisplayGroups.CONFIG: parser.add_argument_group(
+            argparse_utils.DisplayGroups.CONFIG.value
+        ),
+        argparse_utils.DisplayGroups.DIAGNOSTICS: parser.add_argument_group(
+            argparse_utils.DisplayGroups.DIAGNOSTICS.value
+        ),
+        argparse_utils.DisplayGroups.OTHER: parser.add_argument_group(
+            argparse_utils.DisplayGroups.OTHER.value
+        ),
+    }
+
     for command_name, command_module in commands.items():
-        _help = (
+        display_group = (
+            getattr(command_module, "get_display_group")()
+            if hasattr(command_module, "get_display_group")
+            else None
+        )
+        argparse_display_group = argparse_display_groups.get(
+            display_group,
+            argparse_display_groups.get(argparse_utils.DisplayGroups.OTHER),
+            # OTHER should always exist as a fallback; see the dict above.
+        )
+        help_text = (
             getattr(command_module, "get_help")()
             if hasattr(command_module, "get_help")
             else None
@@ -80,11 +107,15 @@ def create_parser(commands: dict[str, ModuleType]) -> argparse.ArgumentParser:
             if hasattr(command_module, "get_epilog")
             else None
         )
-        command_parser = subparsers.add_parser(
-            command_name, help=_help, description=description, epilog=epilog
+        argparse_utils.add_command(
+            subparsers,
+            command_module,
+            argparse_display_group,
+            command_name,
+            help_text,
+            description,
+            epilog,
         )
-        if hasattr(command_module, "setup_parser"):
-            command_module.setup_parser(command_parser)
 
     return parser
 

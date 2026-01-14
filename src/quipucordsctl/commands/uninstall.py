@@ -8,6 +8,7 @@ from gettext import gettext as _
 from pathlib import Path
 
 from quipucordsctl import (
+    argparse_utils,
     loginctl_utils,
     podman_utils,
     settings,
@@ -16,6 +17,11 @@ from quipucordsctl import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def get_display_group() -> argparse_utils.DisplayGroups:
+    """Get the group identifier for displaying this command in CLI help text."""
+    return argparse_utils.DisplayGroups.MAIN
 
 
 def get_help() -> str:

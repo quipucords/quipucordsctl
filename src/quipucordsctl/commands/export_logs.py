@@ -12,10 +12,15 @@ from datetime import datetime
 from gettext import gettext as _
 from pathlib import Path
 
-from quipucordsctl import settings, shell_utils
+from quipucordsctl import argparse_utils, settings, shell_utils
 
 logger = logging.getLogger(__name__)
 BUFSIZE = 5 * 1024 * 1024  # 5 MB
+
+
+def get_display_group() -> argparse_utils.DisplayGroups:
+    """Get the group identifier for displaying this command in CLI help text."""
+    return argparse_utils.DisplayGroups.DIAGNOSTICS
 
 
 class PreconditionsNotMetError(Exception):
