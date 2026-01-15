@@ -30,12 +30,15 @@ def archive_dir(tmp_path: pathlib.Path):
 
 def test_get_help():
     """Test the get_help returns an appropriate string."""
-    assert "Export container logs" in export_logs.get_help()
+    assert f"Export {settings.SERVER_SOFTWARE_NAME} logs" == export_logs.get_help()
 
 
 def test_get_description():
     """Test the get_description returns an appropriate string."""
-    assert "`export_logs`" in export_logs.get_description()
+    assert (
+        f"Export {settings.SERVER_SOFTWARE_NAME} logs and save"
+        in export_logs.get_description()
+    )
 
 
 def test_run_happy_path(tmp_path: pathlib.Path):
@@ -148,7 +151,7 @@ def test_export_container_logs_file_open_error(
         logged_path = (
             (tmp_path / "p.log").with_stem(first_service_stem).resolve().as_posix()
         )
-        assert "Logs may not be complete" in caplog.text
+        assert "Exported logs may be incomplete." in caplog.text
         assert logged_path in caplog.text
 
         # Check other services passed open call
@@ -179,7 +182,10 @@ def test_export_container_logs_journalctl_failure(
     )
     export_logs.export_container_logs(tmp_path)
 
-    expected_msg = "Failed to run a command. Logs may not be complete."
+    expected_msg = (
+        "Failed to export logs for quipucords-app.service. "
+        "Exported logs may be incomplete."
+    )
     assert expected_msg in caplog.text
 
     expected_calls = []

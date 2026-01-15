@@ -23,7 +23,7 @@ BLOCKLIST = ["dscpassw0rd", "qpcpassw0rd"]
 
 def get_help() -> str:
     """Get the help/docstring for this command."""
-    return _("Reset the admin login password.")
+    return _("Reset the admin login password")
 
 
 def get_description() -> str:
@@ -31,10 +31,10 @@ def get_description() -> str:
     return _(
         textwrap.dedent(
             """
-            The `%(command_name)s` command resets the password you use to log in
-            to the %(server_software_name)s software in your web browser and CLI.
+            Reset the password you use to log in to the %(server_software_name)s
+            server from your web browser and CLI.
             The `%(command_name)s` command will try to use the value from
-            the environment variable `%(env_var_name)s` if you have set one.
+            the environment variable `%(env_var_name)s` if it exists.
             """
         )
     ) % {

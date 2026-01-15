@@ -22,7 +22,7 @@ REQUIREMENTS = {"min_length": MIN_LENGTH}
 
 def get_help() -> str:
     """Get the help/docstring for this command."""
-    return _("Reset the session secret key.")
+    return _("Reset the session secret key")
 
 
 def get_description() -> str:
@@ -30,14 +30,13 @@ def get_description() -> str:
     return _(
         textwrap.dedent(
             """
-            The `%(command_name)s` command resets the %(server_software_name)s
-            session secret key. This secret key is used only by the
-            %(server_software_name)s server internally to protect your session and
-            the connection between your web browser or CLI and the
-            %(server_software_name)s server, and as a user, you never need to use
-            this secret key directly.
+            Reset the %(server_software_name)s session secret key.
+            The %(server_software_name)s server internally uses this secret key
+            to protect your session and the connection between your web browser
+            or CLI and the %(server_software_name)s server.
+            As a user, you should never need to use this value directly.
             The `%(command_name)s` command will try to use the value from
-            the environment variable `%(env_var_name)s` if you have set one.
+            the environment variable `%(env_var_name)s` if it exists.
             """
         )
     ) % {

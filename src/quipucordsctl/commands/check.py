@@ -7,6 +7,7 @@ import os
 import pathlib
 import stat
 import sys
+import textwrap
 from dataclasses import dataclass
 from enum import Enum
 from gettext import gettext as _
@@ -39,10 +40,22 @@ class PathCheckResult:
 
 def get_help() -> str:
     """Get the help/docstring for this command."""
+    return _("Check config files and directories")
+
+
+def get_description() -> str:
+    """Get the longer description of this command."""
     return _(
-        "Check that all necessary files and directories exist for running "
-        "%(server_software_name)s."
-    ) % {"server_software_name": settings.SERVER_SOFTWARE_NAME}
+        textwrap.dedent(
+            """
+            Check for the presence and expected modes (permissions) of specific files
+            and directories under local `~/.config' and `~/.local/` paths that the
+            %(server_software_name)s software requires for normal operation.
+            """
+        )
+    ) % {
+        "server_software_name": settings.SERVER_SOFTWARE_NAME,
+    }
 
 
 def check_directory_status(

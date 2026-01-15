@@ -374,9 +374,7 @@ def test_check_file_and_print_status_returns_correct_status(
 
 def test_get_help():
     """Test that get_help returns expected help text."""
-    help_text = check.get_help()
-    assert "Check that all necessary files and directories exist" in help_text
-    assert settings.SERVER_SOFTWARE_NAME in help_text
+    assert "Check config files and directories" == check.get_help()
 
 
 def test_check_directory_status_with_permission_error(tmp_path: pathlib.Path):
