@@ -25,7 +25,11 @@ def load_commands() -> dict[str, ModuleType]:
 
 def create_parser(commands: dict[str, ModuleType]) -> argparse.ArgumentParser:
     """Create the argument parser for the CLI."""
-    parser = argparse.ArgumentParser(prog=settings.PROGRAM_NAME)
+    parser = argparse.ArgumentParser(
+        prog=settings.PROGRAM_NAME,
+        description=_("Configure and manage local %(server_software_name)s services.")
+        % {"server_software_name": settings.SERVER_SOFTWARE_NAME},
+    )
     parser.add_argument(
         "-v",
         "--verbose",
