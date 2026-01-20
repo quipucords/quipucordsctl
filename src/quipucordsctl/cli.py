@@ -13,6 +13,18 @@ from . import argparse_utils, podman_utils, settings, systemctl_utils
 logger = logging.getLogger(__name__)
 
 
+class CtlLoggingFormatter(logging.Formatter):
+    """Custom logging formatter that conditionally adds timestamps."""
+
+    def __init__(self, verbosity: int, datefmt: str):
+        log_format = (
+            "%(asctime)s %(levelname)s: %(message)s"
+            if verbosity > 2  # noqa: PLR2004
+            else "%(levelname)s: %(message)s"
+        )
+        super().__init__(fmt=log_format, datefmt=datefmt)
+
+
 def load_commands() -> dict[str, ModuleType]:
     """Dynamically load command modules."""
     commands = {}
@@ -120,7 +132,7 @@ def create_parser(commands: dict[str, ModuleType]) -> argparse.ArgumentParser:
     return parser
 
 
-def configure_logging(verbosity: int = 0, quiet: bool = False) -> int:
+def configure_log_level(verbosity: int = 0, quiet: bool = False) -> int:
     """
     Configure the base logger.
 
@@ -131,26 +143,46 @@ def configure_logging(verbosity: int = 0, quiet: bool = False) -> int:
         if quiet
         else max(logging.DEBUG, settings.DEFAULT_LOG_LEVEL - (verbosity * 10))
     )
-    log_format = (
-        "%(asctime)s %(levelname)s: %(message)s"
-        if verbosity > 2  # noqa: PLR2004
-        else "%(levelname)s: %(message)s"
-    )
-    logging.basicConfig(
-        format=log_format,
-        level=log_level,
-        encoding="utf-8",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
+    root = logging.getLogger()
+    root.setLevel(log_level)
     return log_level
 
 
-def run():
+def install_console_handler(verbosity: int) -> None:
+    """
+    Install the custom console logging handler.
+
+    This function should be called exactly once, only at program startup.
+    """
+    root = logging.getLogger()
+
+    if any(isinstance(h, logging.StreamHandler) for h in root.handlers):
+        # Early return in case handlers have already been installed.
+        logger.warning(_("Cannot install log handler due to existing handler."))
+        return
+
+    handler = logging.StreamHandler(sys.stderr)
+    handler.setFormatter(
+        CtlLoggingFormatter(
+            verbosity=verbosity,
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+    )
+    root.addHandler(handler)
+
+
+def run(install_logging_handlers=False):
     """Run the program with arguments from the CLI."""
     commands = load_commands()
     parser = create_parser(commands)
     args = parser.parse_args()
-    configure_logging(args.verbosity, args.quiet)
+
+    configure_log_level(args.verbosity, args.quiet)
+    if install_logging_handlers:
+        # Conditionally install handlers to allow
+        # unit tests to operate without them.
+        install_console_handler(args.verbosity, args.color)
+
     settings.runtime.update(yes=args.yes, quiet=args.quiet)
 
     if args.command in commands:

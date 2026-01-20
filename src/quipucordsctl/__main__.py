@@ -19,7 +19,7 @@ def main():
     # our specific bindtextdomain contents.
     from . import cli  # noqa: PLC0415
 
-    cli.run()
+    cli.run(install_logging_handlers=True)
 
 
 if __name__ == "__main__":

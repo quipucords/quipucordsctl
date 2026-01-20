@@ -35,4 +35,4 @@ def test_main_invokes_other_setup_and_cli_run(mocker):
     main_module.main()
 
     mock_other_setup.assert_called_once_with()
-    mock_run.assert_called_once_with()
+    mock_run.assert_called_once_with(install_logging_handlers=True)
