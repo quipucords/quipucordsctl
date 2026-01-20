@@ -214,6 +214,7 @@ def test_cli_nonzero_exit_when_command_raises_exception(
         mock_args.verbosity = 0  # need any int because MagicMock is not int-like
         mock_args.yes = False
         mock_args.quiet = False
+        mock_args.color = "never"
 
         mock_command = MagicMock()
         mock_command.run.side_effect = exception
@@ -223,3 +224,142 @@ def test_cli_nonzero_exit_when_command_raises_exception(
         mock_sys.exit.assert_called_once_with(1)
 
         assert caplog.messages == [error_message]
+
+
+@pytest.mark.parametrize(
+    "color_choice,no_color_env,isatty,expected",
+    [
+        ("always", "", False, True),
+        ("always", "", True, True),
+        ("always", "1", False, True),
+        ("always", "1", True, True),
+        ("never", "", False, False),
+        ("never", "", True, False),
+        ("never", "1", False, False),
+        ("never", "1", True, False),
+        ("auto", "", False, False),
+        ("auto", "", True, True),
+        ("auto", "1", False, False),
+        ("auto", "1", True, False),
+    ],
+)
+def test_should_use_color(color_choice, no_color_env, isatty, expected, monkeypatch):
+    """Test cli.should_use_color respects choice, NO_COLOR env var, and detected tty."""
+    monkeypatch.setenv("NO_COLOR", no_color_env)
+    fake_stream = mock.Mock()
+    fake_stream.isatty.return_value = isatty
+    assert cli.should_use_color(color_choice, fake_stream) is expected
+
+
+def test_ctlloggingformatter_format(faker):
+    """Test cli.ctlloggingformatter format with color enabled and high verbosity."""
+    datefmt = faker.slug()  # predictable placeholder since datetime changes quickly
+    formatter = cli.CtlLoggingFormatter(use_color=True, verbosity=5, datefmt=datefmt)
+    message = faker.sentence()
+    record = logging.LogRecord(
+        name="my_logger",
+        level=logging.DEBUG,
+        pathname=faker.slug(),
+        lineno=faker.pyint(),
+        msg=message,
+        args=[],
+        exc_info=None,
+    )
+    expected = (
+        f"{formatter.LEVEL_STYLES[logging.DEBUG]}"
+        f"{datefmt} DEBUG: {message}{formatter.RESET}"
+    )
+    assert formatter.format(record) == expected
+
+
+def test_ctlloggingformatter_format_no_color(faker):
+    """Test cli.ctlloggingformatter format with color disabled."""
+    datefmt = faker.slug()  # predictable placeholder since datetime changes quickly
+    formatter = cli.CtlLoggingFormatter(use_color=False, verbosity=5, datefmt=datefmt)
+    message = faker.sentence()
+    record = logging.LogRecord(
+        name="my_logger",
+        level=logging.DEBUG,
+        pathname=faker.slug(),
+        lineno=faker.pyint(),
+        msg=message,
+        args=[],
+        exc_info=None,
+    )
+    expected = f"{datefmt} DEBUG: {message}"
+    assert formatter.format(record) == expected
+
+
+def test_ctlloggingformatter_format_no_verbosity(faker):
+    """Test cli.ctlloggingformatter format with color enabled but no verbosity."""
+    formatter = cli.CtlLoggingFormatter(
+        use_color=True, verbosity=0, datefmt=faker.slug()
+    )
+    message = faker.sentence()
+    record = logging.LogRecord(
+        name="my_logger",
+        level=logging.DEBUG,
+        pathname=faker.slug(),
+        lineno=faker.pyint(),
+        msg=message,
+        args=[],
+        exc_info=None,
+    )
+    expected = (
+        f"{formatter.LEVEL_STYLES[logging.DEBUG]}DEBUG: {message}{formatter.RESET}"
+    )
+    assert formatter.format(record) == expected
+
+
+def test_ctlloggingformatter_format_unsupported_level(faker):
+    """Test cli.ctlloggingformatter format with unsupported level."""
+    formatter = cli.CtlLoggingFormatter(
+        use_color=True, verbosity=0, datefmt=faker.slug()
+    )
+    message = faker.sentence()
+    record = logging.LogRecord(
+        name="my_logger",
+        level=logging.NOTSET,
+        pathname=faker.slug(),
+        lineno=faker.pyint(),
+        msg=message,
+        args=[],
+        exc_info=None,
+    )
+    expected = f"NOTSET: {message}"
+    assert formatter.format(record) == expected
+
+
+def test_install_console_handler(caplog):
+    """Test cli.install_console_handler adds the expected handler."""
+    caplog.set_level(logging.DEBUG)
+    with mock.patch.object(cli, "logging") as mock_logging:
+        mock_root_logger = mock_logging.getLogger.return_value
+        mock_root_logger.handlers = []
+        mock_handler = mock_logging.StreamHandler.return_value
+
+        cli.install_console_handler(verbosity=0, color="never")
+
+        mock_root_logger.addHandler.assert_called_once()
+        mock_handler.setFormatter.assert_called_once()
+        assert mock_handler == mock_root_logger.addHandler.call_args[0][0]
+        formatter = mock_handler.setFormatter.call_args[0][0]
+        assert isinstance(formatter, cli.CtlLoggingFormatter)
+        assert formatter.use_color is False
+
+    assert caplog.messages == []
+
+
+def test_install_console_handler_skips_if_any_handler_exists(caplog):
+    """Test cli.install_console_handler skips if any handler is already installed."""
+    caplog.set_level(logging.WARNING)
+    with mock.patch.object(cli, "logging") as mock_logging:
+        mock_root_logger = mock_logging.getLogger.return_value
+        mock_root_logger.handlers = [mock.Mock()]
+        mock_logging.StreamHandler = mock.Mock
+
+        cli.install_console_handler(verbosity=0, color="never")
+
+        mock_root_logger.addHandler.assert_not_called()
+
+    assert caplog.messages == ["Cannot install log handler due to existing handler."]

@@ -3,6 +3,7 @@
 import argparse
 import importlib
 import logging
+import os
 import pkgutil
 import sys
 from gettext import gettext as _
@@ -14,15 +15,37 @@ logger = logging.getLogger(__name__)
 
 
 class CtlLoggingFormatter(logging.Formatter):
-    """Custom logging formatter that conditionally adds timestamps."""
+    """Custom logging formatter that conditionally adds colors and timestamps."""
 
-    def __init__(self, verbosity: int, datefmt: str):
+    LEVEL_STYLES = {
+        logging.DEBUG: "\033[2m",  # dim (grey)
+        logging.INFO: "",  # normal
+        logging.WARNING: "\033[33m",  # yellow
+        logging.ERROR: "\033[31m",  # red
+        logging.CRITICAL: "\033[31;1m",  # bold red
+    }
+    RESET = "\033[0m"
+
+    def __init__(self, use_color: bool, verbosity: int, datefmt: str):
         log_format = (
             "%(asctime)s %(levelname)s: %(message)s"
             if verbosity > 2  # noqa: PLR2004
             else "%(levelname)s: %(message)s"
         )
         super().__init__(fmt=log_format, datefmt=datefmt)
+        self.use_color = use_color
+
+    def format(self, record: logging.LogRecord) -> str:
+        """Conditionally format the record with color for logging."""
+        line = super().format(record)
+
+        if not self.use_color:
+            return line
+
+        if style := self.LEVEL_STYLES.get(record.levelno, ""):
+            return f"{style}{line}{self.RESET}"
+
+        return line
 
 
 def load_commands() -> dict[str, ModuleType]:
@@ -66,6 +89,13 @@ def create_parser(commands: dict[str, ModuleType]) -> argparse.ArgumentParser:
         dest="quiet",
         default=False,
         help=_("Quiet output (overrides `-v`/`--verbose`)"),
+    )
+    parser.add_argument(
+        "--color",
+        "-C",
+        choices=("auto", "always", "never"),
+        default="auto",
+        help=_("Control the use of color in output"),
     )
     parser.add_argument(
         "-c",
@@ -132,6 +162,17 @@ def create_parser(commands: dict[str, ModuleType]) -> argparse.ArgumentParser:
     return parser
 
 
+def should_use_color(color_choice: str, stream) -> bool:
+    """Determine whether to use color in output."""
+    if color_choice == "always":
+        return True
+    if color_choice == "never":
+        return False
+    if os.environ.get("NO_COLOR", None):
+        return False
+    return stream.isatty()
+
+
 def configure_log_level(verbosity: int = 0, quiet: bool = False) -> int:
     """
     Configure the base logger.
@@ -148,7 +189,7 @@ def configure_log_level(verbosity: int = 0, quiet: bool = False) -> int:
     return log_level
 
 
-def install_console_handler(verbosity: int) -> None:
+def install_console_handler(verbosity: int, color: str) -> None:
     """
     Install the custom console logging handler.
 
@@ -164,6 +205,7 @@ def install_console_handler(verbosity: int) -> None:
     handler = logging.StreamHandler(sys.stderr)
     handler.setFormatter(
         CtlLoggingFormatter(
+            use_color=should_use_color(color, handler.stream),
             verbosity=verbosity,
             datefmt="%Y-%m-%d %H:%M:%S",
         )
