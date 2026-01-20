@@ -126,7 +126,7 @@ def test_configure_logging(
     verbosity: int, quiet: bool, expected_log_levels: list[int], caplog
 ):
     """Test configure_logging sets appropriate log levels."""
-    level = cli.configure_logging(verbosity, quiet)
+    level = cli.configure_log_level(verbosity, quiet)
 
     messages = {
         logging.CRITICAL: "critical message",
