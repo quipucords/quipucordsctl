@@ -2,6 +2,7 @@
 
 import logging
 import pathlib
+import subprocess
 from unittest import mock
 
 import pytest
@@ -662,3 +663,123 @@ def test_get_missing_images_empty_expected(
     assert result == set()
     mock_image_exists.assert_not_called()
     assert "All required images are present locally." in caplog.messages[-1]
+
+
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_check_registry_login_logged_in(mock_run_command, caplog):
+    """Test check_registry_login returns True when credentials are valid."""
+    caplog.set_level(logging.DEBUG)
+    registry = "registry.redhat.io"
+    mock_run_command.return_value = "", None, 0
+
+    assert podman_utils.check_registry_login(registry)
+    mock_run_command.assert_called_once_with(
+        ["podman", "login", registry],
+        raise_error=False,
+        stdin="",
+        stderr=subprocess.DEVNULL,
+    )
+    assert (
+        f"Valid credentials already exist for registry '{registry}'."
+        in caplog.messages[-1]
+    )
+
+
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_check_registry_login_not_logged_in(mock_run_command, caplog):
+    """Test check_registry_login returns False when user is not logged in."""
+    caplog.set_level(logging.DEBUG)
+    registry = "registry.redhat.io"
+    mock_run_command.return_value = "", None, 125
+
+    assert not podman_utils.check_registry_login(registry)
+    mock_run_command.assert_called_once_with(
+        ["podman", "login", registry],
+        raise_error=False,
+        stdin="",
+        stderr=subprocess.DEVNULL,
+    )
+    assert f"Not logged in to registry '{registry}'." in caplog.messages[-1]
+
+
+@mock.patch.object(podman_utils, "getpass")
+@mock.patch("builtins.input")
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_login_to_registry_success(  # noqa: PLR0913
+    mock_run_command, mock_input, mock_getpass, faker, caplog, capsys
+):
+    """Test login_to_registry returns True on successful login."""
+    caplog.set_level(logging.INFO)
+    registry = "registry.redhat.io"
+    username = faker.user_name()
+    password = faker.password()
+
+    mock_input.return_value = username
+    mock_getpass.getpass.return_value = password
+    mock_run_command.return_value = None, None, 0
+
+    assert podman_utils.login_to_registry(registry)
+
+    mock_run_command.assert_called_once_with(
+        ["podman", "login", registry, "--username", username, "--password-stdin"],
+        raise_error=False,
+        stdin=password,
+        redact_output=False,
+    )
+    assert f"Successfully logged in to registry '{registry}'." in caplog.messages[-1]
+    assert "Logging in to" in capsys.readouterr().out
+
+
+@mock.patch.object(podman_utils, "getpass")
+@mock.patch("builtins.input")
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_login_to_registry_failure(
+    mock_run_command, mock_input, mock_getpass, faker, caplog
+):
+    """Test login_to_registry returns False when podman login fails."""
+    caplog.set_level(logging.ERROR)
+    registry = "registry.redhat.io"
+
+    mock_input.return_value = faker.user_name()
+    mock_getpass.getpass.return_value = faker.password()
+    mock_run_command.return_value = None, "Login failed", 1
+
+    assert not podman_utils.login_to_registry(registry)
+    assert f"Failed to log in to registry '{registry}'." in caplog.messages[-1]
+
+
+@mock.patch.object(podman_utils, "getpass")
+@mock.patch("builtins.input")
+def test_login_to_registry_empty_username(mock_input, mock_getpass, caplog):
+    """Test login_to_registry returns False when username is empty."""
+    caplog.set_level(logging.ERROR)
+    registry = "registry.redhat.io"
+
+    mock_input.return_value = "   "
+    mock_getpass.getpass.return_value = "password"
+
+    assert not podman_utils.login_to_registry(registry)
+    assert "Username cannot be empty." in caplog.messages[-1]
+
+
+@mock.patch.object(podman_utils, "getpass")
+@mock.patch("builtins.input")
+def test_login_to_registry_empty_password(mock_input, mock_getpass, faker, caplog):
+    """Test login_to_registry returns False when password is empty."""
+    caplog.set_level(logging.ERROR)
+    registry = "registry.redhat.io"
+
+    mock_input.return_value = faker.user_name()
+    mock_getpass.getpass.return_value = ""
+
+    assert not podman_utils.login_to_registry(registry)
+    assert "Password cannot be empty." in caplog.messages[-1]
+
+
+@mock.patch.object(podman_utils.settings, "runtime")
+def test_login_to_registry_quiet_mode(mock_runtime):
+    """Test login_to_registry returns False in quiet mode without prompting."""
+    mock_runtime.quiet = True
+    registry = "registry.redhat.io"
+
+    assert not podman_utils.login_to_registry(registry)

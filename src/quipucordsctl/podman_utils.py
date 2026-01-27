@@ -1,10 +1,12 @@
 """Functions to simplify interfacing with podman."""
 
 import configparser
+import getpass
 import json
 import logging
 import os
 import pathlib
+import subprocess
 import sys
 import textwrap
 from gettext import gettext as _
@@ -381,3 +383,77 @@ def get_missing_images() -> set[str]:
         logger.debug(_("All required images are present locally."))
 
     return missing_images
+
+
+def check_registry_login(registry: str) -> bool:
+    """
+    Check if the user has valid credentials for a registry.
+
+    Runs 'podman login <registry>' with empty stdin to validate credentials
+    against the remote registry without prompting for input.
+    """
+    verify_podman_argument_string(_("registry"), registry)
+    # Pass empty stdin to prevent interactive prompt if credentials are invalid
+    # Suppress stderr to avoid showing podman's EOF error to the user
+    __, __, exit_code = shell_utils.run_command(
+        ["podman", "login", registry],
+        raise_error=False,
+        stdin="",
+        stderr=subprocess.DEVNULL,
+    )
+    if exit_code == 0:
+        logger.debug(
+            _("Valid credentials already exist for registry '%(registry)s'."),
+            {"registry": registry},
+        )
+        return True
+    logger.debug(
+        _("Not logged in to registry '%(registry)s'."),
+        {"registry": registry},
+    )
+    return False
+
+
+def login_to_registry(registry: str) -> bool:
+    """
+    Prompt user for credentials and attempt to log in to the registry.
+
+    Uses --password-stdin to avoid exposing password in process list.
+    Returns True if login succeeds, False otherwise.
+    """
+    verify_podman_argument_string(_("registry"), registry)
+
+    if settings.runtime.quiet:
+        # podman login is required, but we can't prompt for credentials in quiet mode
+        return False
+
+    print(_("Logging in to '%(registry)s'...") % {"registry": registry})
+
+    username = input(_("Username: "))
+    if not username.strip():
+        logger.error(_("Username cannot be empty."))
+        return False
+    password = getpass.getpass(_("Password: "))
+    if not password:
+        logger.error(_("Password cannot be empty."))
+        return False
+
+    __, stderr, exit_code = shell_utils.run_command(
+        ["podman", "login", registry, "--username", username, "--password-stdin"],
+        raise_error=False,
+        stdin=password,
+        redact_output=False,  # TODO password should be safe via stdin, right ?
+    )
+
+    if exit_code == 0:
+        logger.info(
+            _("Successfully logged in to registry '%(registry)s'."),
+            {"registry": registry},
+        )
+        return True
+
+    logger.error(
+        _("Failed to log in to registry '%(registry)s'."),
+        {"registry": registry},
+    )
+    return False
