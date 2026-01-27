@@ -457,3 +457,82 @@ def login_to_registry(registry: str) -> bool:
         {"registry": registry},
     )
     return False
+
+
+def _log_missing_images_list(missing_images: set[str]) -> None:
+    """Log the list of missing images."""
+    for image in sorted(missing_images):
+        logger.warning(
+            _("Required container image '%(image)s' is missing."), {"image": image}
+        )
+
+
+def _ensure_registry_logins(missing_images: set[str]) -> bool:
+    """
+    Ensure user is logged in to all required registries.
+
+    Returns True if all logins succeed, False otherwise.
+    """
+    registries = {get_registry_from_image_name(img) for img in missing_images}
+
+    for registry in registries:
+        if not check_registry_login(registry):
+            logger.info(
+                _("Login required for registry '%(registry)s'."),
+                {"registry": registry},
+            )
+            if not login_to_registry(registry):
+                return False
+    return True
+
+
+def _pull_missing_images(missing_images: set[str]) -> bool:
+    """
+    Pull all missing images.
+
+    Returns True if all pulls succeed, False otherwise.
+    """
+    logger.debug(_("Pulling container images..."))
+
+    for image in sorted(missing_images):
+        logger.info(_("Pulling image: %(image)s"), {"image": image})
+        if not pull_image(image):
+            return False
+    return True
+
+
+def ensure_images() -> bool:
+    """
+    Ensure all required container images are present locally.
+
+    Checks for missing images, prompts user to download if needed,
+    handles registry login, and pulls images.
+
+    Returns True if all images are present (or successfully pulled),
+    False otherwise.
+    """
+    if not (missing_images := get_missing_images()):
+        logger.info(_("All required container images are present."))
+        return True
+
+    _log_missing_images_list(missing_images)
+
+    if not shell_utils.confirm(
+        _("Should %(program)s pull missing images from the container registry?")
+        % {"program": settings.PROGRAM_NAME}
+    ):
+        logger.error(
+            _("Installation cannot proceed without all required container images.")
+        )
+        logger.info(_("For disconnected installation, see the online documentation."))
+        return False
+
+    if not _ensure_registry_logins(missing_images):
+        return False
+
+    if not _pull_missing_images(missing_images):
+        return False
+
+    logger.info(_("All required images have been pulled successfully."))
+
+    return True

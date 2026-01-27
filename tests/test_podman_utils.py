@@ -783,3 +783,150 @@ def test_login_to_registry_quiet_mode(mock_runtime):
     registry = "registry.redhat.io"
 
     assert not podman_utils.login_to_registry(registry)
+
+
+@mock.patch.object(podman_utils, "get_missing_images")
+def test_ensure_images_all_present(mock_get_missing, caplog):
+    """Test ensure_images returns True when all images are present."""
+    caplog.set_level(logging.INFO)
+    mock_get_missing.return_value = set()
+
+    assert podman_utils.ensure_images()
+    assert "All required container images are present." in caplog.messages[-1]
+
+
+@mock.patch.object(podman_utils, "pull_image")
+@mock.patch.object(podman_utils, "check_registry_login")
+@mock.patch.object(podman_utils, "get_registry_from_image_name")
+@mock.patch.object(podman_utils.shell_utils, "confirm")
+@mock.patch.object(podman_utils, "get_missing_images")
+def test_ensure_images_pull_success(  # noqa: PLR0913
+    mock_get_missing,
+    mock_confirm,
+    mock_get_registry,
+    mock_check_login,
+    mock_pull,
+    faker,
+    caplog,
+):
+    """Test ensure_images returns True when images are pulled successfully."""
+    caplog.set_level(logging.INFO)
+    missing_image = f"registry.redhat.io/{faker.slug()}:latest"
+    mock_get_missing.return_value = {missing_image}
+    mock_confirm.return_value = True
+    mock_get_registry.return_value = "registry.redhat.io"
+    mock_check_login.return_value = True
+    mock_pull.return_value = True
+
+    assert podman_utils.ensure_images()
+
+    mock_pull.assert_called_once_with(missing_image)
+    assert "Required container image" in caplog.text and "is missing" in caplog.text
+    assert "All required images have been pulled successfully." in caplog.text
+
+
+@mock.patch.object(podman_utils.shell_utils, "confirm")
+@mock.patch.object(podman_utils, "get_missing_images")
+def test_ensure_images_user_declines(mock_get_missing, mock_confirm, faker, caplog):
+    """Test ensure_images returns False when user declines to download."""
+    caplog.set_level(logging.INFO)
+    missing_image = f"registry.redhat.io/{faker.slug()}:latest"
+    mock_get_missing.return_value = {missing_image}
+    mock_confirm.return_value = False
+
+    assert not podman_utils.ensure_images()
+
+    assert "disconnected installation" in caplog.text.lower()
+
+
+@mock.patch.object(podman_utils, "login_to_registry")
+@mock.patch.object(podman_utils, "check_registry_login")
+@mock.patch.object(podman_utils, "get_registry_from_image_name")
+@mock.patch.object(podman_utils.shell_utils, "confirm")
+@mock.patch.object(podman_utils, "get_missing_images")
+def test_ensure_images_login_required_and_succeeds(  # noqa: PLR0913
+    mock_get_missing,
+    mock_confirm,
+    mock_get_registry,
+    mock_check_login,
+    mock_login,
+    faker,
+):
+    """Test ensure_images handles login when not already logged in."""
+    missing_image = f"registry.redhat.io/{faker.slug()}:latest"
+    mock_get_missing.return_value = {missing_image}
+    mock_confirm.return_value = True
+    mock_get_registry.return_value = "registry.redhat.io"
+    mock_check_login.return_value = False
+    mock_login.return_value = True
+
+    with mock.patch.object(podman_utils, "pull_image", return_value=True):
+        assert podman_utils.ensure_images()
+
+    mock_login.assert_called_once_with("registry.redhat.io")
+
+
+@mock.patch.object(podman_utils, "login_to_registry")
+@mock.patch.object(podman_utils, "check_registry_login")
+@mock.patch.object(podman_utils, "get_registry_from_image_name")
+@mock.patch.object(podman_utils.shell_utils, "confirm")
+@mock.patch.object(podman_utils, "get_missing_images")
+def test_ensure_images_login_fails(  # noqa: PLR0913
+    mock_get_missing,
+    mock_confirm,
+    mock_get_registry,
+    mock_check_login,
+    mock_login,
+    faker,
+):
+    """Test ensure_images returns False when login fails."""
+    missing_image = f"registry.redhat.io/{faker.slug()}:latest"
+    mock_get_missing.return_value = {missing_image}
+    mock_confirm.return_value = True
+    mock_get_registry.return_value = "registry.redhat.io"
+    mock_check_login.return_value = False
+    mock_login.return_value = False
+
+    assert not podman_utils.ensure_images()
+
+
+@mock.patch.object(podman_utils, "pull_image")
+@mock.patch.object(podman_utils, "check_registry_login")
+@mock.patch.object(podman_utils, "get_registry_from_image_name")
+@mock.patch.object(podman_utils.shell_utils, "confirm")
+@mock.patch.object(podman_utils, "get_missing_images")
+def test_ensure_images_pull_fails(  # noqa: PLR0913
+    mock_get_missing,
+    mock_confirm,
+    mock_get_registry,
+    mock_check_login,
+    mock_pull,
+    faker,
+):
+    """Test ensure_images returns False when pull fails."""
+    missing_image = f"registry.redhat.io/{faker.slug()}:latest"
+    mock_get_missing.return_value = {missing_image}
+    mock_confirm.return_value = True
+    mock_get_registry.return_value = "registry.redhat.io"
+    mock_check_login.return_value = True
+    mock_pull.return_value = False
+
+    assert not podman_utils.ensure_images()
+
+
+@mock.patch.object(podman_utils.settings, "runtime")
+@mock.patch.object(podman_utils.shell_utils, "confirm")
+@mock.patch.object(podman_utils, "get_missing_images")
+def test_ensure_images_quiet_mode_no_output(
+    mock_get_missing, mock_confirm, mock_runtime, faker, capsys
+):
+    """Test ensure_images produces no output in quiet mode when user declines."""
+    mock_runtime.quiet = True
+    missing_image = f"registry.redhat.io/{faker.slug()}:latest"
+    mock_get_missing.return_value = {missing_image}
+    mock_confirm.return_value = False
+
+    assert not podman_utils.ensure_images()
+
+    output = capsys.readouterr().out
+    assert output == ""
