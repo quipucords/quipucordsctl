@@ -533,3 +533,132 @@ def test_get_secret_value_preserves_whitespace(mock_run_command, secret_value):
 
     result = podman_utils.get_secret_value(secret_name)
     assert result == secret_value
+
+
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_image_exists_returns_true_when_image_exists(mock_run_command, faker, caplog):
+    """Test image_exists returns True when image exists locally."""
+    caplog.set_level(logging.DEBUG)
+    image_name = f"quay.io/{faker.slug()}/{faker.slug()}:latest"
+    mock_run_command.return_value = None, None, 0
+
+    assert podman_utils.image_exists(image_name)
+    mock_run_command.assert_called_once_with(
+        ["podman", "image", "exists", image_name], raise_error=False
+    )
+    assert f"Container image '{image_name}' exists locally." in caplog.messages[-1]
+
+
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_image_exists_returns_false_when_image_not_found(
+    mock_run_command, faker, caplog
+):
+    """Test image_exists returns False when image does not exist locally."""
+    caplog.set_level(logging.DEBUG)
+    image_name = f"quay.io/{faker.slug()}/{faker.slug()}:latest"
+    mock_run_command.return_value = None, None, 1
+
+    assert not podman_utils.image_exists(image_name)
+    mock_run_command.assert_called_once_with(
+        ["podman", "image", "exists", image_name], raise_error=False
+    )
+    assert (
+        f"Container image '{image_name}' does not exist locally." in caplog.messages[-1]
+    )
+
+
+@pytest.mark.parametrize("value", (None, 123, ["list"], {"dict": "value"}))
+def test_image_exists_raises_type_error_for_non_string(value):
+    """Test image_exists raises TypeError for non-string inputs."""
+    with pytest.raises(TypeError):
+        podman_utils.image_exists(value)
+
+
+@pytest.mark.parametrize("value", ("", " ", "\t", "\n", "   "))
+def test_image_exists_raises_value_error_for_empty_string(value):
+    """Test image_exists raises ValueError for empty/whitespace strings."""
+    with pytest.raises(ValueError):
+        podman_utils.image_exists(value)
+
+
+@mock.patch.object(podman_utils, "image_exists")
+@mock.patch.object(podman_utils, "list_expected_podman_container_images")
+def test_get_missing_images_all_present(
+    mock_list_expected, mock_image_exists, faker, caplog
+):
+    """Test get_missing_images returns empty set when all images exist."""
+    caplog.set_level(logging.DEBUG)
+    expected_images = {
+        f"quay.io/{faker.slug()}/{faker.slug()}:latest",
+        f"quay.io/{faker.slug()}/{faker.slug()}:latest",
+    }
+    mock_list_expected.return_value = expected_images
+    mock_image_exists.return_value = True
+
+    result = podman_utils.get_missing_images()
+
+    assert result == set()
+    assert mock_image_exists.call_count == len(expected_images)
+    assert "All required images are present locally." in caplog.messages[-1]
+
+
+@mock.patch.object(podman_utils, "image_exists")
+@mock.patch.object(podman_utils, "list_expected_podman_container_images")
+def test_get_missing_images_some_missing(
+    mock_list_expected, mock_image_exists, faker, caplog
+):
+    """Test get_missing_images returns only the missing images."""
+    caplog.set_level(logging.DEBUG)
+    present_image = f"quay.io/{faker.slug()}/present:latest"
+    missing_image = f"quay.io/{faker.slug()}/missing:latest"
+    expected_images = {present_image, missing_image}
+    mock_list_expected.return_value = expected_images
+    mock_image_exists.side_effect = lambda img: {
+        present_image: True,
+        missing_image: False,
+    }[img]
+
+    result = podman_utils.get_missing_images()
+
+    assert result == {missing_image}
+    assert "Missing 1 of 2 required images." in caplog.messages[-1]
+
+
+@mock.patch.object(podman_utils, "image_exists")
+@mock.patch.object(podman_utils, "list_expected_podman_container_images")
+def test_get_missing_images_all_missing(
+    mock_list_expected, mock_image_exists, faker, caplog
+):
+    """Test get_missing_images returns all images when none exist locally."""
+    caplog.set_level(logging.DEBUG)
+    expected_images = {
+        f"quay.io/{faker.slug()}/{faker.slug()}:latest",
+        f"quay.io/{faker.slug()}/{faker.slug()}:latest",
+        f"quay.io/{faker.slug()}/{faker.slug()}:latest",
+    }
+    mock_list_expected.return_value = expected_images
+    mock_image_exists.return_value = False
+
+    result = podman_utils.get_missing_images()
+
+    assert result == expected_images
+    assert (
+        f"Missing {len(expected_images)} of {len(expected_images)}"
+        in caplog.messages[-1]
+    )
+
+
+@mock.patch.object(podman_utils, "image_exists")
+@mock.patch.object(podman_utils, "list_expected_podman_container_images")
+def test_get_missing_images_empty_expected(
+    mock_list_expected, mock_image_exists, caplog
+):
+    """Test get_missing_images handles case with no expected images."""
+    caplog.set_level(logging.DEBUG)
+    mock_list_expected.return_value = set()
+
+    result = podman_utils.get_missing_images()
+
+    assert result == set()
+    mock_image_exists.assert_not_called()
+    assert "All required images are present locally." in caplog.messages[-1]
