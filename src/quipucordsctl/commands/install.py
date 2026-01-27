@@ -32,9 +32,8 @@ from quipucordsctl.systemdunitparser import SystemdUnitParser
 INSTALL_SUCCESS_LONG_MESSAGE = _(
     textwrap.dedent(
         """
-        Installation completed successfully. Please run the following commands to start the %(server_software_name)s server:
+        Installation completed successfully. Please run the following command to start the %(server_software_name)s server:
 
-            podman login registry.redhat.io
             systemctl --user restart %(server_software_package)s-app
         """  # noqa: E501
     ).strip()
@@ -363,6 +362,9 @@ def run(args: argparse.Namespace) -> bool:
         systemctl_reload()
     except subprocess.CalledProcessError:
         logger.error(_("systemctl reload failed unexpectedly. Please check logs."))
+        return False
+
+    if not podman_utils.ensure_images():
         return False
 
     if not loginctl_utils.enable_linger(args.linger):
