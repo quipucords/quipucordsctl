@@ -227,3 +227,50 @@ def test_update_systemd_template_config_with_overrides_missing_header(
     )
 
     assert caplog.messages[0].startswith(f"Skipping overrides for {template_filename}")
+
+
+def test_install_run_ensure_images_called(
+    temp_config_directories: dict[str, pathlib.Path], tmp_path: pathlib.Path
+):
+    """Test that install calls ensure_images."""
+    mock_args = mock.Mock()
+    mock_args.override_conf_dir = None
+
+    with (
+        mock.patch.object(install, "podman_utils") as mock_podman_utils,
+        mock.patch.object(install, "systemctl_utils"),
+        mock.patch.object(install, "reset_secrets", return_value=True),
+        mock.patch.object(install, "systemctl_reload"),
+        mock.patch.object(install, "loginctl_utils") as mock_loginctl_utils,
+    ):
+        mock_podman_utils.ensure_images.return_value = True
+        mock_loginctl_utils.enable_linger.return_value = True
+
+        result = install.run(mock_args)
+
+        assert result is True
+        mock_podman_utils.ensure_images.assert_called_once()
+
+
+def test_install_run_fails_when_ensure_images_fails(
+    temp_config_directories: dict[str, pathlib.Path], tmp_path: pathlib.Path
+):
+    """Test that install returns False when ensure_images fails."""
+    mock_args = mock.Mock()
+    mock_args.override_conf_dir = None
+
+    with (
+        mock.patch.object(install, "podman_utils") as mock_podman_utils,
+        mock.patch.object(install, "systemctl_utils"),
+        mock.patch.object(install, "reset_secrets", return_value=True),
+        mock.patch.object(install, "systemctl_reload"),
+        mock.patch.object(install, "loginctl_utils") as mock_loginctl_utils,
+    ):
+        mock_podman_utils.ensure_images.return_value = False  # Images failed
+        mock_loginctl_utils.enable_linger.return_value = True
+
+        result = install.run(mock_args)
+
+        assert result is False
+        mock_podman_utils.ensure_images.assert_called_once()
+        mock_loginctl_utils.enable_linger.assert_not_called()
