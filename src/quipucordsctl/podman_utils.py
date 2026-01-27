@@ -337,3 +337,47 @@ def get_secret_value(secret_name: str) -> str | None:
         {"secret_name": secret_name},
     )
     return None
+
+
+def image_exists(image_name: str) -> bool:
+    """Check if a container image exists locally."""
+    verify_podman_argument_string(_("podman image name"), image_name)
+    __, __, exit_code = shell_utils.run_command(
+        ["podman", "image", "exists", image_name], raise_error=False
+    )
+    if exit_code == 0:
+        logger.debug(
+            _("Container image '%(image_name)s' exists locally."),
+            {"image_name": image_name},
+        )
+        return True
+    logger.debug(
+        _("Container image '%(image_name)s' does not exist locally."),
+        {"image_name": image_name},
+    )
+    return False
+
+
+def get_missing_images() -> set[str]:
+    """
+    Get the set of required container images that are not present locally.
+
+    Reads required images from installed config files and checks each one.
+    Returns only the images that are missing.
+    """
+    expected_images = list_expected_podman_container_images()
+    missing_images = set()
+
+    for image in expected_images:
+        if not image_exists(image):
+            missing_images.add(image)
+
+    if missing_images:
+        logger.debug(
+            _("Missing %(count)d of %(total)d required images."),
+            {"count": len(missing_images), "total": len(expected_images)},
+        )
+    else:
+        logger.debug(_("All required images are present locally."))
+
+    return missing_images
