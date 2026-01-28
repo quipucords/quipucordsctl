@@ -102,7 +102,9 @@ def copytree_helper(source: Path, dest: Path):
 def export_container_logs(dest: Path):
     """Export Quipucords logs into files inside a directory."""
     for service in settings.SYSTEMD_SERVICE_FILENAMES:
-        logger.info(_("Exporting logs for %(service_name)s"), {"service_name": service})
+        logger.info(
+            _("Exporting logs from %(service_name)s"), {"service_name": service}
+        )
         fname = Path(service).stem
         command = ["journalctl", f"--user-unit={service}"]
         try:
@@ -142,6 +144,10 @@ def export_container_logs(dest: Path):
 
 def copy_qpc_log(dest: Path):
     """Copy qpc (CLI) log file. Note the path is the same upstream and downstream."""
+    logger.info(
+        _("Exporting logs from %(server_software_name)s CLI"),
+        {"server_software_name": settings.SERVER_SOFTWARE_NAME},
+    )
     source = (settings.SERVER_DATA_DIR / "../qpc/qpc.log").resolve()
     try:
         shutil.copy(source, dest, follow_symlinks=True)
@@ -172,6 +178,7 @@ def copy_qpc_log(dest: Path):
 
 def copy_postgres_logs(dest: Path):
     """Copy Postgres log files."""
+    logger.info(_("Exporting logs from PostgreSQL"))
     source = settings.SERVER_DATA_DIR / "db/userdata/log/"
     actual_dest = dest / "postgres"
     copytree_helper(source, actual_dest)
@@ -179,6 +186,7 @@ def copy_postgres_logs(dest: Path):
 
 def copy_nginx_logs(dest: Path):
     """Copy nginx log files."""
+    logger.info(_("Exporting logs from nginx"))
     source = settings.SERVER_DATA_DIR / "log/nginx/"
     actual_dest = dest / "nginx"
     copytree_helper(source, actual_dest)
