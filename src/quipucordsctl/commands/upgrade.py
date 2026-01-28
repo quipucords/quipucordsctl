@@ -98,9 +98,7 @@ def print_success():
         _(
             textwrap.dedent(
                 """
-                Upgrade completed successfully.
-                Please run the following command to restart the
-                %(server_software_name)s server:
+                Upgrade completed successfully. Please run the following command to restart the %(server_software_name)s server:
 
                     systemctl --user restart %(server_software_package)s-app
                 """  # noqa: E501
