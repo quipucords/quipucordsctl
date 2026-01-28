@@ -65,12 +65,12 @@ def add_command(  # noqa: PLR0913
         else:
             raise ValueError(
                 _(
-                    "subparser._choices_actions[-1].dest was %(value)s, "
-                    "but add_command expected %(command_name)s"
+                    "subparser._choices_actions[-1].dest was %(value)r, "
+                    "but add_command expected %(command_name)r"
                 )
                 % {
-                    "value": repr(subparser._choices_actions[-1].dest),
-                    "command_name": repr(command_name),
+                    "value": subparser._choices_actions[-1].dest,
+                    "command_name": command_name,
                 }
             )
     except (AttributeError, IndexError, KeyError, ValueError) as e:
