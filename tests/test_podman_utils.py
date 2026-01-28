@@ -321,7 +321,7 @@ def test_remove_image(mock_run_command, faker, caplog):
     mock_run_command.return_value = None, None, 0  # successful delete
 
     assert podman_utils.remove_image(images_id)
-    assert f"Podman image '{images_id}' was removed." == caplog.messages[-1]
+    assert f"Container image '{images_id}' was removed." == caplog.messages[-1]
 
 
 @mock.patch.object(podman_utils.shell_utils, "run_command")
@@ -533,3 +533,390 @@ def test_get_secret_value_preserves_whitespace(mock_run_command, secret_value):
 
     result = podman_utils.get_secret_value(secret_name)
     assert result == secret_value
+
+
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_image_exists_returns_true_when_image_exists(mock_run_command, faker, caplog):
+    """Test image_exists returns True when image exists locally."""
+    caplog.set_level(logging.DEBUG)
+    image_name = f"quay.io/{faker.slug()}/{faker.slug()}:latest"
+    mock_run_command.return_value = None, None, 0
+
+    assert podman_utils.image_exists(image_name)
+    mock_run_command.assert_called_once_with(
+        ["podman", "image", "exists", image_name], raise_error=False
+    )
+    assert f"Container image '{image_name}' exists locally." in caplog.messages[-1]
+
+
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_image_exists_returns_false_when_image_not_found(
+    mock_run_command, faker, caplog
+):
+    """Test image_exists returns False when image does not exist locally."""
+    caplog.set_level(logging.DEBUG)
+    image_name = f"quay.io/{faker.slug()}/{faker.slug()}:latest"
+    mock_run_command.return_value = None, None, 1
+
+    assert not podman_utils.image_exists(image_name)
+    mock_run_command.assert_called_once_with(
+        ["podman", "image", "exists", image_name], raise_error=False
+    )
+    assert (
+        f"Container image '{image_name}' does not exist locally." in caplog.messages[-1]
+    )
+
+
+@pytest.mark.parametrize("value", (None, 123, ["list"], {"dict": "value"}))
+def test_image_exists_raises_type_error_for_non_string(value):
+    """Test image_exists raises TypeError for non-string inputs."""
+    with pytest.raises(TypeError):
+        podman_utils.image_exists(value)
+
+
+@pytest.mark.parametrize("value", ("", " ", "\t", "\n", "   "))
+def test_image_exists_raises_value_error_for_empty_string(value):
+    """Test image_exists raises ValueError for empty/whitespace strings."""
+    with pytest.raises(ValueError):
+        podman_utils.image_exists(value)
+
+
+@mock.patch.object(podman_utils, "image_exists")
+@mock.patch.object(podman_utils, "list_expected_podman_container_images")
+def test_get_missing_images_all_present(
+    mock_list_expected, mock_image_exists, faker, caplog
+):
+    """Test get_missing_images returns empty set when all images exist."""
+    caplog.set_level(logging.DEBUG)
+    expected_images = {
+        f"quay.io/{faker.slug()}/{faker.slug()}:latest",
+        f"quay.io/{faker.slug()}/{faker.slug()}:latest",
+    }
+    mock_list_expected.return_value = expected_images
+    mock_image_exists.return_value = True
+
+    result = podman_utils.get_missing_images()
+
+    assert result == set()
+    assert mock_image_exists.call_count == len(expected_images)
+    assert "All required images are present locally." in caplog.messages[-1]
+
+
+@mock.patch.object(podman_utils, "image_exists")
+@mock.patch.object(podman_utils, "list_expected_podman_container_images")
+def test_get_missing_images_some_missing(
+    mock_list_expected, mock_image_exists, faker, caplog
+):
+    """Test get_missing_images returns only the missing images."""
+    caplog.set_level(logging.DEBUG)
+    present_image = f"quay.io/{faker.slug()}/present:latest"
+    missing_image = f"quay.io/{faker.slug()}/missing:latest"
+    expected_images = {present_image, missing_image}
+    mock_list_expected.return_value = expected_images
+    mock_image_exists.side_effect = lambda img: {
+        present_image: True,
+        missing_image: False,
+    }[img]
+
+    result = podman_utils.get_missing_images()
+
+    assert result == {missing_image}
+    assert "Missing 1 of 2 required images." in caplog.messages[-1]
+
+
+@mock.patch.object(podman_utils, "image_exists")
+@mock.patch.object(podman_utils, "list_expected_podman_container_images")
+def test_get_missing_images_all_missing(
+    mock_list_expected, mock_image_exists, faker, caplog
+):
+    """Test get_missing_images returns all images when none exist locally."""
+    caplog.set_level(logging.DEBUG)
+    expected_images = {
+        f"quay.io/{faker.slug()}/{faker.slug()}:latest",
+        f"quay.io/{faker.slug()}/{faker.slug()}:latest",
+        f"quay.io/{faker.slug()}/{faker.slug()}:latest",
+    }
+    mock_list_expected.return_value = expected_images
+    mock_image_exists.return_value = False
+
+    result = podman_utils.get_missing_images()
+
+    assert result == expected_images
+    assert (
+        f"Missing {len(expected_images)} of {len(expected_images)}"
+        in caplog.messages[-1]
+    )
+
+
+@mock.patch.object(podman_utils, "image_exists")
+@mock.patch.object(podman_utils, "list_expected_podman_container_images")
+def test_get_missing_images_empty_expected(
+    mock_list_expected, mock_image_exists, caplog
+):
+    """Test get_missing_images handles case with no expected images."""
+    caplog.set_level(logging.DEBUG)
+    mock_list_expected.return_value = set()
+
+    result = podman_utils.get_missing_images()
+
+    assert result == set()
+    mock_image_exists.assert_not_called()
+    assert "All required images are present locally." in caplog.messages[-1]
+
+
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_check_registry_login_logged_in(mock_run_command, caplog):
+    """Test check_registry_login returns True when credentials are valid."""
+    caplog.set_level(logging.DEBUG)
+    registry = "registry.redhat.io"
+    mock_run_command.return_value = "", None, 0
+
+    assert podman_utils.check_registry_login(registry)
+    mock_run_command.assert_called_once_with(
+        ["podman", "login", registry], raise_error=False, stdin=""
+    )
+    assert f"Valid credentials for registry '{registry}'." in caplog.messages[-1]
+
+
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_check_registry_login_not_logged_in(mock_run_command, caplog):
+    """Test check_registry_login returns False when user is not logged in."""
+    caplog.set_level(logging.DEBUG)
+    registry = "registry.redhat.io"
+    mock_run_command.return_value = "", None, 125
+
+    assert not podman_utils.check_registry_login(registry)
+    mock_run_command.assert_called_once_with(
+        ["podman", "login", registry], raise_error=False, stdin=""
+    )
+    assert f"Not logged in to registry '{registry}'." in caplog.messages[-1]
+
+
+@mock.patch.object(podman_utils, "getpass")
+@mock.patch("builtins.input")
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_login_to_registry_success(  # noqa: PLR0913
+    mock_run_command, mock_input, mock_getpass, faker, caplog, capsys
+):
+    """Test login_to_registry returns True on successful login."""
+    caplog.set_level(logging.INFO)
+    registry = "registry.redhat.io"
+    username = faker.user_name()
+    password = faker.password()
+
+    mock_input.return_value = username
+    mock_getpass.getpass.return_value = password
+    mock_run_command.return_value = None, None, 0
+
+    assert podman_utils.login_to_registry(registry)
+
+    mock_run_command.assert_called_once_with(
+        ["podman", "login", registry, "--username", username, "--password-stdin"],
+        raise_error=False,
+        stdin=password,
+        redact_output=False,
+    )
+    assert f"Successfully logged in to registry '{registry}'." in caplog.messages[-1]
+    assert "Logging in to" in capsys.readouterr().out
+
+
+@mock.patch.object(podman_utils, "getpass")
+@mock.patch("builtins.input")
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_login_to_registry_failure(
+    mock_run_command, mock_input, mock_getpass, faker, caplog
+):
+    """Test login_to_registry returns False when podman login fails."""
+    caplog.set_level(logging.ERROR)
+    registry = "registry.redhat.io"
+
+    mock_input.return_value = faker.user_name()
+    mock_getpass.getpass.return_value = faker.password()
+    mock_run_command.return_value = None, "Login failed", 1
+
+    assert not podman_utils.login_to_registry(registry)
+    assert f"Failed to log into registry '{registry}'." in caplog.messages[-1]
+
+
+@mock.patch.object(podman_utils, "getpass")
+@mock.patch("builtins.input")
+def test_login_to_registry_empty_username(mock_input, mock_getpass, caplog):
+    """Test login_to_registry returns False when username is empty."""
+    caplog.set_level(logging.ERROR)
+    registry = "registry.redhat.io"
+
+    mock_input.return_value = "   "
+    mock_getpass.getpass.return_value = "password"
+
+    assert not podman_utils.login_to_registry(registry)
+    assert "Username cannot be empty." in caplog.messages[-1]
+
+
+@mock.patch.object(podman_utils, "getpass")
+@mock.patch("builtins.input")
+def test_login_to_registry_empty_password(mock_input, mock_getpass, faker, caplog):
+    """Test login_to_registry returns False when password is empty."""
+    caplog.set_level(logging.ERROR)
+    registry = "registry.redhat.io"
+
+    mock_input.return_value = faker.user_name()
+    mock_getpass.getpass.return_value = ""
+
+    assert not podman_utils.login_to_registry(registry)
+    assert "Password cannot be empty." in caplog.messages[-1]
+
+
+@mock.patch.object(podman_utils.settings, "runtime")
+def test_login_to_registry_quiet_mode(mock_runtime):
+    """Test login_to_registry returns False in quiet mode without prompting."""
+    mock_runtime.quiet = True
+    registry = "registry.redhat.io"
+
+    assert not podman_utils.login_to_registry(registry)
+
+
+@mock.patch.object(podman_utils, "get_missing_images")
+def test_ensure_images_all_present(mock_get_missing, caplog):
+    """Test ensure_images returns True when all images are present."""
+    caplog.set_level(logging.INFO)
+    mock_get_missing.return_value = set()
+
+    assert podman_utils.ensure_images()
+    assert "All required container images are present." in caplog.messages[-1]
+
+
+@mock.patch.object(podman_utils, "pull_image")
+@mock.patch.object(podman_utils, "check_registry_login")
+@mock.patch.object(podman_utils, "get_registry_from_image_name")
+@mock.patch.object(podman_utils.shell_utils, "confirm")
+@mock.patch.object(podman_utils, "get_missing_images")
+def test_ensure_images_pull_success(  # noqa: PLR0913
+    mock_get_missing,
+    mock_confirm,
+    mock_get_registry,
+    mock_check_login,
+    mock_pull,
+    faker,
+    caplog,
+):
+    """Test ensure_images returns True when images are pulled successfully."""
+    caplog.set_level(logging.INFO)
+    missing_image = f"registry.redhat.io/{faker.slug()}:latest"
+    mock_get_missing.return_value = {missing_image}
+    mock_confirm.return_value = True
+    mock_get_registry.return_value = "registry.redhat.io"
+    mock_check_login.return_value = True
+    mock_pull.return_value = True
+
+    assert podman_utils.ensure_images()
+
+    mock_pull.assert_called_once_with(missing_image)
+    assert "Required container image" in caplog.text and "is missing" in caplog.text
+    assert "All required images have been pulled successfully." in caplog.text
+
+
+@mock.patch.object(podman_utils.shell_utils, "confirm")
+@mock.patch.object(podman_utils, "get_missing_images")
+def test_ensure_images_user_declines(mock_get_missing, mock_confirm, faker, capsys):
+    """Test ensure_images returns False when user declines to download."""
+    missing_image = f"registry.redhat.io/{faker.slug()}:latest"
+    mock_get_missing.return_value = {missing_image}
+    mock_confirm.return_value = False
+
+    assert not podman_utils.ensure_images()
+
+    output = capsys.readouterr().out
+    assert "offline installation" in output.lower()
+
+
+@mock.patch.object(podman_utils, "login_to_registry")
+@mock.patch.object(podman_utils, "check_registry_login")
+@mock.patch.object(podman_utils, "get_registry_from_image_name")
+@mock.patch.object(podman_utils.shell_utils, "confirm")
+@mock.patch.object(podman_utils, "get_missing_images")
+def test_ensure_images_login_required_and_succeeds(  # noqa: PLR0913
+    mock_get_missing,
+    mock_confirm,
+    mock_get_registry,
+    mock_check_login,
+    mock_login,
+    faker,
+):
+    """Test ensure_images handles login when not already logged in."""
+    missing_image = f"registry.redhat.io/{faker.slug()}:latest"
+    mock_get_missing.return_value = {missing_image}
+    mock_confirm.return_value = True
+    mock_get_registry.return_value = "registry.redhat.io"
+    mock_check_login.return_value = False
+    mock_login.return_value = True
+
+    with mock.patch.object(podman_utils, "pull_image", return_value=True):
+        assert podman_utils.ensure_images()
+
+    mock_login.assert_called_once_with("registry.redhat.io")
+
+
+@mock.patch.object(podman_utils, "login_to_registry")
+@mock.patch.object(podman_utils, "check_registry_login")
+@mock.patch.object(podman_utils, "get_registry_from_image_name")
+@mock.patch.object(podman_utils.shell_utils, "confirm")
+@mock.patch.object(podman_utils, "get_missing_images")
+def test_ensure_images_login_fails(  # noqa: PLR0913
+    mock_get_missing,
+    mock_confirm,
+    mock_get_registry,
+    mock_check_login,
+    mock_login,
+    faker,
+):
+    """Test ensure_images returns False when login fails."""
+    missing_image = f"registry.redhat.io/{faker.slug()}:latest"
+    mock_get_missing.return_value = {missing_image}
+    mock_confirm.return_value = True
+    mock_get_registry.return_value = "registry.redhat.io"
+    mock_check_login.return_value = False
+    mock_login.return_value = False
+
+    assert not podman_utils.ensure_images()
+
+
+@mock.patch.object(podman_utils, "pull_image")
+@mock.patch.object(podman_utils, "check_registry_login")
+@mock.patch.object(podman_utils, "get_registry_from_image_name")
+@mock.patch.object(podman_utils.shell_utils, "confirm")
+@mock.patch.object(podman_utils, "get_missing_images")
+def test_ensure_images_pull_fails(  # noqa: PLR0913
+    mock_get_missing,
+    mock_confirm,
+    mock_get_registry,
+    mock_check_login,
+    mock_pull,
+    faker,
+):
+    """Test ensure_images returns False when pull fails."""
+    missing_image = f"registry.redhat.io/{faker.slug()}:latest"
+    mock_get_missing.return_value = {missing_image}
+    mock_confirm.return_value = True
+    mock_get_registry.return_value = "registry.redhat.io"
+    mock_check_login.return_value = True
+    mock_pull.return_value = False
+
+    assert not podman_utils.ensure_images()
+
+
+@mock.patch.object(podman_utils.settings, "runtime")
+@mock.patch.object(podman_utils.shell_utils, "confirm")
+@mock.patch.object(podman_utils, "get_missing_images")
+def test_ensure_images_quiet_mode_no_output(
+    mock_get_missing, mock_confirm, mock_runtime, faker, capsys
+):
+    """Test ensure_images produces no output in quiet mode when user declines."""
+    mock_runtime.quiet = True
+    missing_image = f"registry.redhat.io/{faker.slug()}:latest"
+    mock_get_missing.return_value = {missing_image}
+    mock_confirm.return_value = False
+
+    assert not podman_utils.ensure_images()
+
+    output = capsys.readouterr().out
+    assert output == ""
