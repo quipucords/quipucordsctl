@@ -104,7 +104,7 @@ def print_success():
 
                     systemctl --user restart %(server_software_package)s-app
                 """  # noqa: E501
-            )
+            ).strip()
         )
         % {
             "server_software_name": settings.SERVER_SOFTWARE_NAME,

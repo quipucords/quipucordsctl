@@ -24,7 +24,7 @@ ENABLE_CGROUPS_V2_LONG_MESSAGE = _(
             sudo grubby --update-kernel=ALL --args="systemd.unified_cgroup_hierarchy=1"
             sudo reboot
         """  # noqa: E501
-    )
+    ).strip()
 )
 
 
