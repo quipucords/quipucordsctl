@@ -28,7 +28,9 @@ class CtlLoggingFormatter(logging.Formatter):
 
     def __init__(self, use_color: bool, verbosity: int, datefmt: str):
         log_format = (
-            "%(asctime)s %(levelname)s: %(message)s"
+            "%(asctime)s %(levelname)s %(name)s:%(lineno)d: %(message)s"
+            if verbosity > 3  # noqa: PLR2004
+            else "%(asctime)s %(levelname)s: %(message)s"
             if verbosity > 2  # noqa: PLR2004
             else "%(levelname)s: %(message)s"
         )

@@ -52,7 +52,7 @@ def is_set() -> bool:
 
 
 reset_username_messages = secrets.ResetSecretMessages(
-    prompt_enter_value=_("Enter admin login username: "),
+    prompt_enter_value=_("Enter new admin login username: "),
     replace_existing_warning=_(
         "The admin login username has already been set. "
         "Resetting the admin login username to a new value "

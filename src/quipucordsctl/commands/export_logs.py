@@ -102,7 +102,9 @@ def copytree_helper(source: Path, dest: Path):
 def export_container_logs(dest: Path):
     """Export Quipucords logs into files inside a directory."""
     for service in settings.SYSTEMD_SERVICE_FILENAMES:
-        logger.info(_("Exporting logs for %(service_name)s"), {"service_name": service})
+        logger.info(
+            _("Exporting logs from %(service_name)s"), {"service_name": service}
+        )
         fname = Path(service).stem
         command = ["journalctl", f"--user-unit={service}"]
         try:
@@ -142,17 +144,41 @@ def export_container_logs(dest: Path):
 
 def copy_qpc_log(dest: Path):
     """Copy qpc (CLI) log file. Note the path is the same upstream and downstream."""
+    logger.info(
+        _("Exporting logs from %(server_software_name)s CLI"),
+        {"server_software_name": settings.SERVER_SOFTWARE_NAME},
+    )
     source = (settings.SERVER_DATA_DIR / "../qpc/qpc.log").resolve()
     try:
         shutil.copy(source, dest, follow_symlinks=True)
-    except (FileNotFoundError, PermissionError) as e:
-        msg = _("Failed to copy a file: %(filepath)s. Exported logs may be incomplete.")
-        logger.error(msg, {"filepath": source.resolve().as_posix()})
+    except FileNotFoundError:
+        logger.warning(
+            _(
+                "File not found: %(filepath)s. "
+                "%(server_software_name)s CLI has not written any logs, "
+                "or exported logs may be incomplete.",
+            ),
+            {
+                "server_software_name": settings.SERVER_SOFTWARE_NAME,
+                "filepath": source.as_posix(),
+            },
+        )
+    except PermissionError as e:
+        logger.error(
+            _(
+                "Permission denied trying to access %(filepath)s. "
+                "Permissions may be incorrect, and exported logs may be incomplete."
+            ),
+            {
+                "filepath": source.as_posix(),
+            },
+        )
         logger.debug(e)
 
 
 def copy_postgres_logs(dest: Path):
     """Copy Postgres log files."""
+    logger.info(_("Exporting logs from PostgreSQL"))
     source = settings.SERVER_DATA_DIR / "db/userdata/log/"
     actual_dest = dest / "postgres"
     copytree_helper(source, actual_dest)
@@ -160,6 +186,7 @@ def copy_postgres_logs(dest: Path):
 
 def copy_nginx_logs(dest: Path):
     """Copy nginx log files."""
+    logger.info(_("Exporting logs from nginx"))
     source = settings.SERVER_DATA_DIR / "log/nginx/"
     actual_dest = dest / "nginx"
     copytree_helper(source, actual_dest)
@@ -202,4 +229,5 @@ def run(args: argparse.Namespace) -> bool:
         with tarfile.open(name=dest_file, mode="w:gz") as tar:
             tar.add(tmpdir, arcname=f"{software_name}-logs")
 
+    logger.info(_("Exported logs to %(dest_file)s"), {"dest_file": dest_file})
     return True

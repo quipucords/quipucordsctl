@@ -185,7 +185,11 @@ def reset_secret(
         logger.debug(messages.result_updated)
         return True
 
-    logger.error(messages.result_not_updated)
+    # If a value already existed and the user changed their mind about resetting it,
+    # log at "warning" level because ctl did not complete the originally requested task.
+    # Else, log at "error" level because that means the required value may be missing.
+    result_not_updated_logger = logger.warning if already_exists else logger.error
+    result_not_updated_logger(messages.result_not_updated)
     return False
 
 
