@@ -385,15 +385,23 @@ def get_missing_images() -> set[str]:
 
 
 def check_registry_login(registry: str) -> bool:
-    """Check if the user is already logged in to the specified registry."""
+    """
+    Check if the user has valid credentials for a registry.
+
+    Runs 'podman login <registry>' with empty stdin to validate credentials
+    against the remote registry without prompting for input.
+    """
     verify_podman_argument_string(_("registry"), registry)
-    stdout, __, exit_code = shell_utils.run_command(
-        ["podman", "login", "--get-login", registry], raise_error=False
+    # Pass empty stdin to prevent interactive prompt if credentials are invalid
+    __, __, exit_code = shell_utils.run_command(
+        ["podman", "login", registry],
+        raise_error=False,
+        stdin="",
     )
-    if exit_code == 0 and stdout.strip():
+    if exit_code == 0:
         logger.debug(
-            _("Already logged in to registry '%(registry)s' as '%(username)s'."),
-            {"registry": registry, "username": stdout.strip()},
+            _("Valid credentials for registry '%(registry)s'."),
+            {"registry": registry},
         )
         return True
     logger.debug(

@@ -665,21 +665,17 @@ def test_get_missing_images_empty_expected(
 
 
 @mock.patch.object(podman_utils.shell_utils, "run_command")
-def test_check_registry_login_logged_in(mock_run_command, faker, caplog):
-    """Test check_registry_login returns True when user is logged in."""
+def test_check_registry_login_logged_in(mock_run_command, caplog):
+    """Test check_registry_login returns True when credentials are valid."""
     caplog.set_level(logging.DEBUG)
     registry = "registry.redhat.io"
-    username = faker.user_name()
-    mock_run_command.return_value = username, None, 0
+    mock_run_command.return_value = "", None, 0
 
     assert podman_utils.check_registry_login(registry)
     mock_run_command.assert_called_once_with(
-        ["podman", "login", "--get-login", registry], raise_error=False
+        ["podman", "login", registry], raise_error=False, stdin=""
     )
-    assert (
-        f"Already logged in to registry '{registry}' as '{username}'."
-        in caplog.messages[-1]
-    )
+    assert f"Valid credentials for registry '{registry}'." in caplog.messages[-1]
 
 
 @mock.patch.object(podman_utils.shell_utils, "run_command")
@@ -687,11 +683,11 @@ def test_check_registry_login_not_logged_in(mock_run_command, caplog):
     """Test check_registry_login returns False when user is not logged in."""
     caplog.set_level(logging.DEBUG)
     registry = "registry.redhat.io"
-    mock_run_command.return_value = "", None, 1
+    mock_run_command.return_value = "", None, 125
 
     assert not podman_utils.check_registry_login(registry)
     mock_run_command.assert_called_once_with(
-        ["podman", "login", "--get-login", registry], raise_error=False
+        ["podman", "login", registry], raise_error=False, stdin=""
     )
     assert f"Not logged in to registry '{registry}'." in caplog.messages[-1]
 
