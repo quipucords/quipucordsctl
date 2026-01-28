@@ -202,4 +202,5 @@ def run(args: argparse.Namespace) -> bool:
         with tarfile.open(name=dest_file, mode="w:gz") as tar:
             tar.add(tmpdir, arcname=f"{software_name}-logs")
 
+    logger.info(_("Exported logs to %(dest_file)s"), {"dest_file": dest_file})
     return True
