@@ -40,7 +40,6 @@ def get_description() -> str:
             server from your web browser and CLI.
             The `%(command_name)s` command uses the value of the `%(env_var_name)s`
             environment variable or generates a cryptographically strong random value.
-            Use `--prompt` only if you need to manually enter a value.
             """
         )
     ) % {

@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 def get_display_group() -> argparse_utils.DisplayGroups:
     """Get the group identifier for displaying this command in CLI help text."""
-    return argparse_utils.DisplayGroups.MAIN
+    return argparse_utils.DisplayGroups.CONFIG
 
 
 def get_help() -> str:
@@ -66,6 +66,14 @@ def setup_parser(parser: argparse.ArgumentParser) -> None:
         )
         % {"default": settings.DEFAULT_PODMAN_PULL_TIMEOUT},
     )
+    parser.add_argument(
+        "--linger",
+        default=True,
+        action=argparse.BooleanOptionalAction,
+        help=_(
+            "Automatically enable lingering for the current user (default: --linger)",
+        ),
+    )
 
 
 def pull_latest_images(timeout: int | None = None) -> bool:
@@ -98,13 +106,11 @@ def print_success():
         _(
             textwrap.dedent(
                 """
-                Upgrade completed successfully.
-                Please run the following command to restart the
-                %(server_software_name)s server:
+                Upgrade completed successfully. Please run the following command to restart the %(server_software_name)s server:
 
                     systemctl --user restart %(server_software_package)s-app
                 """  # noqa: E501
-            )
+            ).strip()
         )
         % {
             "server_software_name": settings.SERVER_SOFTWARE_NAME,

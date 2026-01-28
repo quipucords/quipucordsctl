@@ -37,7 +37,7 @@ INSTALL_SUCCESS_LONG_MESSAGE = _(
             podman login registry.redhat.io
             systemctl --user restart %(server_software_package)s-app
         """  # noqa: E501
-    )
+    ).strip()
 )
 
 logger = logging.getLogger(__name__)
