@@ -15,8 +15,8 @@ class DisplayGroups(enum.Enum):
     """Enum of possible display group names for argparse help text."""
 
     MAIN = _("Main Commands")
-    CONFIG = _("Advanced Configuration Commands")
     DIAGNOSTICS = _("Diagnostic Commands")
+    CONFIG = _("Advanced Configuration Commands")
     OTHER = _("Other Commands")
 
 
