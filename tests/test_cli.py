@@ -254,7 +254,7 @@ def test_should_use_color(color_choice, no_color_env, isatty, expected, monkeypa
 def test_ctlloggingformatter_format(faker):
     """Test cli.ctlloggingformatter format with color enabled and high verbosity."""
     datefmt = faker.slug()  # predictable placeholder since datetime changes quickly
-    formatter = cli.CtlLoggingFormatter(use_color=True, verbosity=5, datefmt=datefmt)
+    formatter = cli.CtlLoggingFormatter(use_color=True, verbosity=3, datefmt=datefmt)
     message = faker.sentence()
     record = logging.LogRecord(
         name="my_logger",
@@ -275,7 +275,7 @@ def test_ctlloggingformatter_format(faker):
 def test_ctlloggingformatter_format_no_color(faker):
     """Test cli.ctlloggingformatter format with color disabled."""
     datefmt = faker.slug()  # predictable placeholder since datetime changes quickly
-    formatter = cli.CtlLoggingFormatter(use_color=False, verbosity=5, datefmt=datefmt)
+    formatter = cli.CtlLoggingFormatter(use_color=False, verbosity=3, datefmt=datefmt)
     message = faker.sentence()
     record = logging.LogRecord(
         name="my_logger",
