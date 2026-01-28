@@ -145,9 +145,28 @@ def copy_qpc_log(dest: Path):
     source = (settings.SERVER_DATA_DIR / "../qpc/qpc.log").resolve()
     try:
         shutil.copy(source, dest, follow_symlinks=True)
-    except (FileNotFoundError, PermissionError) as e:
-        msg = _("Failed to copy a file: %(filepath)s. Exported logs may be incomplete.")
-        logger.error(msg, {"filepath": source.resolve().as_posix()})
+    except FileNotFoundError:
+        logger.warning(
+            _(
+                "File not found: %(filepath)s. "
+                "%(server_software_name)s CLI has not written any logs, "
+                "or exported logs may be incomplete.",
+            ),
+            {
+                "server_software_name": settings.SERVER_SOFTWARE_NAME,
+                "filepath": source.as_posix(),
+            },
+        )
+    except PermissionError as e:
+        logger.error(
+            _(
+                "Permission denied trying to access %(filepath)s. "
+                "Permissions may be incorrect, and exported logs may be incomplete."
+            ),
+            {
+                "filepath": source.as_posix(),
+            },
+        )
         logger.debug(e)
 
 

@@ -224,13 +224,15 @@ def test_copy_qpc_log_no_dir(
     caplog, temp_config_directories: dict[str, pathlib.Path], archive_dir: pathlib.Path
 ):
     """Check copy_qpc_log can handle missing directory."""
-    caplog.set_level(logging.ERROR)
+    caplog.set_level(logging.WARNING)
     qpc_log = (temp_config_directories["SERVER_DATA_DIR"] / "../qpc/qpc.log").resolve()
 
     export_logs.copy_qpc_log(archive_dir)
 
-    expected_msg = f"Failed to copy a file: {qpc_log.as_posix()}."
-    assert expected_msg in caplog.text
+    expected_msg = f"File not found: {qpc_log.as_posix()}."
+    last_log = caplog.records[-1]
+    assert expected_msg in last_log.message
+    assert last_log.levelno == logging.WARNING
 
 
 def test_copy_qpc_log_wrong_permissions(
@@ -245,8 +247,10 @@ def test_copy_qpc_log_wrong_permissions(
 
     export_logs.copy_qpc_log(archive_dir)
 
-    expected_msg = f"Failed to copy a file: {qpc_log.as_posix()}."
-    assert expected_msg in caplog.text
+    expected_msg = f"Permission denied trying to access {qpc_log.as_posix()}."
+    last_log = caplog.records[-1]
+    assert expected_msg in last_log.message
+    assert last_log.levelno == logging.ERROR
 
 
 def test_copy_postgres_logs_happy_path(
