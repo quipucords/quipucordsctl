@@ -66,6 +66,14 @@ def setup_parser(parser: argparse.ArgumentParser) -> None:
         )
         % {"default": settings.DEFAULT_PODMAN_PULL_TIMEOUT},
     )
+    parser.add_argument(
+        "--linger",
+        default=True,
+        action=argparse.BooleanOptionalAction,
+        help=_(
+            "Automatically enable lingering for the current user (default: --linger)",
+        ),
+    )
 
 
 def pull_latest_images(timeout: int | None = None) -> bool:
