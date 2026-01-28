@@ -287,7 +287,7 @@ def remove_image(image_id: str) -> bool:
     )
     if exit_code == 0:
         logger.info(
-            _("Podman image '%(image_id)s' was removed."), {"image_id": image_id}
+            _("Container image '%(image_id)s' was removed."), {"image_id": image_id}
         )
         return True
     logger.error(
@@ -348,12 +348,12 @@ def image_exists(image_name: str) -> bool:
     )
     if exit_code == 0:
         logger.debug(
-            _("Podman image '%(image_name)s' exists locally."),
+            _("Container image '%(image_name)s' exists locally."),
             {"image_name": image_name},
         )
         return True
     logger.debug(
-        _("Podman image '%(image_name)s' does not exist locally."),
+        _("Container image '%(image_name)s' does not exist locally."),
         {"image_name": image_name},
     )
     return False
@@ -385,24 +385,19 @@ def get_missing_images() -> set[str]:
 
 
 def check_registry_login(registry: str) -> bool:
-    """
-    Check if the user is already logged into the specified registry.
-
-    Uses 'podman login --get-login' which returns the username if logged in,
-    or exits with non-zero if not logged in.
-    """
+    """Check if the user is already logged in to the specified registry."""
     verify_podman_argument_string(_("registry"), registry)
     stdout, __, exit_code = shell_utils.run_command(
         ["podman", "login", "--get-login", registry], raise_error=False
     )
     if exit_code == 0 and stdout.strip():
         logger.debug(
-            _("Already logged into registry '%(registry)s' as '%(username)s'."),
+            _("Already logged in to registry '%(registry)s' as '%(username)s'."),
             {"registry": registry, "username": stdout.strip()},
         )
         return True
     logger.debug(
-        _("Not logged into registry '%(registry)s'."),
+        _("Not logged in to registry '%(registry)s'."),
         {"registry": registry},
     )
     return False
@@ -418,22 +413,18 @@ def login_to_registry(registry: str) -> bool:
     verify_podman_argument_string(_("registry"), registry)
 
     if settings.runtime.quiet:
-        logger.debug(_("Skipping login prompt in quiet mode."))
+        # podman login is required, but we can't prompt for credentials in quiet mode
         return False
 
-    print(_("Logging into %(registry)s...") % {"registry": registry})
+    print(_("Logging in to '%(registry)s'...") % {"registry": registry})
 
-    try:
-        username = input(_("Username: "))
-        if not username.strip():
-            logger.error(_("Username cannot be empty."))
-            return False
-        password = getpass.getpass(_("Password: "))
-        if not password:
-            logger.error(_("Password cannot be empty."))
-            return False
-    except EOFError:
-        logger.error(_("Input closed unexpectedly."))
+    username = input(_("Username: "))
+    if not username.strip():
+        logger.error(_("Username cannot be empty."))
+        return False
+    password = getpass.getpass(_("Password: "))
+    if not password:
+        logger.error(_("Password cannot be empty."))
         return False
 
     __, stderr, exit_code = shell_utils.run_command(
@@ -445,7 +436,7 @@ def login_to_registry(registry: str) -> bool:
 
     if exit_code == 0:
         logger.info(
-            _("Successfully logged into registry '%(registry)s'."),
+            _("Successfully logged in to registry '%(registry)s'."),
             {"registry": registry},
         )
         return True
@@ -457,17 +448,17 @@ def login_to_registry(registry: str) -> bool:
     return False
 
 
-def _print_missing_images_list(missing_images: set[str]) -> None:
-    """Print the list of missing images to the user."""
-    print(_("\nThe following container images are missing:"))
+def _log_missing_images_list(missing_images: set[str]) -> None:
+    """Log the list of missing images."""
     for image in sorted(missing_images):
-        print(f"  - {image}")
-    print()
+        logger.warning(
+            _("Required container image '%(image)s' is missing."), {"image": image}
+        )
 
 
 def _ensure_registry_logins(missing_images: set[str]) -> bool:
     """
-    Ensure user is logged into all required registries.
+    Ensure user is logged in to all required registries.
 
     Returns True if all logins succeed, False otherwise.
     """
@@ -480,15 +471,6 @@ def _ensure_registry_logins(missing_images: set[str]) -> bool:
                 {"registry": registry},
             )
             if not login_to_registry(registry):
-                if not settings.runtime.quiet:
-                    print(
-                        _(
-                            "\nLogin failed. Please log in manually and retry:\n"
-                            "    podman login %(registry)s\n"
-                            "    %(program)s install\n"
-                        )
-                        % {"registry": registry, "program": settings.PROGRAM_NAME}
-                    )
                 return False
     return True
 
@@ -499,25 +481,11 @@ def _pull_missing_images(missing_images: set[str]) -> bool:
 
     Returns True if all pulls succeed, False otherwise.
     """
-    if not settings.runtime.quiet:
-        print(_("\nPulling images..."))
+    logger.debug(_("Pulling Podman images..."))
 
     for image in sorted(missing_images):
         logger.info(_("Pulling image: %(image)s"), {"image": image})
         if not pull_image(image):
-            if not settings.runtime.quiet:
-                print(
-                    _(
-                        "\nFailed to pull image: %(image)s\n"
-                        "\n"
-                        "Please check:\n"
-                        "  - Your registry credentials\n"
-                        "  - Your subscription/entitlement to these images\n"
-                        "  - Network connectivity\n"
-                    )
-                    # TODO is that what we want to say ?
-                    % {"image": image}
-                )
             return False
     return True
 
@@ -532,16 +500,16 @@ def ensure_images() -> bool:
     Returns True if all images are present (or successfully pulled),
     False otherwise.
     """
-    missing_images = get_missing_images()
-
-    if not missing_images:
+    if not (missing_images := get_missing_images()):
         logger.info(_("All required container images are present."))
         return True
 
-    if not settings.runtime.quiet:
-        _print_missing_images_list(missing_images)
+    _log_missing_images_list(missing_images)
 
-    if not shell_utils.confirm(_("Do you want to download the missing images?")):
+    if not shell_utils.confirm(
+        _("Should %(program)s pull missing images from the Podman registry?")
+        % {"program": settings.PROGRAM_NAME}
+    ):
         if not settings.runtime.quiet:
             print(
                 _(
@@ -563,7 +531,5 @@ def ensure_images() -> bool:
         return False
 
     logger.info(_("All required images have been pulled successfully."))
-    if not settings.runtime.quiet:
-        print(_("All images downloaded successfully.\n"))
 
     return True
