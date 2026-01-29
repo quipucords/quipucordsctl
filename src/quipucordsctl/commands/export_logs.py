@@ -149,15 +149,22 @@ def copy_qpc_log(dest: Path):
         {"server_software_name": settings.SERVER_SOFTWARE_NAME},
     )
     source = (settings.SERVER_DATA_DIR / "../qpc/qpc.log").resolve()
+    if not source.parent.exists():
+        logger.info(
+            "%(server_software_name)s CLI log directory (%(dirpath)s) does not exist; "
+            "CLI has never run or has not not written any logs.",
+            {
+                "server_software_name": settings.SERVER_SOFTWARE_NAME,
+                "dirpath": source.parent.as_posix(),
+            },
+        )
+        return
     try:
         shutil.copy(source, dest, follow_symlinks=True)
     except FileNotFoundError:
-        logger.warning(
-            _(
-                "File not found: %(filepath)s. "
-                "%(server_software_name)s CLI has not written any logs, "
-                "or exported logs may be incomplete.",
-            ),
+        logger.info(
+            "%(server_software_name)s CLI log file (%(filepath)s) does not exist; "
+            "CLI has never run or has not not written any logs.",
             {
                 "server_software_name": settings.SERVER_SOFTWARE_NAME,
                 "filepath": source.as_posix(),
