@@ -76,19 +76,20 @@ def test_run_output_is_not_dir(tmp_path: pathlib.Path, caplog):
     mock_args.output = output
 
     assert export_logs.run(mock_args) is False
-    assert "Must be a directory" in caplog.text
+    assert "must be a directory" in caplog.text
 
 
-def test_run_output_is_not_writable(tmp_path: pathlib.Path, caplog):
-    """Test the run command - output is not writable."""
+@pytest.mark.parametrize("mode", [0o000, 0o100, 0o200, 0o300, 0o400, 0o500, 0o600])
+def test_run_output_lacks_expected_modes(mode, tmp_path: pathlib.Path, caplog):
+    """Test export_logs checks required permissions/modes of output directory."""
     caplog.set_level(logging.ERROR)
     output = tmp_path / "new-dir"
-    output.mkdir(mode=0o444)
+    output.mkdir(mode=mode)
     mock_args = mock.Mock()
     mock_args.output = output
 
     assert export_logs.run(mock_args) is False
-    assert "must be readable and writable" in caplog.text
+    assert "must be readable, writable, and executable" in caplog.text
 
 
 def test_run_no_exported_files(tmp_path: pathlib.Path, caplog):
