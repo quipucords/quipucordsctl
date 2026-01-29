@@ -279,25 +279,25 @@ def delete_secret(secret_name: str) -> bool:
 
 
 def remove_image(image_id: str) -> bool:
-    """Remove a podman image ID."""
-    verify_podman_argument_string(_("podman image ID"), image_id)
+    """Remove a container image ID."""
+    verify_podman_argument_string(_("container image ID"), image_id)
     __, __, exit_code = shell_utils.run_command(
         ["podman", "image", "rm", image_id], raise_error=False
     )
     if exit_code == 0:
         logger.info(
-            _("Podman image '%(image_id)s' was removed."), {"image_id": image_id}
+            _("Removed container image '%(image_id)s'."), {"image_id": image_id}
         )
         return True
     logger.error(
-        _("Podman failed to remove image '%(image_id)s'."), {"image_id": image_id}
+        _("Failed to remove container image '%(image_id)s'."), {"image_id": image_id}
     )
     return False
 
 
 def pull_image(image_id: str, wait_timeout: int = None) -> bool:
     """Pull the podman given container image name+tag."""
-    verify_podman_argument_string(_("podman image ID"), image_id)
+    verify_podman_argument_string(_("container image ID"), image_id)
     if wait_timeout is None:
         wait_timeout = settings.DEFAULT_PODMAN_PULL_TIMEOUT
     __, __, exit_code = shell_utils.run_command(
