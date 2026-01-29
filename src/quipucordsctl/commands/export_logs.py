@@ -67,13 +67,14 @@ def check_preconditions(dest: Path) -> bool:
     """Check if path provided by user is a directory where we can create a new file."""
     if not dest.is_dir():
         logger.error(
-            _("Must be a directory: %(path)s"), {"path": dest.resolve().as_posix()}
+            _("Output path %(path)s must be a directory."),
+            {"path": dest.resolve().as_posix()},
         )
         return False
 
-    if not os.access(dest, os.R_OK | os.W_OK):
+    if not os.access(dest, os.R_OK | os.W_OK | os.X_OK):
         logger.error(
-            _("Directory %(path)s must be readable and writable"),
+            _("Output directory %(path)s must be readable, writable, and executable."),
             {"path": dest.resolve().as_posix()},
         )
         return False
