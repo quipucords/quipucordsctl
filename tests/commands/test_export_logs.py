@@ -224,15 +224,31 @@ def test_copy_qpc_log_no_dir(
     caplog, temp_config_directories: dict[str, pathlib.Path], archive_dir: pathlib.Path
 ):
     """Check copy_qpc_log can handle missing directory."""
-    caplog.set_level(logging.WARNING)
+    caplog.set_level(logging.INFO)
     qpc_log = (temp_config_directories["SERVER_DATA_DIR"] / "../qpc/qpc.log").resolve()
 
     export_logs.copy_qpc_log(archive_dir)
 
-    expected_msg = f"File not found: {qpc_log.as_posix()}."
+    expected_msg = f"CLI log directory ({qpc_log.parent.as_posix()}) does not exist"
     last_log = caplog.records[-1]
     assert expected_msg in last_log.message
-    assert last_log.levelno == logging.WARNING
+    assert last_log.levelno == logging.INFO
+
+
+def test_copy_qpc_log_no_file(
+    caplog, temp_config_directories: dict[str, pathlib.Path], archive_dir: pathlib.Path
+):
+    """Check copy_qpc_log can handle missing file."""
+    caplog.set_level(logging.INFO)
+    qpc_log = (temp_config_directories["SERVER_DATA_DIR"] / "../qpc/qpc.log").resolve()
+    qpc_log.parent.mkdir(parents=True)
+
+    export_logs.copy_qpc_log(archive_dir)
+
+    expected_msg = f"CLI log file ({qpc_log.as_posix()}) does not exist"
+    last_log = caplog.records[-1]
+    assert expected_msg in last_log.message
+    assert last_log.levelno == logging.INFO
 
 
 def test_copy_qpc_log_wrong_permissions(
