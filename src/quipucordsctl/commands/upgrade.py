@@ -51,7 +51,7 @@ def setup_parser(parser: argparse.ArgumentParser) -> None:
         "--no-pull",
         action="store_true",
         help=_(
-            "Do not automatically pull the latest podman images "
+            "Do not automatically pull the latest container images "
             "(default: pull, requires network connection)"
         ),
     )
@@ -140,8 +140,8 @@ def run(args: argparse.Namespace) -> bool:
     if args.no_pull:
         logger.warning(
             _(
-                "You requested an upgrade without pulling the latest podman images. "
-                "Please verify that you have the latest podman images before you "
+                "You requested an upgrade without pulling the latest container images. "
+                "Please verify that you have the latest container images before you "
                 "restart the %(server_software_name)s software, or the software may "
                 "not run correctly."
             ),

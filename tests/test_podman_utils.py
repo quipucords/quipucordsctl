@@ -321,7 +321,7 @@ def test_remove_image(mock_run_command, faker, caplog):
     mock_run_command.return_value = None, None, 0  # successful delete
 
     assert podman_utils.remove_image(images_id)
-    assert f"Podman image '{images_id}' was removed." == caplog.messages[-1]
+    assert f"Removed container image '{images_id}'." == caplog.messages[-1]
 
 
 @mock.patch.object(podman_utils.shell_utils, "run_command")
@@ -332,7 +332,7 @@ def test_remove_image_already_removed(mock_run_command, faker, caplog):
     mock_run_command.return_value = None, None, 1  # "failed" because does not exist
 
     assert not podman_utils.remove_image(image_id)
-    assert f"Podman failed to remove image '{image_id}'." == caplog.messages[-1]
+    assert f"Failed to remove container image '{image_id}'." == caplog.messages[-1]
 
 
 def test_list_expected_podman_container_images(
