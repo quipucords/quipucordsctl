@@ -798,7 +798,6 @@ def test_ensure_images_pull_success(  # noqa: PLR0913
     mock_pull,
     faker,
     caplog,
-    capsys,
 ):
     """Test ensure_images returns True when images are pulled successfully."""
     caplog.set_level(logging.INFO)
@@ -812,22 +811,22 @@ def test_ensure_images_pull_success(  # noqa: PLR0913
     assert podman_utils.ensure_images()
 
     mock_pull.assert_called_once_with(missing_image)
-    assert "All required images have been pulled successfully." in caplog.messages[-1]
-    assert "images are missing" in capsys.readouterr().out
+    assert "Required container image" in caplog.text and "is missing" in caplog.text
+    assert "All required images have been pulled successfully." in caplog.text
 
 
 @mock.patch.object(podman_utils.shell_utils, "confirm")
 @mock.patch.object(podman_utils, "get_missing_images")
-def test_ensure_images_user_declines(mock_get_missing, mock_confirm, faker, capsys):
+def test_ensure_images_user_declines(mock_get_missing, mock_confirm, faker, caplog):
     """Test ensure_images returns False when user declines to download."""
+    caplog.set_level(logging.INFO)
     missing_image = f"registry.redhat.io/{faker.slug()}:latest"
     mock_get_missing.return_value = {missing_image}
     mock_confirm.return_value = False
 
     assert not podman_utils.ensure_images()
 
-    output = capsys.readouterr().out
-    assert "offline installation" in output.lower()
+    assert "disconnected installation" in caplog.text.lower()
 
 
 @mock.patch.object(podman_utils, "login_to_registry")
@@ -869,7 +868,6 @@ def test_ensure_images_login_fails(  # noqa: PLR0913
     mock_check_login,
     mock_login,
     faker,
-    capsys,
 ):
     """Test ensure_images returns False when login fails."""
     missing_image = f"registry.redhat.io/{faker.slug()}:latest"
@@ -880,10 +878,6 @@ def test_ensure_images_login_fails(  # noqa: PLR0913
     mock_login.return_value = False
 
     assert not podman_utils.ensure_images()
-
-    output = capsys.readouterr().out
-    assert "Login failed" in output
-    assert "podman login" in output
 
 
 @mock.patch.object(podman_utils, "pull_image")
@@ -898,7 +892,6 @@ def test_ensure_images_pull_fails(  # noqa: PLR0913
     mock_check_login,
     mock_pull,
     faker,
-    capsys,
 ):
     """Test ensure_images returns False when pull fails."""
     missing_image = f"registry.redhat.io/{faker.slug()}:latest"
@@ -909,9 +902,6 @@ def test_ensure_images_pull_fails(  # noqa: PLR0913
     mock_pull.return_value = False
 
     assert not podman_utils.ensure_images()
-
-    output = capsys.readouterr().out
-    assert "Failed to pull image" in output
 
 
 @mock.patch.object(podman_utils.settings, "runtime")
