@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import pathlib
+import subprocess
 import sys
 import textwrap
 from gettext import gettext as _
@@ -393,10 +394,12 @@ def check_registry_login(registry: str) -> bool:
     """
     verify_podman_argument_string(_("registry"), registry)
     # Pass empty stdin to prevent interactive prompt if credentials are invalid
+    # Suppress stderr to avoid showing podman's EOF error to the user
     __, __, exit_code = shell_utils.run_command(
         ["podman", "login", registry],
         raise_error=False,
         stdin="",
+        stderr=subprocess.DEVNULL,
     )
     if exit_code == 0:
         logger.debug(

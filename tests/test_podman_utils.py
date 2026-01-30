@@ -2,6 +2,7 @@
 
 import logging
 import pathlib
+import subprocess
 from unittest import mock
 
 import pytest
@@ -673,7 +674,10 @@ def test_check_registry_login_logged_in(mock_run_command, caplog):
 
     assert podman_utils.check_registry_login(registry)
     mock_run_command.assert_called_once_with(
-        ["podman", "login", registry], raise_error=False, stdin=""
+        ["podman", "login", registry],
+        raise_error=False,
+        stdin="",
+        stderr=subprocess.DEVNULL,
     )
     assert f"Valid credentials for registry '{registry}'." in caplog.messages[-1]
 
@@ -687,7 +691,10 @@ def test_check_registry_login_not_logged_in(mock_run_command, caplog):
 
     assert not podman_utils.check_registry_login(registry)
     mock_run_command.assert_called_once_with(
-        ["podman", "login", registry], raise_error=False, stdin=""
+        ["podman", "login", registry],
+        raise_error=False,
+        stdin="",
+        stderr=subprocess.DEVNULL,
     )
     assert f"Not logged in to registry '{registry}'." in caplog.messages[-1]
 
