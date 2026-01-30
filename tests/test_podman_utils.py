@@ -321,7 +321,7 @@ def test_remove_image(mock_run_command, faker, caplog):
     mock_run_command.return_value = None, None, 0  # successful delete
 
     assert podman_utils.remove_image(images_id)
-    assert f"Removed container image '{images_id}'." == caplog.messages[-1]
+    assert f"Container image '{images_id}' was removed." == caplog.messages[-1]
 
 
 @mock.patch.object(podman_utils.shell_utils, "run_command")
@@ -546,7 +546,7 @@ def test_image_exists_returns_true_when_image_exists(mock_run_command, faker, ca
     mock_run_command.assert_called_once_with(
         ["podman", "image", "exists", image_name], raise_error=False
     )
-    assert f"Podman image '{image_name}' exists locally." in caplog.messages[-1]
+    assert f"Container image '{image_name}' exists locally." in caplog.messages[-1]
 
 
 @mock.patch.object(podman_utils.shell_utils, "run_command")
@@ -562,7 +562,9 @@ def test_image_exists_returns_false_when_image_not_found(
     mock_run_command.assert_called_once_with(
         ["podman", "image", "exists", image_name], raise_error=False
     )
-    assert f"Podman image '{image_name}' does not exist locally." in caplog.messages[-1]
+    assert (
+        f"Container image '{image_name}' does not exist locally." in caplog.messages[-1]
+    )
 
 
 @pytest.mark.parametrize("value", (None, 123, ["list"], {"dict": "value"}))

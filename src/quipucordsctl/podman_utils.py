@@ -287,7 +287,7 @@ def remove_image(image_id: str) -> bool:
     )
     if exit_code == 0:
         logger.info(
-            _("Removed container image '%(image_id)s'."), {"image_id": image_id}
+            _("Container image '%(image_id)s' was removed."), {"image_id": image_id}
         )
         return True
     logger.error(
@@ -348,12 +348,12 @@ def image_exists(image_name: str) -> bool:
     )
     if exit_code == 0:
         logger.debug(
-            _("Podman image '%(image_name)s' exists locally."),
+            _("Container image '%(image_name)s' exists locally."),
             {"image_name": image_name},
         )
         return True
     logger.debug(
-        _("Podman image '%(image_name)s' does not exist locally."),
+        _("Container image '%(image_name)s' does not exist locally."),
         {"image_name": image_name},
     )
     return False
