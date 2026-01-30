@@ -386,23 +386,26 @@ def get_missing_images() -> set[str]:
 
 def check_registry_login(registry: str) -> bool:
     """
-    Check if the user is already logged into the specified registry.
+    Check if the user has valid credentials for a registry.
 
-    Uses 'podman login --get-login' which returns the username if logged in,
-    or exits with non-zero if not logged in.
+    Runs 'podman login <registry>' with empty stdin to validate credentials
+    against the remote registry without prompting for input.
     """
     verify_podman_argument_string(_("registry"), registry)
-    stdout, __, exit_code = shell_utils.run_command(
-        ["podman", "login", "--get-login", registry], raise_error=False
+    # Pass empty stdin to prevent interactive prompt if credentials are invalid
+    __, __, exit_code = shell_utils.run_command(
+        ["podman", "login", registry],
+        raise_error=False,
+        stdin="",
     )
-    if exit_code == 0 and stdout.strip():
+    if exit_code == 0:
         logger.debug(
-            _("Already logged into registry '%(registry)s' as '%(username)s'."),
-            {"registry": registry, "username": stdout.strip()},
+            _("Valid credentials for registry '%(registry)s'."),
+            {"registry": registry},
         )
         return True
     logger.debug(
-        _("Not logged into registry '%(registry)s'."),
+        _("Not logged in to registry '%(registry)s'."),
         {"registry": registry},
     )
     return False
@@ -418,22 +421,18 @@ def login_to_registry(registry: str) -> bool:
     verify_podman_argument_string(_("registry"), registry)
 
     if settings.runtime.quiet:
-        logger.debug(_("Skipping login prompt in quiet mode."))
+        # podman login is required, but we can't prompt for credentials in quiet mode
         return False
 
-    print(_("Logging into %(registry)s...") % {"registry": registry})
+    print(_("Logging in to '%(registry)s'...") % {"registry": registry})
 
-    try:
-        username = input(_("Username: "))
-        if not username.strip():
-            logger.error(_("Username cannot be empty."))
-            return False
-        password = getpass.getpass(_("Password: "))
-        if not password:
-            logger.error(_("Password cannot be empty."))
-            return False
-    except EOFError:
-        logger.error(_("Input closed unexpectedly."))
+    username = input(_("Username: "))
+    if not username.strip():
+        logger.error(_("Username cannot be empty."))
+        return False
+    password = getpass.getpass(_("Password: "))
+    if not password:
+        logger.error(_("Password cannot be empty."))
         return False
 
     __, stderr, exit_code = shell_utils.run_command(
@@ -445,7 +444,7 @@ def login_to_registry(registry: str) -> bool:
 
     if exit_code == 0:
         logger.info(
-            _("Successfully logged into registry '%(registry)s'."),
+            _("Successfully logged in to registry '%(registry)s'."),
             {"registry": registry},
         )
         return True
