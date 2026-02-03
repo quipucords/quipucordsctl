@@ -427,6 +427,11 @@ def login_to_registry(registry: str) -> bool:
         # podman login is required, but we can't prompt for credentials in quiet mode
         return False
 
+    if not shell_utils.confirm(
+        _("Log in to registry '%(registry)s'?") % {"registry": registry}
+    ):
+        return False
+
     print(_("Logging in to '%(registry)s'...") % {"registry": registry})
 
     username = input(_("Username: "))
@@ -467,23 +472,21 @@ def _log_missing_images_list(missing_images: set[str]) -> None:
         )
 
 
-def _ensure_registry_logins(missing_images: set[str]) -> bool:
-    """
-    Ensure user is logged in to all required registries.
-
-    Returns True if all logins succeed, False otherwise.
-    """
+def _ensure_registry_logins(missing_images: set[str]):
+    """Ensure user is logged in to registries."""
     registries = {get_registry_from_image_name(img) for img in missing_images}
 
     for registry in registries:
         if not check_registry_login(registry):
             logger.info(
-                _("Login required for registry '%(registry)s'."),
+                _("Valid credentials do not exist for registry '%(registry)s'."),
                 {"registry": registry},
             )
             if not login_to_registry(registry):
-                return False
-    return True
+                logger.debug(
+                    _("Could not log in to registry '%(registry)s'."),
+                    {"registry": registry},
+                )
 
 
 def _pull_missing_images(missing_images: set[str]) -> bool:
@@ -527,8 +530,7 @@ def ensure_images() -> bool:
         logger.info(_("For disconnected installation, see the online documentation."))
         return False
 
-    if not _ensure_registry_logins(missing_images):
-        return False
+    _ensure_registry_logins(missing_images)
 
     if not _pull_missing_images(missing_images):
         return False
