@@ -705,8 +705,9 @@ def test_check_registry_login_not_logged_in(mock_run_command, caplog):
 @mock.patch.object(podman_utils, "getpass")
 @mock.patch("builtins.input")
 @mock.patch.object(podman_utils.shell_utils, "run_command")
+@mock.patch.object(podman_utils.shell_utils, "confirm")
 def test_login_to_registry_success(  # noqa: PLR0913
-    mock_run_command, mock_input, mock_getpass, faker, caplog, capsys
+    mock_confirm, mock_run_command, mock_input, mock_getpass, faker, caplog, capsys
 ):
     """Test login_to_registry returns True on successful login."""
     caplog.set_level(logging.INFO)
@@ -717,6 +718,7 @@ def test_login_to_registry_success(  # noqa: PLR0913
     mock_input.return_value = username
     mock_getpass.getpass.return_value = password
     mock_run_command.return_value = None, None, 0
+    mock_confirm.return_value = True  # 'y' answer to "Log in to registry?" prompt
 
     assert podman_utils.login_to_registry(registry)
 
@@ -730,11 +732,27 @@ def test_login_to_registry_success(  # noqa: PLR0913
     assert "Logging in to" in capsys.readouterr().out
 
 
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+@mock.patch.object(podman_utils.shell_utils, "confirm")
+def test_login_to_registry_but_user_says_no(  # noqa: PLR0913
+    mock_confirm, mock_run_command, faker, caplog, capsys
+):
+    """Test login_to_registry returns False if the user chooses not to log in."""
+    caplog.set_level(logging.INFO)
+    registry = faker.hostname()
+    mock_confirm.return_value = False  # 'n' answer to "Log in to registry?" prompt
+
+    assert not podman_utils.login_to_registry(registry)
+
+    mock_run_command.assert_not_called()
+
+
 @mock.patch.object(podman_utils, "getpass")
 @mock.patch("builtins.input")
 @mock.patch.object(podman_utils.shell_utils, "run_command")
-def test_login_to_registry_failure(
-    mock_run_command, mock_input, mock_getpass, faker, caplog
+@mock.patch.object(podman_utils.shell_utils, "confirm")
+def test_login_to_registry_failure(  # noqa: PLR0913
+    mock_confirm, mock_run_command, mock_input, mock_getpass, faker, caplog
 ):
     """Test login_to_registry returns False when podman login fails."""
     caplog.set_level(logging.ERROR)
@@ -743,6 +761,7 @@ def test_login_to_registry_failure(
     mock_input.return_value = faker.user_name()
     mock_getpass.getpass.return_value = faker.password()
     mock_run_command.return_value = None, "Login failed", 1
+    mock_confirm.return_value = True  # 'y' answer to "Log in to registry?" prompt
 
     assert not podman_utils.login_to_registry(registry)
     assert f"Failed to log in to registry '{registry}'." in caplog.messages[-1]
@@ -750,13 +769,17 @@ def test_login_to_registry_failure(
 
 @mock.patch.object(podman_utils, "getpass")
 @mock.patch("builtins.input")
-def test_login_to_registry_empty_username(mock_input, mock_getpass, caplog):
+@mock.patch.object(podman_utils.shell_utils, "confirm")
+def test_login_to_registry_empty_username(
+    mock_confirm, mock_input, mock_getpass, caplog
+):
     """Test login_to_registry returns False when username is empty."""
     caplog.set_level(logging.ERROR)
     registry = "registry.redhat.io"
 
     mock_input.return_value = "   "
     mock_getpass.getpass.return_value = "password"
+    mock_confirm.return_value = True  # 'y' answer to "Log in to registry?" prompt
 
     assert not podman_utils.login_to_registry(registry)
     assert "Username cannot be empty." in caplog.messages[-1]
@@ -764,13 +787,17 @@ def test_login_to_registry_empty_username(mock_input, mock_getpass, caplog):
 
 @mock.patch.object(podman_utils, "getpass")
 @mock.patch("builtins.input")
-def test_login_to_registry_empty_password(mock_input, mock_getpass, faker, caplog):
+@mock.patch.object(podman_utils.shell_utils, "confirm")
+def test_login_to_registry_empty_password(
+    mock_confirm, mock_input, mock_getpass, faker, caplog
+):
     """Test login_to_registry returns False when password is empty."""
     caplog.set_level(logging.ERROR)
     registry = "registry.redhat.io"
 
     mock_input.return_value = faker.user_name()
     mock_getpass.getpass.return_value = ""
+    mock_confirm.return_value = True  # 'y' answer to "Log in to registry?" prompt
 
     assert not podman_utils.login_to_registry(registry)
     assert "Password cannot be empty." in caplog.messages[-1]
@@ -870,9 +897,13 @@ def test_ensure_images_login_required_and_succeeds(  # noqa: PLR0913
 @mock.patch.object(podman_utils, "check_registry_login")
 @mock.patch.object(podman_utils, "get_registry_from_image_name")
 @mock.patch.object(podman_utils.shell_utils, "confirm")
+@mock.patch.object(podman_utils, "pull_image")
+@mock.patch.object(podman_utils, "_pull_missing_images")
 @mock.patch.object(podman_utils, "get_missing_images")
 def test_ensure_images_login_fails(  # noqa: PLR0913
     mock_get_missing,
+    mock_pull_missing_images,
+    mock_pull_image,
     mock_confirm,
     mock_get_registry,
     mock_check_login,
@@ -886,8 +917,10 @@ def test_ensure_images_login_fails(  # noqa: PLR0913
     mock_get_registry.return_value = "registry.redhat.io"
     mock_check_login.return_value = False
     mock_login.return_value = False
+    mock_pull_missing_images.return_value = False
 
     assert not podman_utils.ensure_images()
+    mock_pull_image.assert_not_called()
 
 
 @mock.patch.object(podman_utils, "pull_image")
