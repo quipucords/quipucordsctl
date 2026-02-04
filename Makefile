@@ -1,5 +1,7 @@
 PYTHON		= $(shell uv run which python 2>/dev/null || which python)
-TEST_OPTS := -ra
+TEST_TIMEOUT ?= "0.5"
+TEST_SESSION_TIMEOUT ?= "5.0"
+TEST_OPTS := -ra --timeout=$(TEST_TIMEOUT) --session-timeout=$(TEST_SESSION_TIMEOUT)
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of:"
