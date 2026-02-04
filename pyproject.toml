@@ -39,8 +39,12 @@ dev = [
     "pytest>=8.4.1",
     "pytest-cov>=6.2.1",
     "pytest-mock>=3.14.1",
+    "pytest-timeout>=2.4.0",
     "ruff>=0.12.2",
 ]
+
+[tool.pytest]
+addopts = ["--timeout=0.5", "--session-timeout=5.0"]
 
 [tool.ruff]
 lint.select = [
