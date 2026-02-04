@@ -114,11 +114,11 @@ def create_parser(commands: dict[str, ModuleType]) -> argparse.ArgumentParser:
         argparse_utils.DisplayGroups.MAIN: parser.add_argument_group(
             argparse_utils.DisplayGroups.MAIN.value
         ),
-        argparse_utils.DisplayGroups.CONFIG: parser.add_argument_group(
-            argparse_utils.DisplayGroups.CONFIG.value
-        ),
         argparse_utils.DisplayGroups.DIAGNOSTICS: parser.add_argument_group(
             argparse_utils.DisplayGroups.DIAGNOSTICS.value
+        ),
+        argparse_utils.DisplayGroups.CONFIG: parser.add_argument_group(
+            argparse_utils.DisplayGroups.CONFIG.value
         ),
         argparse_utils.DisplayGroups.OTHER: parser.add_argument_group(
             argparse_utils.DisplayGroups.OTHER.value
