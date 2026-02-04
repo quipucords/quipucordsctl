@@ -495,7 +495,8 @@ def _pull_missing_images(missing_images: set[str]) -> bool:
 
     Returns True if all pulls succeed, False otherwise.
     """
-    logger.debug(_("Pulling container images..."))
+    if not settings.runtime.quiet:
+        print(_("Pulling container images. This may take a few minutes."))
 
     for image in sorted(missing_images):
         logger.info(_("Pulling image: %(image)s"), {"image": image})
