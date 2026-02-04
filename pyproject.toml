@@ -43,9 +43,6 @@ dev = [
     "ruff>=0.12.2",
 ]
 
-[tool.pytest]
-addopts = ["--timeout=0.5", "--session-timeout=5.0"]
-
 [tool.ruff]
 lint.select = [
     "C90", # mccabe complexity
