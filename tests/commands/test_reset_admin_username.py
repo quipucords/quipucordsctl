@@ -113,6 +113,11 @@ def test_reset_admin_username_requires_confirmation_when_replacing(mocker, caplo
         "confirm",
         return_value=False,
     )
+    mocker.patch.object(
+        reset_admin_username.secrets,
+        "build_similar_value_check",
+        return_value=False,
+    )
 
     caplog.set_level(logging.ERROR)
     expected_log_message = "The admin login username was not updated."
@@ -128,6 +133,11 @@ def test_reset_admin_username_succeeds_with_confirmation(mocker, caplog):
         reset_admin_username.podman_utils,
         "secret_exists",
         return_value=True,
+    )
+    mocker.patch.object(
+        reset_admin_username.secrets,
+        "build_similar_value_check",
+        return_value=None,
     )
     mocker.patch.object(
         reset_admin_username.secrets.shell_utils,
