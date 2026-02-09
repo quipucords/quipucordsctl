@@ -5,8 +5,17 @@ import pathlib
 import pkgutil
 from collections.abc import Generator
 from typing import Any
+from unittest.mock import MagicMock
 
 import pytest
+
+
+@pytest.fixture(autouse=True)
+def forbid_shell_utils_subprocess(monkeypatch):
+    """Forbid subprocess.Popen invocation in tests."""
+    mock_subprocess = MagicMock()
+    monkeypatch.setattr("quipucordsctl.shell_utils.subprocess.Popen", mock_subprocess)
+    mock_subprocess.side_effect = Exception("This should never be called in a test!!!")
 
 
 @pytest.fixture
