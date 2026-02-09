@@ -59,7 +59,7 @@ jobs:
         run: uv sync
 
       - name: Run Test
-        run: make ${{ matrix.type }} -k
+        run: make ${{ matrix.type }} TEST_TIMEOUT=1.0 TEST_SESSION_TIMEOUT=10.0 -k
 
       - name: Report coverage
         if: ${{ success() && contains(matrix.type, 'test-coverage') }}
