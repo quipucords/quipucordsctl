@@ -308,7 +308,7 @@ def write_env_file(
 
 def write_config_files(override_conf_dir: pathlib.Path | None = None):
     """Generate and write to disk all systemd unit and env files for the server."""
-    logger.info("Generating config files")
+    logger.info(_("Generating config files"))
     mkdirs()
 
     for filename in settings.TEMPLATE_SYSTEMD_UNITS_FILENAMES:
