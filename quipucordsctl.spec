@@ -5,7 +5,7 @@
 %global ui_image quay.io/quipucords/quipucords-ui:2.4
 ###############################################################
 
-%global version_ctl 2.4.2
+%global version_ctl 2.5.0
 %global templates_dir src/quipucordsctl/templates
 %global product_name_upper %(echo %{product_name_lower} | tr '[:lower:]' '[:upper:]')
 
@@ -177,5 +177,8 @@ sed -i 's#^Image=.*#Image=%{ui_image}#g' %{buildroot}/%{_datadir}/%{name}/config
 %endif
 
 %changelog
+* Fri Feb 13 2026 Brad Smith <brasmith@redhat.com> - 0:2.5.0-1
+- provide and obsolete %{old_installer_package}
+
 * Wed Sep 17 2025 Alberto Bellotti <abellott@redhat.com> - 0:2.1.0-1
 - Initial version
