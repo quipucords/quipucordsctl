@@ -9,6 +9,13 @@
 %global templates_dir src/quipucordsctl/templates
 %global product_name_upper %(echo %{product_name_lower} | tr '[:lower:]' '[:upper:]')
 
+# Declare max version of the old installer to obsolete in case we change
+# our minds later and want to bring it back at a higher version number.
+# The value we set in old_installer_version_max should remain frozen.
+%global old_installer_package quipucords-installer
+%global old_installer_version_max 2.4.99
+
+
 ###############################################################
 # Build notes:
 # - We officially support RHEL 8 and RHEL 9 downstream but we
@@ -85,6 +92,8 @@ Requires:       podman >= 4.9.4
 Requires:       python%{python3_pkgversion}
 Requires:       python%{python3_pkgversion}-setuptools
 
+Obsoletes:      %{old_installer_package} < %{old_installer_version_max}
+Provides:       %{old_installer_package} = %{version}-%{release}
 
 %description
 %{name} installs and manages the %{product_name_title} server
