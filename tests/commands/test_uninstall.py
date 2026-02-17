@@ -164,8 +164,8 @@ def test_uninstall_run(capsys):
         assert captured.out.strip() == uninstall_message
 
 
-def test_uninstall_run_exits_early_if_cannot_stop(capsys):
-    """Test the command exits early if "stop_services" fails."""
+def test_uninstall_keeps_uninstalling_even_if_a_step_does_not_succeed(capsys):
+    """Test the command keeps trying to uninstall even if some commands fail."""
     mock_args = argparse.Namespace()
     mock_args.keep_data_dirs = False
     with (
@@ -181,21 +181,30 @@ def test_uninstall_run_exits_early_if_cannot_stop(capsys):
         ) as mock_reload_daemon,
         mock.patch.object(uninstall, "remove_data") as mock_remove_data,
         mock.patch.object(uninstall, "remove_secrets") as mock_remove_secrets,
+        mock.patch.object(
+            uninstall.loginctl_utils, "check_linger"
+        ) as mock_check_linger,
     ):
         mock_stop_service.return_value = False
+        mock_remove_container_images.return_value = True
+        mock_remove_services.return_value = False
+        mock_reload_daemon.return_value = True
+        mock_remove_secrets.return_value = False
+        mock_remove_data.return_value = True
+        mock_check_linger.return_value = True
 
         mock_args.quiet = False
         assert not uninstall.run(mock_args)
 
         mock_stop_service.assert_called_once()
-        mock_remove_container_images.assert_not_called()
-        mock_remove_services.assert_not_called()
-        mock_reload_daemon.assert_not_called()
-        mock_remove_data.assert_not_called()
-        mock_remove_secrets.assert_not_called()
+        mock_remove_container_images.assert_called_once()
+        mock_remove_services.assert_called_once()
+        mock_reload_daemon.assert_called_once()
+        mock_remove_data.assert_called_once()
+        mock_remove_secrets.assert_called_once()
 
         captured = capsys.readouterr()
-        assert "uninstalled successfully" not in captured.out
+        assert "uninstall encountered an unexpected error" in captured.out
 
 
 def test_uninstall_run_keep_data_dirs(capsys):
@@ -224,6 +233,7 @@ def test_uninstall_run_keep_data_dirs(capsys):
         mock_remove_services.return_value = True
         mock_reload_daemon.return_value = True
         mock_remove_secrets.return_value = True
+        mock_remove_data.return_value = True
         mock_check_linger.return_value = True
 
         mock_args.quiet = False
@@ -239,29 +249,3 @@ def test_uninstall_run_keep_data_dirs(capsys):
         captured = capsys.readouterr()
         uninstall_message = f"{settings.SERVER_SOFTWARE_NAME} uninstalled successfully."
         assert captured.out.strip() == uninstall_message
-
-
-def test_uninstall_run_fails_if_linger_check_fails(capsys):
-    """Test the command exits early if "stop_services" fails."""
-    mock_args = argparse.Namespace()
-    with (
-        mock.patch.object(uninstall.systemctl_utils, "stop_service"),
-        mock.patch.object(uninstall, "remove_container_images"),
-        mock.patch.object(uninstall, "remove_services"),
-        mock.patch.object(uninstall.systemctl_utils, "reload_daemon"),
-        mock.patch.object(
-            uninstall.loginctl_utils, "check_linger"
-        ) as mock_check_linger,
-        mock.patch.object(uninstall, "remove_data"),
-        mock.patch.object(uninstall, "remove_secrets"),
-    ):
-        mock_check_linger.return_value = False
-
-        mock_args.quiet = False
-        mock_args.keep_data_dirs = False
-        assert not uninstall.run(mock_args)
-
-        mock_check_linger.assert_called_once()
-
-        captured = capsys.readouterr()
-        assert "uninstalled successfully" not in captured.out
