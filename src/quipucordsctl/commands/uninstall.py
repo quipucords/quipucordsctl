@@ -59,7 +59,7 @@ def setup_parser(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def remove_container_images():
+def remove_container_images() -> bool:
     """Remove container images."""
     logger.info(
         _("Removing the %(server_software_name)s container images."),
@@ -77,6 +77,8 @@ def remove_container_images():
                 "and manually remove any remaining images if necessary."
             ),
         )
+        return False
+    return True
 
 
 def remove_file(file_path: Path) -> bool:
@@ -149,8 +151,14 @@ def reload_daemon() -> bool:
     return True
 
 
-def remove_data(keep_data_dirs=False):
-    """Remove the quipucords data, or tell the user it was not removed."""
+def remove_data(keep_data_dirs=False) -> bool:
+    """
+    Remove the quipucords data, or tell the user it was not removed.
+
+    Note: This function returns a bool simply to provide a consistent interface with the
+    other uninstall-related functions. Although this always returns True today, perhaps
+    later we will find a reason for this to return False.
+    """
     if keep_data_dirs:
         logger.info(
             _(
@@ -159,7 +167,7 @@ def remove_data(keep_data_dirs=False):
             ),
             {"server_software_name": settings.SERVER_SOFTWARE_NAME},
         )
-        return
+        return True
 
     logger.info(
         _("Removing the %(server_software_name)s data."),
@@ -167,6 +175,7 @@ def remove_data(keep_data_dirs=False):
     )
     for data_dir in settings.SERVER_DATA_SUBDIRS_EXCLUDING_DB.values():
         shutil.rmtree(data_dir, ignore_errors=True)
+    return True
 
 
 def remove_secrets() -> bool:
@@ -193,21 +202,41 @@ def remove_secrets() -> bool:
 
 def run(args: argparse.Namespace) -> bool:  # noqa: PLR0911
     """Uninstall the server."""
-    if not systemctl_utils.stop_service():
-        return False
-    remove_container_images()
-    if not remove_services():
-        return False
-    if not systemctl_utils.reload_daemon():
-        return False
-    remove_data(args.keep_data_dirs)
-    if not remove_secrets():
-        return False
-    if not loginctl_utils.check_linger():
-        return False
+    # Important implementation detail:
+    # We nest this list of function call results inside `all` because we want all the
+    # functions to execute, but we only consider the collective operation to be
+    # successful if all completed successfully. Even if one fails, the others should
+    # still try to run so that we uninstall as much as possible. For this reason, we
+    # cannot simply chain calls together using "and" because we do not want one False to
+    # prevent later functions from running.
+    success = all(
+        [
+            systemctl_utils.stop_service(),
+            remove_container_images(),
+            remove_services(),
+            systemctl_utils.reload_daemon(),
+            remove_data(args.keep_data_dirs),
+            remove_secrets(),
+            loginctl_utils.check_linger(),
+        ]
+    )
+
     if not args.quiet:
-        print(
-            _("%(server_software_name)s uninstalled successfully.")
-            % {"server_software_name": settings.SERVER_SOFTWARE_NAME}
-        )
-    return True
+        if success:
+            print(
+                _("%(server_software_name)s uninstalled successfully.")
+                % {"server_software_name": settings.SERVER_SOFTWARE_NAME}
+            )
+        else:
+            print(
+                _(
+                    "%(program_name)s uninstall encountered an unexpected error. "
+                    "Check logs and manually review that %(server_software_name)s "
+                    "uninstalled completely."
+                )
+                % {
+                    "program_name": settings.PROGRAM_NAME,
+                    "server_software_name": settings.SERVER_SOFTWARE_NAME,
+                }
+            )
+    return success
