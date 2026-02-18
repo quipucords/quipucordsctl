@@ -119,7 +119,7 @@ def test_export_container_logs_happy_path(tmp_path: pathlib.Path, mock_shell_uti
     for service in settings.SYSTEMD_SERVICE_FILENAMES:
         expected_calls.append(
             mock.call(
-                ["journalctl", f"--user-unit={service}"],
+                ["journalctl", "--all", f"--user-unit={service}"],
                 wait_timeout=mock.ANY,
                 bufsize=mock.ANY,
                 stdout=mock.ANY,
@@ -160,7 +160,7 @@ def test_export_container_logs_file_open_error(
         for service in other_services:
             expected_calls.append(
                 mock.call(
-                    ["journalctl", f"--user-unit={service}"],
+                    ["journalctl", "--all", f"--user-unit={service}"],
                     wait_timeout=mock.ANY,
                     bufsize=mock.ANY,
                     stdout=mock.ANY,
@@ -193,7 +193,7 @@ def test_export_container_logs_journalctl_failure(
     for service in settings.SYSTEMD_SERVICE_FILENAMES:
         expected_calls.append(
             mock.call(
-                ["journalctl", f"--user-unit={service}"],
+                ["journalctl", "--all", f"--user-unit={service}"],
                 wait_timeout=mock.ANY,
                 bufsize=mock.ANY,
                 stdout=mock.ANY,
