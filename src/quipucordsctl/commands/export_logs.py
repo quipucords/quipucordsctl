@@ -107,7 +107,7 @@ def export_container_logs(dest: Path):
             _("Exporting logs from %(service_name)s"), {"service_name": service}
         )
         fname = Path(service).stem
-        command = ["journalctl", f"--user-unit={service}"]
+        command = ["journalctl", "--all", f"--user-unit={service}"]
         try:
             dest_filename = (dest / "j.log").with_stem(fname)
             with dest_filename.open("w") as fh:
