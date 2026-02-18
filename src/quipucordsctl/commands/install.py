@@ -338,9 +338,9 @@ def systemctl_reload():
 def run(args: argparse.Namespace) -> bool:
     """Install the server, ensuring requirements are met."""
     logger.debug("Starting install command")
+    systemctl_utils.ensure_systemd_user_session()
     podman_utils.ensure_podman_socket()
     podman_utils.ensure_cgroups_v2()
-    systemctl_utils.ensure_systemd_user_session()
 
     if not reset_secrets(args):
         return False
