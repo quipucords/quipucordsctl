@@ -59,7 +59,7 @@ def setup_parser(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def remove_container_images():
+def remove_container_images() -> bool:
     """Remove container images."""
     logger.info(
         _("Removing the %(server_software_name)s container images."),
@@ -77,6 +77,8 @@ def remove_container_images():
                 "and manually remove any remaining images if necessary."
             ),
         )
+        return False
+    return True
 
 
 def remove_file(file_path: Path) -> bool:
@@ -193,21 +195,31 @@ def remove_secrets() -> bool:
 
 def run(args: argparse.Namespace) -> bool:  # noqa: PLR0911
     """Uninstall the server."""
-    if not systemctl_utils.stop_service():
-        return False
-    remove_container_images()
-    if not remove_services():
-        return False
-    if not systemctl_utils.reload_daemon():
-        return False
+    success = (
+        systemctl_utils.stop_service()
+        & remove_container_images()
+        & remove_services()
+        & systemctl_utils.reload_daemon()
+    )
     remove_data(args.keep_data_dirs)
-    if not remove_secrets():
-        return False
-    if not loginctl_utils.check_linger():
-        return False
+    success &= remove_secrets() & loginctl_utils.check_linger()
+
     if not args.quiet:
-        print(
-            _("%(server_software_name)s uninstalled successfully.")
-            % {"server_software_name": settings.SERVER_SOFTWARE_NAME}
-        )
-    return True
+        if success:
+            print(
+                _("%(server_software_name)s uninstalled successfully.")
+                % {"server_software_name": settings.SERVER_SOFTWARE_NAME}
+            )
+        else:
+            print(
+                _(
+                    "%(program_name)s uninstall encountered an unexpected error. "
+                    "Check logs and manually review that %(server_software_name)s "
+                    "uninstalled completely."
+                )
+                % {
+                    "program_name": settings.PROGRAM_NAME,
+                    "server_software_name": settings.SERVER_SOFTWARE_NAME,
+                }
+            )
+    return success
