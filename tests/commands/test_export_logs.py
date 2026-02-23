@@ -88,8 +88,12 @@ def test_run_output_lacks_expected_modes(mode, tmp_path: pathlib.Path, caplog):
     mock_args = mock.Mock()
     mock_args.output = output
 
-    assert export_logs.run(mock_args) is False
-    assert "must be readable, writable, and executable" in caplog.text
+    try:
+        assert export_logs.run(mock_args) is False
+        assert "must be readable, writable, and executable" in caplog.text
+    finally:
+        # Reset permissions so pytest can clean up
+        output.chmod(0o755)
 
 
 def test_run_no_exported_files(tmp_path: pathlib.Path, caplog):

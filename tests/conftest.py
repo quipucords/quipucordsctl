@@ -10,6 +10,17 @@ from unittest.mock import MagicMock
 import pytest
 
 
+def restore_permissions(target: pathlib.Path) -> None:
+    """Restore potentially mangled permissions for pytest teardown cleanup."""
+    if not target.is_dir():
+        return
+    target.chmod(0o755)
+    for root, dirs, files in target.walk(on_error=print):
+        for _dir in dirs:
+            dirpath = pathlib.Path(root, _dir)
+            dirpath.chmod(0o755)
+
+
 @pytest.fixture(autouse=True)
 def forbid_shell_utils_subprocess(monkeypatch):
     """Forbid subprocess.Popen invocation in tests."""
@@ -54,7 +65,11 @@ def temp_config_directories(
             tmp_data_dirs,
         )
 
-    yield temp_settings_dirs
+    try:
+        yield temp_settings_dirs
+    finally:
+        # Reset permissions so pytest can clean up
+        restore_permissions(tmp_path)
 
 
 @pytest.fixture
