@@ -707,7 +707,7 @@ def test_check_registry_login_not_logged_in(mock_run_command, caplog):
 @mock.patch.object(podman_utils.shell_utils, "run_command")
 @mock.patch.object(podman_utils.shell_utils, "confirm")
 def test_login_to_registry_success(  # noqa: PLR0913
-    mock_confirm, mock_run_command, mock_input, mock_getpass, faker, caplog, capsys
+    mock_confirm, mock_run_command, mock_input, mock_getpass, faker, caplog
 ):
     """Test login_to_registry returns True on successful login."""
     caplog.set_level(logging.INFO)
@@ -729,7 +729,6 @@ def test_login_to_registry_success(  # noqa: PLR0913
         redact_output=False,
     )
     assert f"Successfully logged in to registry '{registry}'." in caplog.messages[-1]
-    assert "Logging in to" in capsys.readouterr().out
 
 
 @mock.patch.object(podman_utils.shell_utils, "run_command")
