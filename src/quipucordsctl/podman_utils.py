@@ -432,8 +432,6 @@ def login_to_registry(registry: str) -> bool:
     ):
         return False
 
-    print(_("Logging in to '%(registry)s'...") % {"registry": registry})
-
     username = input(_("Username: "))
     if not username.strip():
         logger.error(_("Username cannot be empty."))
