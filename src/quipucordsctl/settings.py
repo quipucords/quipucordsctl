@@ -70,6 +70,12 @@ SYSTEMCTL_USER_LIST_QUIPUCORDS_APP = [
     "list-unit-files",
     f"{SERVER_SOFTWARE_PACKAGE}-app.service",
 ]
+SYSTEMCTL_USER_START_QUIPUCORDS_APP = [
+    "systemctl",
+    "--user",
+    "start",
+    f"{SERVER_SOFTWARE_PACKAGE}-app",
+]
 SYSTEMCTL_USER_STOP_QUIPUCORDS_APP = [
     "systemctl",
     "--user",
@@ -81,6 +87,19 @@ SYSTEMCTL_USER_STOP_QUIPUCORDS_NETWORK = [
     "--user",
     "stop",
     f"{SERVER_SOFTWARE_PACKAGE}-network",
+]
+SYSTEMCTL_USER_STATUS_QUIPUCORDS_APP = [
+    "systemctl",
+    "--user",
+    "status",
+    f"{SERVER_SOFTWARE_PACKAGE}-app",
+]
+SYSTEMCTL_USER_IS_FAILED_QUIPUCORDS_APP = [
+    "systemctl",
+    "-q",
+    "--user",
+    "is-failed",
+    f"{SERVER_SOFTWARE_PACKAGE}-app.service",
 ]
 
 # podman secrets we use
@@ -95,6 +114,7 @@ QUIPUCORDS_SECRETS = {
 
 QUIPUCORDS_SECRET_KEYS = QUIPUCORDS_SECRETS.values()
 DEFAULT_SUBPROCESS_WAIT_TIMEOUT = 60  # in seconds
+DEFAULT_SERVICE_START_WAIT_TIMEOUT = 120  # in seconds
 DEFAULT_JOURNALCTL_WAIT_TIMEOUT = 300  # in seconds, or 5 minutes
 DEFAULT_PODMAN_PULL_TIMEOUT = 600  # seconds, or 10 minutes
 DEFAULT_PODMAN_REGISTRY = "quay.io"

@@ -1,6 +1,7 @@
 """Test the systemctl_utils module."""
 
 import os
+import subprocess
 from unittest import mock
 
 import pytest
@@ -90,3 +91,140 @@ def test_invalid_systemd_user_session_systemctl_error(mock_shell_utils):
     mock_shell_utils.run_command.assert_called_once_with(
         settings.SYSTEMCTL_USER_IS_SYSTEM_RUNNING_CMD
     )
+
+
+def test_check_service_running_when_active(mock_shell_utils):
+    """Test check_service_running returns True when service is active."""
+    mock_shell_utils.run_command.return_value = ("", "", 0)
+    assert systemctl_utils.check_service_running() is True
+
+
+def test_check_service_running_when_inactive(mock_shell_utils):
+    """Test check_service_running returns False when service is not active."""
+    mock_shell_utils.run_command.return_value = ("", "", 1)
+    assert systemctl_utils.check_service_running() is False
+
+
+def test_log_start_failure_details_prints_stdout(mock_shell_utils, capsys):
+    """Test _log_start_failure_details prints status output when not quiet."""
+    mock_shell_utils.run_command.return_value = ("service status output", "", 1)
+    with mock.patch.object(systemctl_utils.settings, "runtime") as mock_runtime:
+        mock_runtime.quiet = False
+        systemctl_utils._log_start_failure_details()
+
+    captured = capsys.readouterr()
+    assert "service status output" in captured.out
+
+
+def test_log_start_failure_details_quiet_suppresses_stdout(mock_shell_utils, capsys):
+    """Test _log_start_failure_details skips printing status output in quiet mode."""
+    mock_shell_utils.run_command.return_value = ("service status output", "", 1)
+    with mock.patch.object(systemctl_utils.settings, "runtime") as mock_runtime:
+        mock_runtime.quiet = True
+        systemctl_utils._log_start_failure_details()
+
+    captured = capsys.readouterr()
+    assert captured.out == ""
+
+
+def test_start_service_happy_path(mock_shell_utils):
+    """Test start_service returns True when service becomes active quickly."""
+    # start succeeds, then is-active returns 0 (active)
+    mock_shell_utils.run_command.side_effect = [
+        ("", "", 0),  # systemctl start
+        ("", "", 0),  # is-active → active
+    ]
+
+    with mock.patch.object(systemctl_utils, "check_service_running", return_value=True):
+        assert systemctl_utils.start_service()
+
+    mock_shell_utils.run_command.assert_called_once_with(
+        settings.SYSTEMCTL_USER_START_QUIPUCORDS_APP
+    )
+
+
+def test_start_service_polls_until_active(mock_shell_utils):
+    """Test start_service polls and succeeds after a few iterations."""
+    # start succeeds; is-failed returns 1 (not failed) for each wait iteration;
+    # on the 3rd check_service_running call, the service is active and we stop.
+    mock_shell_utils.run_command.side_effect = [
+        ("", "", 0),  # systemctl start
+        ("", "", 1),  # is-failed: exit 1 = service is NOT failed (still starting)
+        ("", "", 1),  # is-failed: exit 1 = service is NOT failed (still starting)
+        # 3rd check_service_running returns True, so is-failed is never called again
+    ]
+
+    call_count = 0
+
+    def check_running_side_effect():
+        nonlocal call_count
+        call_count += 1
+        return call_count >= 3  # active on the 3rd poll
+
+    with (
+        mock.patch.object(
+            systemctl_utils,
+            "check_service_running",
+            side_effect=check_running_side_effect,
+        ),
+        mock.patch.object(systemctl_utils, "time") as mock_time,
+    ):
+        # monotonic returns values that won't expire the deadline
+        mock_time.monotonic.side_effect = [0, 0, 10, 20, 30, 40, 50]
+        assert systemctl_utils.start_service()
+
+    assert call_count == 3
+
+
+def test_start_service_fails_on_failed_state(mock_shell_utils):
+    """Test start_service returns False when service enters failed state."""
+    mock_shell_utils.run_command.side_effect = [
+        ("", "", 0),  # systemctl start
+        ("status output", "", 1),  # status (called in _log_start_failure_details)
+    ]
+
+    with (
+        mock.patch.object(systemctl_utils, "check_service_running", return_value=False),
+        mock.patch.object(systemctl_utils, "_log_start_failure_details") as mock_log,
+        mock.patch.object(systemctl_utils, "time") as mock_time,
+    ):
+        mock_time.monotonic.side_effect = [0, 0, 10]
+        # is-failed returns 0 (service IS failed)
+        mock_shell_utils.run_command.side_effect = [
+            ("", "", 0),  # systemctl start
+            ("", "", 0),  # is-failed → failed (exit 0 means IS failed)
+        ]
+
+        assert not systemctl_utils.start_service()
+        mock_log.assert_called_once()
+
+
+def test_start_service_fails_when_start_command_raises(mock_shell_utils):
+    """Test start_service returns False when systemctl start command itself fails."""
+    mock_shell_utils.run_command.side_effect = subprocess.CalledProcessError(
+        1, settings.SYSTEMCTL_USER_START_QUIPUCORDS_APP
+    )
+
+    with mock.patch.object(systemctl_utils, "_log_start_failure_details") as mock_log:
+        assert not systemctl_utils.start_service()
+        mock_log.assert_called_once()
+
+
+def test_start_service_timeout(mock_shell_utils):
+    """Test start_service returns False when timeout is exceeded."""
+    mock_shell_utils.run_command.return_value = ("", "", 0)
+
+    with (
+        mock.patch.object(systemctl_utils, "check_service_running", return_value=False),
+        mock.patch.object(systemctl_utils, "_log_start_failure_details") as mock_log,
+        mock.patch.object(systemctl_utils, "time") as mock_time,
+    ):
+        # is-failed returns 1 (not failed yet), but deadline expires immediately
+        mock_shell_utils.run_command.side_effect = [
+            ("", "", 0),  # systemctl start
+        ]
+        # First monotonic call sets deadline, second is already past it
+        mock_time.monotonic.side_effect = [0, 999]
+
+        assert not systemctl_utils.start_service()
+        mock_log.assert_called_once()
