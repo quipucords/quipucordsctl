@@ -21,6 +21,23 @@ def test_get_display_group():
     assert start.get_display_group() == argparse_utils.DisplayGroups.MAIN
 
 
+def test_start_run_fails_when_not_installed(capsys):
+    """Test start returns False with a message when service is not installed."""
+    mock_args = mock.Mock()
+
+    with mock.patch.object(start, "systemctl_utils") as mock_systemctl_utils:
+        mock_systemctl_utils.is_service_installed.return_value = False
+
+        result = start.run(mock_args)
+
+        assert result is False
+        mock_systemctl_utils.is_service_installed.assert_called_once()
+        mock_systemctl_utils.ensure_systemd_user_session.assert_not_called()
+        captured = capsys.readouterr()
+        assert settings.PROGRAM_NAME in captured.out
+        assert "install" in captured.out
+
+
 def test_start_run_happy_path():
     """Test the start command happy path."""
     mock_args = mock.Mock()

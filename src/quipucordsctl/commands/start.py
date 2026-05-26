@@ -7,6 +7,10 @@ from gettext import gettext as _
 from quipucordsctl import argparse_utils, podman_utils, settings, systemctl_utils
 
 _START_SUCCESS_MESSAGE = _("%(server_software_name)s server started successfully.")
+_NOT_INSTALLED_MESSAGE = _(
+    "%(server_software_name)s is not installed. "
+    "Please install it first by running '%(program_name)s install'."
+)
 
 
 def get_display_group() -> argparse_utils.DisplayGroups:
@@ -38,6 +42,16 @@ def get_description() -> str:
 
 def run(args: argparse.Namespace) -> bool:
     """Start the server, ensuring requirements are met and images are present."""
+    if not systemctl_utils.is_service_installed():
+        print(
+            _NOT_INSTALLED_MESSAGE
+            % {
+                "server_software_name": settings.SERVER_SOFTWARE_NAME,
+                "program_name": settings.PROGRAM_NAME,
+            }
+        )
+        return False
+
     systemctl_utils.ensure_systemd_user_session()
     podman_utils.ensure_podman_socket()
     podman_utils.ensure_cgroups_v2()

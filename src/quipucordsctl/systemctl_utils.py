@@ -83,6 +83,14 @@ def reload_daemon() -> bool:
     return True
 
 
+def is_service_installed() -> bool:
+    """Return True if the quipucords-app systemd unit file is present."""
+    __, __, exit_code = shell_utils.run_command(
+        settings.SYSTEMCTL_USER_LIST_QUIPUCORDS_APP, raise_error=False
+    )
+    return exit_code == 0
+
+
 def check_service_running() -> bool:
     """Check if quipucords-app service is currently running."""
     logger.debug(
