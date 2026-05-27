@@ -310,6 +310,30 @@ def test_install_run_with_no_start_skips_start_service(
         mock_systemctl_utils.start_service.assert_not_called()
 
 
+def test_resolve_override_conf_dir_nonexistent(tmp_path, caplog):
+    """Test _resolve_override_conf_dir returns None and warns for a non-existent dir."""
+    caplog.set_level(logging.WARNING)
+    nonexistent_dir = str(tmp_path / "does_not_exist")
+    result = install._resolve_override_conf_dir(nonexistent_dir)
+    assert result is None
+    assert "does not exist" in caplog.text
+
+
+def test_start_and_print_success_prints_message_on_quiet_false(capsys):
+    """Test _start_and_print_success prints success message when start succeeds."""
+    mock_args = mock.Mock()
+    mock_args.start = True
+    mock_args.quiet = False
+
+    with mock.patch.object(install, "systemctl_utils") as mock_systemctl_utils:
+        mock_systemctl_utils.start_service.return_value = True
+        result = install._start_and_print_success(mock_args)
+
+    assert result is True
+    captured = capsys.readouterr()
+    assert settings.SERVER_SOFTWARE_NAME in captured.out
+
+
 def test_install_run_fails_when_start_service_fails(
     temp_config_directories: dict[str, pathlib.Path], tmp_path: pathlib.Path
 ):

@@ -29,14 +29,14 @@ from quipucordsctl.commands import (
 )
 from quipucordsctl.systemdunitparser import SystemdUnitParser
 
-INSTALL_SUCCESS_MESSAGE = _(
+INSTALL_SUCCESS_START_MESSAGE = _(
     "Installation of %(server_software_name)s completed successfully."
 )
 INSTALL_SUCCESS_NO_START_MESSAGE = _(
     textwrap.dedent(
         """
         Installation of %(server_software_name)s completed successfully.
-        Run the following command to start the server:
+        Please run the following command to start the server:
 
             %(program_name)s start
         """
@@ -53,7 +53,7 @@ def get_display_group() -> argparse_utils.DisplayGroups:
 
 def get_help() -> str:
     """Get the help/docstring for this command."""
-    return _("Install the %(server_software_name)s server") % {
+    return _("Install and start the %(server_software_name)s server") % {
         "server_software_name": settings.SERVER_SOFTWARE_NAME
     }
 
@@ -373,7 +373,7 @@ def _start_and_print_success(args: argparse.Namespace) -> bool:
             return False
         if not args.quiet:
             print(
-                INSTALL_SUCCESS_MESSAGE
+                INSTALL_SUCCESS_START_MESSAGE
                 % {"server_software_name": settings.SERVER_SOFTWARE_NAME},
             )
     elif not args.quiet:
@@ -388,7 +388,7 @@ def _start_and_print_success(args: argparse.Namespace) -> bool:
 
 
 def run(args: argparse.Namespace) -> bool:
-    """Install the server, ensuring requirements are met."""
+    """Install and start the server, ensuring requirements are met."""
     logger.debug("Starting install command")
     systemctl_utils.ensure_systemd_user_session()
     podman_utils.ensure_podman_socket()

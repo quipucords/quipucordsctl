@@ -93,6 +93,18 @@ def test_invalid_systemd_user_session_systemctl_error(mock_shell_utils):
     )
 
 
+def test_is_service_installed_when_installed(mock_shell_utils):
+    """Test is_service_installed returns True when the service unit is present."""
+    mock_shell_utils.run_command.return_value = ("", "", 0)
+    assert systemctl_utils.is_service_installed() is True
+
+
+def test_is_service_installed_when_not_installed(mock_shell_utils):
+    """Test is_service_installed returns False when the service unit is not present."""
+    mock_shell_utils.run_command.return_value = ("", "", 1)
+    assert systemctl_utils.is_service_installed() is False
+
+
 def test_check_service_running_when_active(mock_shell_utils):
     """Test check_service_running returns True when service is active."""
     mock_shell_utils.run_command.return_value = ("", "", 0)

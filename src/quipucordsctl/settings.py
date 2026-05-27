@@ -99,7 +99,7 @@ SYSTEMCTL_USER_IS_FAILED_QUIPUCORDS_APP = [
     "-q",
     "--user",
     "is-failed",
-    f"{SERVER_SOFTWARE_PACKAGE}-app.service",
+    f"{SERVER_SOFTWARE_PACKAGE}-app",
 ]
 
 # podman secrets we use

@@ -134,7 +134,7 @@ def _log_start_failure_details() -> None:
     if stdout and not settings.runtime.quiet:
         print(stdout)
     logger.error(
-        _(_START_FAILURE_GUIDANCE)
+        _START_FAILURE_GUIDANCE
         % {
             "server_software_name": settings.SERVER_SOFTWARE_NAME,
             "server_software_package": settings.SERVER_SOFTWARE_PACKAGE,
