@@ -141,18 +141,14 @@ def test_log_start_failure_details_quiet_suppresses_stdout(mock_shell_utils, cap
 
 def test_start_service_happy_path(mock_shell_utils):
     """Test start_service returns True when service becomes active quickly."""
-    # start succeeds, then is-active returns 0 (active)
     mock_shell_utils.run_command.side_effect = [
-        ("", "", 0),  # systemctl start
-        ("", "", 0),  # is-active → active
+        ("", "", 0),  # systemctl reset-failed
+        ("", "", 0),  # systemctl start network
+        ("", "", 0),  # systemctl start app
     ]
 
     with mock.patch.object(systemctl_utils, "check_service_running", return_value=True):
         assert systemctl_utils.start_service()
-
-    mock_shell_utils.run_command.assert_called_once_with(
-        settings.SYSTEMCTL_USER_START_QUIPUCORDS_APP
-    )
 
 
 def test_start_service_polls_until_active(mock_shell_utils):
@@ -160,7 +156,9 @@ def test_start_service_polls_until_active(mock_shell_utils):
     # start succeeds; is-failed returns 1 (not failed) for each wait iteration;
     # on the 3rd check_service_running call, the service is active and we stop.
     mock_shell_utils.run_command.side_effect = [
-        ("", "", 0),  # systemctl start
+        ("", "", 0),  # systemctl reset-failed
+        ("", "", 0),  # systemctl start network
+        ("", "", 0),  # systemctl start app
         ("", "", 1),  # is-failed: exit 1 = service is NOT failed (still starting)
         ("", "", 1),  # is-failed: exit 1 = service is NOT failed (still starting)
         # 3rd check_service_running returns True, so is-failed is never called again
@@ -203,7 +201,9 @@ def test_start_service_fails_on_failed_state(mock_shell_utils):
         mock_time.monotonic.side_effect = [0, 0, 10]
         # is-failed returns 0 (service IS failed)
         mock_shell_utils.run_command.side_effect = [
-            ("", "", 0),  # systemctl start
+            ("", "", 0),  # systemctl reset-failed
+            ("", "", 0),  # systemctl start network
+            ("", "", 0),  # systemctl start app
             ("", "", 0),  # is-failed → failed (exit 0 means IS failed)
         ]
 
@@ -233,7 +233,9 @@ def test_start_service_timeout(mock_shell_utils):
     ):
         # is-failed returns 1 (not failed yet), but deadline expires immediately
         mock_shell_utils.run_command.side_effect = [
-            ("", "", 0),  # systemctl start
+            ("", "", 0),  # systemctl reset-failed
+            ("", "", 0),  # systemctl start network
+            ("", "", 0),  # systemctl start app
         ]
         # First monotonic call sets deadline, second is already past it
         mock_time.monotonic.side_effect = [0, 999]

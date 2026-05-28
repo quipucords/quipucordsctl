@@ -105,7 +105,7 @@ def check_service_running() -> bool:
             "-q",
             "--user",
             "is-active",
-            f"{settings.SERVER_SOFTWARE_PACKAGE}-app.service",
+            f"{settings.SERVER_SOFTWARE_PACKAGE}-app",
         ],
         raise_error=False,
     )
@@ -150,7 +150,12 @@ def start_service() -> bool:
         {"server_software_name": settings.SERVER_SOFTWARE_NAME},
     )
     try:
-        shell_utils.run_command(settings.SYSTEMCTL_USER_START_QUIPUCORDS_APP)
+        shell_utils.run_command(settings.SYSTEMCTL_USER_RESET_FAILED_CMD)
+        shell_utils.run_command(settings.SYSTEMCTL_USER_START_QUIPUCORDS_NETWORK)
+        shell_utils.run_command(
+            settings.SYSTEMCTL_USER_START_QUIPUCORDS_APP,
+            wait_timeout=settings.DEFAULT_APP_START_TIMEOUT,
+        )
     except subprocess.CalledProcessError:
         logger.error(
             _("Failed to issue start command for %(server_software_name)s."),

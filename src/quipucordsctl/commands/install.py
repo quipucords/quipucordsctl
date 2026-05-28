@@ -29,7 +29,7 @@ from quipucordsctl.commands import (
 )
 from quipucordsctl.systemdunitparser import SystemdUnitParser
 
-INSTALL_SUCCESS_START_MESSAGE = _(
+INSTALL_SUCCESS_MESSAGE = _(
     "Installation of %(server_software_name)s completed successfully."
 )
 INSTALL_SUCCESS_NO_START_MESSAGE = _(
@@ -373,7 +373,7 @@ def _start_and_print_success(args: argparse.Namespace) -> bool:
             return False
         if not args.quiet:
             print(
-                INSTALL_SUCCESS_START_MESSAGE
+                INSTALL_SUCCESS_MESSAGE
                 % {"server_software_name": settings.SERVER_SOFTWARE_NAME},
             )
     elif not args.quiet:
