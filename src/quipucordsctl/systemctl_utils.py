@@ -105,14 +105,14 @@ def check_service_running() -> bool:
             "-q",
             "--user",
             "is-active",
-            f"{settings.SERVER_SOFTWARE_PACKAGE}-app",
+            f"{settings.SERVER_SOFTWARE_PACKAGE}-app.service",
         ],
         raise_error=False,
     )
     return status_exit == 0
 
 
-_START_FAILURE_GUIDANCE = textwrap.dedent(
+START_FAILURE_GUIDANCE = textwrap.dedent(
     _(
         """
         %(server_software_name)s failed to start. Check the journal for errors:
@@ -125,7 +125,7 @@ _START_FAILURE_GUIDANCE = textwrap.dedent(
 )
 
 
-def _log_start_failure_details() -> None:
+def log_start_failure_details() -> None:
     """Print service status and log user guidance after a failed start."""
     stdout, __, __ = shell_utils.run_command(
         settings.SYSTEMCTL_USER_STATUS_QUIPUCORDS_APP,
@@ -134,7 +134,7 @@ def _log_start_failure_details() -> None:
     if stdout and not settings.runtime.quiet:
         print(stdout)
     logger.error(
-        _START_FAILURE_GUIDANCE
+        START_FAILURE_GUIDANCE
         % {
             "server_software_name": settings.SERVER_SOFTWARE_NAME,
             "server_software_package": settings.SERVER_SOFTWARE_PACKAGE,
@@ -161,7 +161,7 @@ def start_service() -> bool:
             _("Failed to issue start command for %(server_software_name)s."),
             {"server_software_name": settings.SERVER_SOFTWARE_NAME},
         )
-        _log_start_failure_details()
+        log_start_failure_details()
         return False
 
     deadline = time.monotonic() + settings.DEFAULT_SERVICE_START_WAIT_TIMEOUT
@@ -180,5 +180,5 @@ def start_service() -> bool:
             break
         time.sleep(5)
 
-    _log_start_failure_details()
+    log_start_failure_details()
     return False

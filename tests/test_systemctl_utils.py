@@ -118,25 +118,35 @@ def test_check_service_running_when_inactive(mock_shell_utils):
 
 
 def test_log_start_failure_details_prints_stdout(mock_shell_utils, capsys):
-    """Test _log_start_failure_details prints status output when not quiet."""
+    """Test log_start_failure_details prints status output when not quiet."""
     mock_shell_utils.run_command.return_value = ("service status output", "", 1)
     with mock.patch.object(systemctl_utils.settings, "runtime") as mock_runtime:
         mock_runtime.quiet = False
-        systemctl_utils._log_start_failure_details()
+        systemctl_utils.log_start_failure_details()
 
     captured = capsys.readouterr()
     assert "service status output" in captured.out
 
 
 def test_log_start_failure_details_quiet_suppresses_stdout(mock_shell_utils, capsys):
-    """Test _log_start_failure_details skips printing status output in quiet mode."""
+    """Test log_start_failure_details skips printing status output in quiet mode."""
     mock_shell_utils.run_command.return_value = ("service status output", "", 1)
     with mock.patch.object(systemctl_utils.settings, "runtime") as mock_runtime:
         mock_runtime.quiet = True
-        systemctl_utils._log_start_failure_details()
+        systemctl_utils.log_start_failure_details()
 
     captured = capsys.readouterr()
     assert captured.out == ""
+
+
+def test_log_start_failure_details_logs_guidance_message(mock_shell_utils, caplog):
+    """Test log_start_failure_details always logs guidance via logger.error."""
+    mock_shell_utils.run_command.return_value = ("service status output", "", 1)
+    with mock.patch.object(systemctl_utils.settings, "runtime") as mock_runtime:
+        mock_runtime.quiet = True
+        systemctl_utils.log_start_failure_details()
+
+    assert any("journalctl --user -u" in r.message for r in caplog.records)
 
 
 def test_start_service_happy_path(mock_shell_utils):
@@ -188,14 +198,9 @@ def test_start_service_polls_until_active(mock_shell_utils):
 
 def test_start_service_fails_on_failed_state(mock_shell_utils):
     """Test start_service returns False when service enters failed state."""
-    mock_shell_utils.run_command.side_effect = [
-        ("", "", 0),  # systemctl start
-        ("status output", "", 1),  # status (called in _log_start_failure_details)
-    ]
-
     with (
         mock.patch.object(systemctl_utils, "check_service_running", return_value=False),
-        mock.patch.object(systemctl_utils, "_log_start_failure_details") as mock_log,
+        mock.patch.object(systemctl_utils, "log_start_failure_details") as mock_log,
         mock.patch.object(systemctl_utils, "time") as mock_time,
     ):
         mock_time.monotonic.side_effect = [0, 0, 10]
@@ -217,7 +222,7 @@ def test_start_service_fails_when_start_command_raises(mock_shell_utils):
         1, settings.SYSTEMCTL_USER_START_QUIPUCORDS_APP
     )
 
-    with mock.patch.object(systemctl_utils, "_log_start_failure_details") as mock_log:
+    with mock.patch.object(systemctl_utils, "log_start_failure_details") as mock_log:
         assert not systemctl_utils.start_service()
         mock_log.assert_called_once()
 
@@ -228,7 +233,7 @@ def test_start_service_timeout(mock_shell_utils):
 
     with (
         mock.patch.object(systemctl_utils, "check_service_running", return_value=False),
-        mock.patch.object(systemctl_utils, "_log_start_failure_details") as mock_log,
+        mock.patch.object(systemctl_utils, "log_start_failure_details") as mock_log,
         mock.patch.object(systemctl_utils, "time") as mock_time,
     ):
         # is-failed returns 1 (not failed yet), but deadline expires immediately
