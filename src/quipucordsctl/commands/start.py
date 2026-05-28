@@ -6,10 +6,15 @@ from gettext import gettext as _
 
 from quipucordsctl import argparse_utils, podman_utils, settings, systemctl_utils
 
-_START_SUCCESS_MESSAGE = _("%(server_software_name)s server started successfully.")
-_NOT_INSTALLED_MESSAGE = _(
-    "%(server_software_name)s is not installed. "
-    "Please install it first by running '%(program_name)s install'."
+START_SUCCESS_MESSAGE = _("%(server_software_name)s server started successfully.")
+SERVER_NOT_INSTALLED_MESSAGE = _(
+    textwrap.dedent(
+        """
+        %(server_software_name)s is not installed. Please install it first by running the following command:
+
+            %(program_name)s install
+        """  # noqa: E501 line-too-long
+    ).strip()
 )
 
 
@@ -44,7 +49,7 @@ def run(args: argparse.Namespace) -> bool:
     """Start the server, ensuring requirements are met and images are present."""
     if not systemctl_utils.is_service_installed():
         print(
-            _NOT_INSTALLED_MESSAGE
+            SERVER_NOT_INSTALLED_MESSAGE
             % {
                 "server_software_name": settings.SERVER_SOFTWARE_NAME,
                 "program_name": settings.PROGRAM_NAME,
@@ -64,7 +69,7 @@ def run(args: argparse.Namespace) -> bool:
 
     if not args.quiet:
         print(
-            _START_SUCCESS_MESSAGE
+            START_SUCCESS_MESSAGE
             % {"server_software_name": settings.SERVER_SOFTWARE_NAME}
         )
     return True

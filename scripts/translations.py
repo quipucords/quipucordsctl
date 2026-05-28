@@ -16,13 +16,15 @@ https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes
 
 import argparse
 import pathlib
+import re
 import subprocess
 import sys
 import sysconfig
 
 DOMAIN = "messages"
 PYBABEL_BIN = pathlib.Path(sys.prefix) / "bin" / "pybabel"
-SOURCE_CODE_DIR = pathlib.Path(__file__).parent.parent / "src" / "quipucordsctl"
+SOURCE_PATH = pathlib.Path("src/quipucordsctl")
+SOURCE_CODE_DIR = pathlib.Path(__file__).parent.parent / SOURCE_PATH
 LOCALES_DIR = SOURCE_CODE_DIR / "locale"
 PYTHON_STDLIB_FILES = ["argparse.py"]
 LOCALES = ["en"]
@@ -30,7 +32,7 @@ LOCALES = ["en"]
 
 def get_code_paths() -> list:
     """Get a list of paths that contain gettext-wrapped strings to localize."""
-    code_paths = [SOURCE_CODE_DIR]
+    code_paths = [SOURCE_PATH]
     stdlib_path = pathlib.Path(sysconfig.get_paths()["stdlib"])
     for stdlib_file_name in PYTHON_STDLIB_FILES:
         stdlib_file_path = stdlib_path / stdlib_file_name
@@ -39,22 +41,42 @@ def get_code_paths() -> list:
     return code_paths
 
 
+def normalize_stdlib_location_comments(pot_file: pathlib.Path) -> None:
+    """Normalize stdlib location comments to remove environment-specific paths.
+
+    pybabel writes the full path to stdlib files (e.g. argparse.py) in location
+    comments, which varies across Python installations and environments. Replace the
+    path prefix with '...' so the comment is stable across contributors.
+
+    Before: #: ../../../../.pyenv/versions/3.12.5/lib/python3.12/argparse.py:228
+    After:  #: .../python3.12/argparse.py:228
+    """
+    stdlib_file_pattern = re.compile(
+        r"(#: ).*/(python\d+\.\d+/" + "|".join(PYTHON_STDLIB_FILES) + r":\d+)"
+    )
+    text = pot_file.read_text(encoding="utf-8")
+    normalized = stdlib_file_pattern.sub(r"\1.../\2", text)
+    pot_file.write_text(normalized, encoding="utf-8")
+
+
 def translations_extract(pybabel_bin):
     """Extract gettext-wrapped strings to messages.pot template file."""
     paths: list[str] = get_code_paths()
+    pot_file = LOCALES_DIR / f"{DOMAIN}.pot"
     try:
         subprocess.check_call(  # noqa: S603
             [
                 pybabel_bin,
                 "extract",
                 "-o",
-                str(LOCALES_DIR / f"{DOMAIN}.pot"),
+                str(pot_file),
                 *(str(path) for path in paths),
             ],
         )
     except subprocess.CalledProcessError as e:
         print(f"Error invoking pybabel extract: {e}")
         sys.exit(1)
+    normalize_stdlib_location_comments(pot_file)
 
 
 def translations_update(pybabel_bin):

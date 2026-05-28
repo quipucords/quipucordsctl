@@ -35,13 +35,13 @@ INSTALL_SUCCESS_MESSAGE = _(
 INSTALL_SUCCESS_NO_START_MESSAGE = _(
     textwrap.dedent(
         """
-        Installation of %(server_software_name)s completed successfully.
-        Please run the following command to start the server:
+        Installation completed successfully. Please run the following command to start the %(server_software_name)s server:
 
             %(program_name)s start
-        """
+        """  # noqa: E501
     ).strip()
 )
+
 
 logger = logging.getLogger(__name__)
 
@@ -347,7 +347,7 @@ def systemctl_reload():
     shell_utils.run_command(settings.SYSTEMCTL_USER_DAEMON_RELOAD_CMD)
 
 
-def _resolve_override_conf_dir(
+def resolve_override_conf_dir(
     override_conf_dir: str | None,
 ) -> pathlib.Path | None:
     """Resolve and validate the override configuration directory argument."""
@@ -366,7 +366,7 @@ def _resolve_override_conf_dir(
     return None
 
 
-def _start_and_print_success(args: argparse.Namespace) -> bool:
+def start_server(args: argparse.Namespace) -> bool:
     """Start the server and print the appropriate success message."""
     if args.start:
         if not systemctl_utils.start_service():
@@ -397,7 +397,7 @@ def run(args: argparse.Namespace) -> bool:
     if not reset_secrets(args):
         return False
 
-    override_conf_dir_path = _resolve_override_conf_dir(args.override_conf_dir)
+    override_conf_dir_path = resolve_override_conf_dir(args.override_conf_dir)
     write_config_files(override_conf_dir_path)
     try:
         systemctl_reload()
@@ -411,4 +411,4 @@ def run(args: argparse.Namespace) -> bool:
     if not loginctl_utils.enable_linger(args.linger):
         return False
 
-    return _start_and_print_success(args)
+    return start_server(args)
