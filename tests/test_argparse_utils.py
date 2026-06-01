@@ -29,7 +29,7 @@ def test_add_command(faker):
     middle_argument_group = parser.add_argument_group(faker.slug())
     parser.add_argument_group(faker.slug())  # extra to force checking multiple groups
 
-    mock_command = mock.Mock()
+    mock_command = mock.Mock(spec=["setup_parser"])
     command_name = faker.slug()
     command_help = faker.sentence()
     command_description = faker.sentence()
@@ -63,5 +63,48 @@ def test_add_command(faker):
     mock_command.setup_parser.assert_called_once()
     assert action.dest == command_name
     assert action.help == command_help
+    assert subparsers.choices[command_name].description == command_description
+    assert subparsers.choices[command_name].epilog == command_epilog
+
+
+def test_add_command_hidden(faker):
+    """Test add_command with HIDDEN_COMMAND=True suppresses help text."""
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+    middle_argument_group = parser.add_argument_group(faker.slug())
+
+    mock_command = mock.Mock(spec=["setup_parser"])
+    mock_command.HIDDEN_COMMAND = True
+    command_name = faker.slug()
+    command_help = faker.sentence()
+    command_description = faker.sentence()
+    command_epilog = faker.sentence()
+
+    argparse_utils.add_command(
+        subparsers,
+        mock_command,
+        middle_argument_group,
+        command_name,
+        command_help,
+        command_description,
+        command_epilog,
+    )
+
+    argparse_group = next(
+        filter(
+            lambda _group: _group.title == middle_argument_group.title,
+            parser._action_groups,
+        )
+    )
+    action = next(
+        filter(
+            lambda _action: _action.dest == command_name,
+            argparse_group._group_actions,
+        )
+    )
+
+    mock_command.setup_parser.assert_called_once()
+    assert action.dest == command_name
+    assert action.help == argparse.SUPPRESS  # Help text should be suppressed
     assert subparsers.choices[command_name].description == command_description
     assert subparsers.choices[command_name].epilog == command_epilog

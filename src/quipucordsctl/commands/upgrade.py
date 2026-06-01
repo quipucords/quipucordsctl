@@ -10,6 +10,8 @@ from quipucordsctl.commands import install
 
 logger = logging.getLogger(__name__)
 
+HIDDEN_COMMAND = True
+
 
 def get_display_group() -> argparse_utils.DisplayGroups:
     """Get the group identifier for displaying this command in CLI help text."""
