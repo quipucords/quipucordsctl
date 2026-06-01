@@ -3,3 +3,4 @@ coverage.xml
 quipucordsctl.egg-info
 build
 .python-version
+docs/_build/.doctrees/

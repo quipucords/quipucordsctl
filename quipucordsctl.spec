@@ -135,6 +135,16 @@ mkdir -p %{buildroot}/%{_bindir}
 mkdir -p %{buildroot}/%{_datadir}/%{name}/env
 cp %{templates_dir}/env/*.env %{buildroot}/%{_datadir}/%{name}/env/
 
+# Install man page with variable replacements
+mkdir -p %{buildroot}%{_mandir}/man1/
+sed \
+  -e "s/QUIPUCORDSCTL_VAR_PROGRAM_NAME/%{name}/g" \
+  -e "s/QUIPUCORDSCTL_VAR_PROJECT/%{product_name_title}/g" \
+  -e "s/QUIPUCORDSCTL_VAR_CURRENT_YEAR/$(date +'%Y')/g" \
+  -e "s/BUILD_DATE/$(date +'%B %d, %Y')/g" \
+  docs/_build/QUIPUCORDSCTL_VAR_PROGRAM_NAME.1 > \
+  %{buildroot}%{_mandir}/man1/%{name}.1
+
 # Copy and rename original source files with appropriate branding.
 mkdir -p %{buildroot}/%{_datadir}/%{name}/config
 cp %{templates_dir}/config/quipucords-app.container %{buildroot}/%{_datadir}/%{name}/config/%{product_name_lower}-app.container
@@ -156,6 +166,7 @@ sed -i 's#^Image=.*#Image=%{ui_image}#g' %{buildroot}/%{_datadir}/%{name}/config
 %files
 %license LICENSE
 %doc README.md
+%doc %{_mandir}/man1/%{name}.*
 %{_bindir}/%{name}
 %{_datadir}/%{name}/config/%{product_name_lower}.network
 %{_datadir}/%{name}/config/%{product_name_lower}-app.container

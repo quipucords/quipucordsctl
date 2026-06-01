@@ -37,6 +37,7 @@ jobs:
           [
             lint,
             test-coverage,
+            manpage-test,
           ]
         python-version: ["3.12"]
     runs-on: ubuntu-latest
@@ -57,6 +58,10 @@ jobs:
 
       - name: Install Python dependencies
         run: uv sync
+
+      - name: Install build dependencies for manpage test
+        if: ${{ contains(matrix.type, 'manpage-test') }}
+        run: uv sync --group build
 
       - name: Run Test
         run: make ${{ matrix.type }} TEST_TIMEOUT=1.0 TEST_SESSION_TIMEOUT=10.0 -k
