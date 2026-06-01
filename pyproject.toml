@@ -42,6 +42,9 @@ dev = [
     "pytest-timeout>=2.4.0",
     "ruff>=0.12.2",
 ]
+build = [
+    "sphinx>=7.2.6,<8",
+]
 
 [tool.ruff]
 lint.select = [

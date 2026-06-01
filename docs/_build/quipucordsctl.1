@@ -1,0 +1,465 @@
+.\" Man page generated from reStructuredText.
+.
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.TH "quipucordsctl" "1" "June 05, 2026" "" "quipucordsctl"
+.SH NAME
+quipucordsctl \- Deploy and manage Quipucords in Podman containers
+.SH SYNOPSIS
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+quipucordsctl [\-\-help] [\-v | \-\-verbose] [\-q | \-\-quiet]
+    [\-y | \-\-yes] [\-C {auto|always|never} | \-\-color {auto|always|never}]
+    [\-c DIRECTORY | \-\-override\-conf\-dir DIRECTORY]
+    COMMAND [ARGS]
+.EE
+.UNINDENT
+.UNINDENT
+.SH DESCRIPTION
+.sp
+\fBquipucordsctl\fP is a command\-line management tool for Quipucords, an agentless inspection and reporting tool that collects relevant facts about Red Hat software usage. This tool simplifies the installation, configuration, and management of Quipucords and all of its required components to run in Podman containers on your local system.
+.sp
+The quipucordsctl tool manages the complete lifecycle of a Quipucords deployment, including container image management, systemd service configuration, database setup, and secret management. It provides commands for installation, health checking, secret rotation, log collection, and system maintenance.
+.sp
+By default, Quipucords configuration is stored under \fB~/.config/quipucords/\fP and application data under \fB~/.local/share/quipucords/\fP in your home directory. The Quipucords services run as systemd user services, which means no root privileges are required for normal operation after the initial package installation.
+.sp
+This manual page describes the commands and options for the \fBquipucordsctl\fP command and includes usage information and example commands.
+.SH USAGE
+.sp
+The \fBquipucordsctl\fP command manages the Quipucords deployment lifecycle. Within that workflow, \fBquipucordsctl\fP performs the following major tasks:
+.INDENT 0.0
+.IP \(bu 2
+Installing Quipucords:
+.sp
+\fBquipucordsctl install\fP
+.IP \(bu 2
+Checking system health:
+.sp
+\fBquipucordsctl check\fP
+.IP \(bu 2
+Resetting administrator credentials:
+.sp
+\fBquipucordsctl reset_admin_password\fP
+.sp
+\fBquipucordsctl reset_admin_username\fP
+.IP \(bu 2
+Collecting diagnostic logs:
+.sp
+\fBquipucordsctl export_logs\fP
+.IP \(bu 2
+Uninstalling Quipucords:
+.sp
+\fBquipucordsctl uninstall\fP
+.UNINDENT
+.sp
+The following sections describe these commands and their options in more detail.
+.SH INSTALLATION
+.SS Installing Quipucords
+.sp
+To install Quipucords and configure all required components, use the \fBinstall\fP command. This command sets up container volumes, generates initial secrets, creates systemd service unit files, and prepares the environment for running Quipucords.
+.sp
+\fBquipucordsctl install\fP
+.sp
+After installation, start the Quipucords application service:
+.sp
+\fBsystemctl \-\-user restart quipucords\-app\fP
+.sp
+After a few seconds, access Quipucords at \X'tty: link https://localhost:9443'\fI\%https://localhost:9443\fP\X'tty: link'
+.SS Uninstalling Quipucords
+.sp
+To completely remove Quipucords and all its data, use the \fBuninstall\fP command. This command stops all running services, removes systemd unit files, removes secrets and configuration files, and deletes all data directories.
+.sp
+\fBquipucordsctl uninstall\fP
+.INDENT 0.0
+.TP
+.B \fB\-\-keep\-data\-dirs\fP
+Preserve data directories and secrets while still removing services, unit files, and configuration. Use this to retain your data when reinstalling.
+.UNINDENT
+.SH DIAGNOSTICS
+.SS Checking System Health
+.sp
+To verify the installation status and health of Quipucords services, use the \fBcheck\fP command. This command checks for the presence and correct permissions of data directories, certificate files, configuration files, and systemd unit files required by Quipucords.
+.sp
+\fBquipucordsctl check\fP
+.SS Exporting Logs
+.sp
+To export Quipucords logs for troubleshooting, use the \fBexport_logs\fP command. This command creates a compressed archive containing log files from all running containers and systemd services.
+.sp
+\fBquipucordsctl export_logs\fP
+.sp
+The command outputs the path to the generated log archive file.
+.SH CONFIGURATION
+.sp
+\fBquipucordsctl\fP provides commands for managing Quipucords configuration and secrets. These commands allow you to reset credentials and rotate secrets without reinstalling the system.
+.SS Resetting Administrator Password
+.sp
+To reset the administrator password for the Quipucords web interface and CLI, use the \fBreset_admin_password\fP command. This command prompts for a new password and updates the stored credentials. Set the \fBQUIPUCORDS_SERVER_PASSWORD\fP environment variable to provide a value non\-interactively.
+.sp
+\fBquipucordsctl reset_admin_password\fP
+.SS Resetting Administrator Username
+.sp
+To reset the administrator username for the Quipucords web interface and CLI, use the \fBreset_admin_username\fP command. This command prompts for a new username and updates the stored credentials. Set the \fBQUIPUCORDS_SERVER_USERNAME\fP environment variable to provide a value non\-interactively.
+.sp
+\fBquipucordsctl reset_admin_username\fP
+.SS Resetting Database Password
+.sp
+To reset the database password used by Quipucords, use the \fBreset_database_password\fP command. By default, this command generates a cryptographically strong random password. Set the \fBQUIPUCORDS_DBMS_PASSWORD\fP environment variable to use a specific value without prompting. Resetting this password on a running system may break the installation or cause data loss.
+.sp
+\fBquipucordsctl reset_database_password\fP
+.INDENT 0.0
+.TP
+.B \fB\-p\fP, \fB\-\-prompt\fP
+Prompt for a custom password instead of generating a random value.
+.UNINDENT
+.SS Resetting Redis Password
+.sp
+To reset the Redis password used by Quipucords for caching and session management, use the \fBreset_redis_password\fP command. By default, this command generates a cryptographically strong random password. Set the \fBQUIPUCORDS_REDIS_PASSWORD\fP environment variable to use a specific value without prompting. Resetting this password on a running system may cause disruption.
+.sp
+\fBquipucordsctl reset_redis_password\fP
+.INDENT 0.0
+.TP
+.B \fB\-p\fP, \fB\-\-prompt\fP
+Prompt for a custom password instead of generating a random value.
+.UNINDENT
+.SS Resetting Encryption Secret
+.sp
+To reset the encryption secret key used to protect sensitive data stored by Quipucords, use the \fBreset_encryption_secret\fP command. By default, this command generates a cryptographically strong random key. Set the \fBQUIPUCORDS_ENCRYPTION_SECRET_KEY\fP environment variable to use a specific value without prompting. Resetting this secret on a running system may break the installation or cause data loss.
+.sp
+\fBquipucordsctl reset_encryption_secret\fP
+.INDENT 0.0
+.TP
+.B \fB\-p\fP, \fB\-\-prompt\fP
+Prompt for a custom secret key instead of generating a random value.
+.UNINDENT
+.SS Resetting Session Secret
+.sp
+To reset the session secret key used for web session management in Quipucords, use the \fBreset_session_secret\fP command. By default, this command generates a cryptographically strong random key. Set the \fBQUIPUCORDS_SESSION_SECRET_KEY\fP environment variable to use a specific value without prompting. Resetting this secret on a running system may cause active sessions to become invalid.
+.sp
+\fBquipucordsctl reset_session_secret\fP
+.INDENT 0.0
+.TP
+.B \fB\-p\fP, \fB\-\-prompt\fP
+Prompt for a custom secret key instead of generating a random value.
+.UNINDENT
+.SH OPTIONS FOR ALL COMMANDS
+.sp
+The following options are available for every quipucordsctl command.
+.INDENT 0.0
+.TP
+.B \fB\-\-help\fP
+Display help information for the command.
+.TP
+.B \fB\-v\fP, \fB\-\-verbose\fP
+Increase verbose output. Can be specified multiple times for more detailed logging (e.g., \fB\-vv\fP or \fB\-vvv\fP).
+.TP
+.B \fB\-q\fP, \fB\-\-quiet\fP
+Quiet output. Suppresses all non\-error messages (overrides \fB\-v\fP/\fB\-\-verbose\fP).
+.TP
+.B \fB\-y\fP, \fB\-\-yes\fP
+Automatically answer yes to all confirmation prompts.
+.TP
+.B \fB\-C\fP \fI{auto|always|never}\fP, \fB\-\-color\fP \fI{auto|always|never}\fP
+Control color output. Default is \fBauto\fP, which enables color when writing to a terminal.
+.TP
+.B \fB\-c\fP, \fB\-\-override\-conf\-dir\fP \fIDIRECTORY\fP
+Load override values from this custom configuration directory. Use this to define override values for built\-in container runtime configuration defaults that are not exposed directly through quipucordsctl commands.
+.UNINDENT
+.SH EXAMPLES
+.INDENT 0.0
+.IP \(bu 2
+Installing Quipucords:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.EX
+$ quipucordsctl install
+$ systemctl \-\-user restart quipucords\-app
+.EE
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Verifying services are running:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.EX
+$ systemctl \-\-user status quipucords\-app
+.EE
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Installing with detailed progress information:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.EX
+$ quipucordsctl \-vv install
+.EE
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Installing with maximum verbosity:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.EX
+$ quipucordsctl \-vvv install
+.EE
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Checking installation status:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.EX
+$ quipucordsctl check
+.EE
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Checking with verbose output:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.EX
+$ quipucordsctl \-v check
+.EE
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Resetting administrator password:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.EX
+$ quipucordsctl reset_admin_password
+.EE
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Resetting administrator username:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.EX
+$ quipucordsctl reset_admin_username
+.EE
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Resetting database password:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.EX
+$ quipucordsctl reset_database_password
+.EE
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Resetting Redis password:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.EX
+$ quipucordsctl reset_redis_password
+.EE
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Resetting encryption secret:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.EX
+$ quipucordsctl reset_encryption_secret
+.EE
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Resetting session secret:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.EX
+$ quipucordsctl reset_session_secret
+.EE
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Exporting logs for troubleshooting:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.EX
+$ quipucordsctl export_logs
+.EE
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Exporting logs with verbose output:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.EX
+$ quipucordsctl \-v export_logs
+.EE
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Viewing service logs:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.EX
+$ journalctl \-\-user \-u quipucords\-app
+.EE
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Uninstalling Quipucords:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.EX
+$ quipucordsctl uninstall
+.EE
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Uninstalling Quipucords while preserving data:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.EX
+$ quipucordsctl uninstall \-\-keep\-data\-dirs
+.EE
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Installing with custom config overrides:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.EX
+$ quipucordsctl \-\-override\-conf\-dir ~/overrides install
+.EE
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Installing without confirmation prompts:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.EX
+$ quipucordsctl \-\-yes install
+.EE
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Installing silently:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.EX
+$ quipucordsctl \-q install
+.EE
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Checking status silently (errors only):
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.EX
+$ quipucordsctl \-q check
+.EE
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.SH FILES
+.INDENT 0.0
+.TP
+.B \fB~/.config/quipucords/env/\fP
+Environment files for Quipucords container services. Contains configuration values passed to each container at startup.
+.TP
+.B \fB~/.config/containers/systemd/quipucords\-*\fP
+Podman Quadlet unit files (\fB\&.container\fP and \fB\&.network\fP) that define the Quipucords container services.
+.TP
+.B \fB~/.local/share/quipucords/\fP
+Quipucords application data directory. Contains the database, certificates, logs, and SSH keys.
+.TP
+.B \fB~/.local/share/containers/storage/\fP
+Podman container storage location. Quipucords container images are stored here.
+.UNINDENT
+.SH ENVIRONMENT
+.INDENT 0.0
+.TP
+.B \fBNO_COLOR\fP
+If set, disables color output regardless of \fB\-\-color\fP setting.
+.UNINDENT
+.SH EXIT STATUS
+.INDENT 0.0
+.TP
+.B \fB0\fP
+Success. The command completed without errors.
+.TP
+.B \fB1\fP
+General error. The command failed due to invalid arguments, missing prerequisites, user interruption, or runtime errors.
+.TP
+.B \fBN\fP (any positive integer, \fBcheck\fP command only)
+The \fBcheck\fP command exits with the number of issues found. For example, if three problems are detected, the exit code is 3.
+.UNINDENT
+.SH SEE ALSO
+.sp
+\fBpodman(1)\fP, \fBsystemctl(1)\fP, \fBjournalctl(1)\fP
+.SH NOTES
+.sp
+quipucordsctl requires Podman and systemd user sessions to function. All commands except the initial RPM installation should be run as a regular non\-root user.
+.sp
+To enable the Quipucords service to start automatically at login:
+.sp
+\fBsystemctl \-\-user enable quipucords\-app\fP
+.sp
+quipucordsctl upstream source code: \X'tty: link https://github.com/quipucords/quipucordsctl'\fI\%https://github.com/quipucords/quipucordsctl\fP\X'tty: link'
+.SH SECURITY CONSIDERATIONS
+.sp
+The configuration and environment files in \fB~/.config/quipucords/\fP are stored with user\-only permissions (mode 0600 for files, 0700 for directories). Ensure your home directory has appropriate permissions to protect these files.
+.sp
+Database passwords, Redis passwords, encryption secrets, and session secrets are stored as Podman secrets, managed by Podman\(aqs secret storage. They are not stored as plain text files in the configuration directory.
+.sp
+When using the \fB\-\-override\-conf\-dir\fP option, ensure the custom configuration directory has appropriate permissions before storing sensitive data there.
+.SH AUTHOR
+Red Hat, Inc.
+.SH COPYRIGHT
+2026, Red Hat, Inc. Licensed under the GNU General Public License version 3.
+.\" Generated by docutils manpage writer.
+.

@@ -65,6 +65,32 @@ uv run bin/translations.py update
 uv run bin/translations.py compile
 ```
 
+## man pages
+
+```sh
+# generate all man page files
+make manpage
+
+# view the generated man page
+man docs/_build/quipucordsctl.1
+
+# test that man pages are up to date (for CI)
+make manpage-test
+
+# clean generated files
+make clean
+```
+
+### downstream rebranding
+
+To generate man pages with different program/project names:
+
+```sh
+QUIPUCORDSCTL_VAR_PROGRAM_NAME=discoveryctl \
+QUIPUCORDSCTL_VAR_PROJECT=Discovery \
+make manpage
+```
+
 ## running directly from source
 
 ```sh
