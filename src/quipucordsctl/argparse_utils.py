@@ -45,9 +45,13 @@ def add_command(  # noqa: PLR0913
     usage = _("{prog} [OPTIONS...] {name} [COMMAND OPTIONS...]").format(
         prog=settings.PROGRAM_NAME, name=command_name
     )
+
+    # Check if this command should be hidden from help text
+    is_hidden = getattr(command_module, "HIDDEN_COMMAND", False)
+
     command_parser = subparser.add_parser(
         command_name,
-        help=help_text,
+        help=argparse.SUPPRESS if is_hidden else help_text,
         description=description,
         epilog=epilog,
         usage=usage,
@@ -59,6 +63,8 @@ def add_command(  # noqa: PLR0913
     # The above call to subparser.add_parser *should always* append to _choices_actions.
     # If future Python internals have changed unexpectedly, this will fail loudly and
     # raise an exception to the top of the stack, ending execution.
+    # Note: For hidden commands, we still add them to the display group to maintain
+    # consistency, even though they won't be shown in help text.
     try:
         if subparser._choices_actions[-1].dest == command_name:
             argparse_display_group._group_actions.append(subparser._choices_actions[-1])
