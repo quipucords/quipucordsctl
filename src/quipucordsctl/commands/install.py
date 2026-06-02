@@ -30,7 +30,8 @@ from quipucordsctl.commands import (
 from quipucordsctl.systemdunitparser import SystemdUnitParser
 
 INSTALL_SUCCESS_MESSAGE = _(
-    "Installation of %(server_software_name)s completed successfully."
+    "Installation of %(server_software_name)s completed"
+    " and the server started successfully."
 )
 INSTALL_SUCCESS_NO_START_MESSAGE = _(
     textwrap.dedent(
