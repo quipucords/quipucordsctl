@@ -56,7 +56,7 @@ This manual page describes the commands and options for the \fBQUIPUCORDSCTL_VAR
 The \fBQUIPUCORDSCTL_VAR_PROGRAM_NAME\fP command manages the QUIPUCORDSCTL_VAR_PROJECT deployment lifecycle. Within that workflow, \fBQUIPUCORDSCTL_VAR_PROGRAM_NAME\fP performs the following major tasks:
 .INDENT 0.0
 .IP \(bu 2
-Installing QUIPUCORDSCTL_VAR_PROJECT:
+Installing and starting QUIPUCORDSCTL_VAR_PROJECT:
 .sp
 \fBQUIPUCORDSCTL_VAR_PROGRAM_NAME install\fP
 .IP \(bu 2
@@ -83,15 +83,16 @@ The following sections describe these commands and their options in more detail.
 .SH INSTALLATION
 .SS Installing QUIPUCORDSCTL_VAR_PROJECT
 .sp
-To install QUIPUCORDSCTL_VAR_PROJECT and configure all required components, use the \fBinstall\fP command. This command sets up container volumes, generates initial secrets, creates systemd service unit files, and prepares the environment for running QUIPUCORDSCTL_VAR_PROJECT.
+To install QUIPUCORDSCTL_VAR_PROJECT and configure all required components, use the \fBinstall\fP command. This command sets up container volumes, generates initial secrets, creates systemd service unit files, prepares the environment for running QUIPUCORDSCTL_VAR_PROJECT and starts the QUIPUCORDSCTL_VAR_PROJECT application service.
 .sp
 \fBQUIPUCORDSCTL_VAR_PROGRAM_NAME install\fP
+.INDENT 0.0
+.TP
+.B \fB\-\-start, \-\-no\-start\fP
+Automatically start the server after installation (default: \-\-start)
+.UNINDENT
 .sp
-After installation, start the QUIPUCORDSCTL_VAR_PROJECT application service:
-.sp
-\fBsystemctl \-\-user restart quipucords\-app\fP
-.sp
-After a few seconds, access QUIPUCORDSCTL_VAR_PROJECT at \X'tty: link https://localhost:9443'\fI\%https://localhost:9443\fP\X'tty: link'
+After the installation, access QUIPUCORDSCTL_VAR_PROJECT at \X'tty: link https://localhost:9443'\fI\%https://localhost:9443\fP\X'tty: link'
 .SS Uninstalling QUIPUCORDSCTL_VAR_PROJECT
 .sp
 To completely remove QUIPUCORDSCTL_VAR_PROJECT and all its data, use the \fBuninstall\fP command. This command stops all running services, removes systemd unit files, removes secrets and configuration files, and deletes all data directories.
@@ -194,13 +195,12 @@ Load override values from this custom configuration directory. Use this to defin
 .SH EXAMPLES
 .INDENT 0.0
 .IP \(bu 2
-Installing QUIPUCORDSCTL_VAR_PROJECT:
+Installing and starting QUIPUCORDSCTL_VAR_PROJECT:
 .INDENT 2.0
 .INDENT 3.5
 .sp
 .EX
 $ QUIPUCORDSCTL_VAR_PROGRAM_NAME install
-$ systemctl \-\-user restart quipucords\-app
 .EE
 .UNINDENT
 .UNINDENT
@@ -231,6 +231,26 @@ Installing with maximum verbosity:
 .sp
 .EX
 $ QUIPUCORDSCTL_VAR_PROGRAM_NAME \-vvv install
+.EE
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Installing but not starting QUIPUCORDSCTL_VAR_PROJECT:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.EX
+$ QUIPUCORDSCTL_VAR_PROGRAM_NAME install \-\-no\-start
+.EE
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Starting QUIPUCORDSCTL_VAR_PROJECT if not automatically started:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.EX
+$ QUIPUCORDSCTL_VAR_PROGRAM_NAME start
 .EE
 .UNINDENT
 .UNINDENT

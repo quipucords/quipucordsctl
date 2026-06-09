@@ -27,7 +27,7 @@ Usage
 
 The ``quipucordsctl`` command manages the Quipucords deployment lifecycle. Within that workflow, ``quipucordsctl`` performs the following major tasks:
 
-* Installing Quipucords:
+* Installing and starting Quipucords:
 
   ``quipucordsctl install``
 
@@ -57,15 +57,14 @@ Installation
 Installing Quipucords
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To install Quipucords and configure all required components, use the ``install`` command. This command sets up container volumes, generates initial secrets, creates systemd service unit files, and prepares the environment for running Quipucords.
+To install Quipucords and configure all required components, use the ``install`` command. This command sets up container volumes, generates initial secrets, creates systemd service unit files, prepares the environment for running Quipucords and starts the Quipucords application service.
 
 ``quipucordsctl install``
 
-After installation, start the Quipucords application service:
+``--start, --no-start``
+    Automatically start the server after installation (default: --start)
 
-``systemctl --user restart quipucords-app``
-
-After a few seconds, access Quipucords at https://localhost:9443
+After the installation, access Quipucords at https://localhost:9443
 
 Uninstalling Quipucords
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -181,10 +180,9 @@ The following options are available for every quipucordsctl command.
 Examples
 --------
 
-* Installing Quipucords::
+* Installing and starting Quipucords::
 
     $ quipucordsctl install
-    $ systemctl --user restart quipucords-app
 
 * Verifying services are running::
 
@@ -197,6 +195,14 @@ Examples
 * Installing with maximum verbosity::
 
     $ quipucordsctl -vvv install
+
+* Installing but not starting Quipucords::
+
+    $ quipucordsctl install --no-start
+
+* Starting Quipucords if not automatically started::
+
+    $ quipucordsctl start
 
 * Checking installation status::
 
