@@ -27,7 +27,7 @@ Usage
 
 The ``QUIPUCORDSCTL_VAR_PROGRAM_NAME`` command manages the QUIPUCORDSCTL_VAR_PROJECT deployment lifecycle. Within that workflow, ``QUIPUCORDSCTL_VAR_PROGRAM_NAME`` performs the following major tasks:
 
-* Installing QUIPUCORDSCTL_VAR_PROJECT:
+* Installing and starting QUIPUCORDSCTL_VAR_PROJECT:
 
   ``QUIPUCORDSCTL_VAR_PROGRAM_NAME install``
 
@@ -57,15 +57,14 @@ Installation
 Installing QUIPUCORDSCTL_VAR_PROJECT
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To install QUIPUCORDSCTL_VAR_PROJECT and configure all required components, use the ``install`` command. This command sets up container volumes, generates initial secrets, creates systemd service unit files, and prepares the environment for running QUIPUCORDSCTL_VAR_PROJECT.
+To install QUIPUCORDSCTL_VAR_PROJECT and configure all required components, use the ``install`` command. This command sets up container volumes, generates initial secrets, creates systemd service unit files, prepares the environment for running QUIPUCORDSCTL_VAR_PROJECT and starts the QUIPUCORDSCTL_VAR_PROJECT application service.
 
 ``QUIPUCORDSCTL_VAR_PROGRAM_NAME install``
 
-After installation, start the QUIPUCORDSCTL_VAR_PROJECT application service:
+``--start, --no-start``
+    Automatically start the server after installation (default: --start)
 
-``systemctl --user restart quipucords-app``
-
-After a few seconds, access QUIPUCORDSCTL_VAR_PROJECT at https://localhost:9443
+After the installation, access QUIPUCORDSCTL_VAR_PROJECT at https://localhost:9443
 
 Uninstalling QUIPUCORDSCTL_VAR_PROJECT
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -181,10 +180,9 @@ The following options are available for every QUIPUCORDSCTL_VAR_PROGRAM_NAME com
 Examples
 --------
 
-* Installing QUIPUCORDSCTL_VAR_PROJECT::
+* Installing and starting QUIPUCORDSCTL_VAR_PROJECT::
 
     $ QUIPUCORDSCTL_VAR_PROGRAM_NAME install
-    $ systemctl --user restart quipucords-app
 
 * Verifying services are running::
 
@@ -197,6 +195,14 @@ Examples
 * Installing with maximum verbosity::
 
     $ QUIPUCORDSCTL_VAR_PROGRAM_NAME -vvv install
+
+* Installing but not starting QUIPUCORDSCTL_VAR_PROJECT::
+
+    $ QUIPUCORDSCTL_VAR_PROGRAM_NAME install --no-start
+
+* Starting QUIPUCORDSCTL_VAR_PROJECT if not automatically started::
+
+    $ QUIPUCORDSCTL_VAR_PROGRAM_NAME start
 
 * Checking installation status::
 

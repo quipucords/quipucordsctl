@@ -27,7 +27,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "quipucordsctl" "1" "June 05, 2026" "" "quipucordsctl"
+.TH "quipucordsctl" "1" "June 09, 2026" "" "quipucordsctl"
 .SH NAME
 quipucordsctl \- Deploy and manage Quipucords in Podman containers
 .SH SYNOPSIS
@@ -56,7 +56,7 @@ This manual page describes the commands and options for the \fBquipucordsctl\fP 
 The \fBquipucordsctl\fP command manages the Quipucords deployment lifecycle. Within that workflow, \fBquipucordsctl\fP performs the following major tasks:
 .INDENT 0.0
 .IP \(bu 2
-Installing Quipucords:
+Installing and starting Quipucords:
 .sp
 \fBquipucordsctl install\fP
 .IP \(bu 2
@@ -83,15 +83,16 @@ The following sections describe these commands and their options in more detail.
 .SH INSTALLATION
 .SS Installing Quipucords
 .sp
-To install Quipucords and configure all required components, use the \fBinstall\fP command. This command sets up container volumes, generates initial secrets, creates systemd service unit files, and prepares the environment for running Quipucords.
+To install Quipucords and configure all required components, use the \fBinstall\fP command. This command sets up container volumes, generates initial secrets, creates systemd service unit files, prepares the environment for running Quipucords and starts the Quipucords application service.
 .sp
 \fBquipucordsctl install\fP
+.INDENT 0.0
+.TP
+.B \fB\-\-start, \-\-no\-start\fP
+Automatically start the server after installation (default: \-\-start)
+.UNINDENT
 .sp
-After installation, start the Quipucords application service:
-.sp
-\fBsystemctl \-\-user restart quipucords\-app\fP
-.sp
-After a few seconds, access Quipucords at \X'tty: link https://localhost:9443'\fI\%https://localhost:9443\fP\X'tty: link'
+After the installation, access Quipucords at \X'tty: link https://localhost:9443'\fI\%https://localhost:9443\fP\X'tty: link'
 .SS Uninstalling Quipucords
 .sp
 To completely remove Quipucords and all its data, use the \fBuninstall\fP command. This command stops all running services, removes systemd unit files, removes secrets and configuration files, and deletes all data directories.
@@ -194,13 +195,12 @@ Load override values from this custom configuration directory. Use this to defin
 .SH EXAMPLES
 .INDENT 0.0
 .IP \(bu 2
-Installing Quipucords:
+Installing and starting Quipucords:
 .INDENT 2.0
 .INDENT 3.5
 .sp
 .EX
 $ quipucordsctl install
-$ systemctl \-\-user restart quipucords\-app
 .EE
 .UNINDENT
 .UNINDENT
@@ -231,6 +231,26 @@ Installing with maximum verbosity:
 .sp
 .EX
 $ quipucordsctl \-vvv install
+.EE
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Installing but not starting Quipucords:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.EX
+$ quipucordsctl install \-\-no\-start
+.EE
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Starting Quipucords if not automatically started:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.EX
+$ quipucordsctl start
 .EE
 .UNINDENT
 .UNINDENT

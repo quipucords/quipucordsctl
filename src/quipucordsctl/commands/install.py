@@ -29,15 +29,20 @@ from quipucordsctl.commands import (
 )
 from quipucordsctl.systemdunitparser import SystemdUnitParser
 
-INSTALL_SUCCESS_LONG_MESSAGE = _(
+INSTALL_SUCCESS_MESSAGE = _(
+    "Installation of %(server_software_name)s completed"
+    " and the server started successfully."
+)
+INSTALL_SUCCESS_NO_START_MESSAGE = _(
     textwrap.dedent(
         """
         Installation completed successfully. Please run the following command to start the %(server_software_name)s server:
 
-            systemctl --user restart %(server_software_package)s-app
+            %(program_name)s start
         """  # noqa: E501
     ).strip()
 )
+
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +54,7 @@ def get_display_group() -> argparse_utils.DisplayGroups:
 
 def get_help() -> str:
     """Get the help/docstring for this command."""
-    return _("Install the %(server_software_name)s server") % {
+    return _("Install and start the %(server_software_name)s server") % {
         "server_software_name": settings.SERVER_SOFTWARE_NAME
     }
 
@@ -87,6 +92,14 @@ def setup_parser(parser: argparse.ArgumentParser) -> None:
         action=argparse.BooleanOptionalAction,
         help=_(
             "Automatically enable lingering for the current user (default: --linger)",
+        ),
+    )
+    parser.add_argument(
+        "--start",
+        default=True,
+        action=argparse.BooleanOptionalAction,
+        help=_(
+            "Automatically start the server after installation (default: --start)",
         ),
     )
 
@@ -335,8 +348,48 @@ def systemctl_reload():
     shell_utils.run_command(settings.SYSTEMCTL_USER_DAEMON_RELOAD_CMD)
 
 
+def resolve_override_conf_dir(
+    override_conf_dir: str | None,
+) -> pathlib.Path | None:
+    """Resolve and validate the override configuration directory argument."""
+    if not override_conf_dir:
+        return None
+    path = pathlib.Path(override_conf_dir)
+    if path.is_dir():
+        return path
+    logger.warning(
+        _(
+            "The specified override configuration directory "
+            "('%(override_conf_dir)s') does not exist."
+        ),
+        {"override_conf_dir": override_conf_dir},
+    )
+    return None
+
+
+def start_server(args: argparse.Namespace) -> bool:
+    """Start the server and print the appropriate success message."""
+    if args.start:
+        if not systemctl_utils.start_service():
+            return False
+        if not args.quiet:
+            print(
+                INSTALL_SUCCESS_MESSAGE
+                % {"server_software_name": settings.SERVER_SOFTWARE_NAME},
+            )
+    elif not args.quiet:
+        print(
+            INSTALL_SUCCESS_NO_START_MESSAGE
+            % {
+                "server_software_name": settings.SERVER_SOFTWARE_NAME,
+                "program_name": settings.PROGRAM_NAME,
+            },
+        )
+    return True
+
+
 def run(args: argparse.Namespace) -> bool:
-    """Install the server, ensuring requirements are met."""
+    """Install and start the server, ensuring requirements are met."""
     logger.debug("Starting install command")
     systemctl_utils.ensure_systemd_user_session()
     podman_utils.ensure_podman_socket()
@@ -345,18 +398,7 @@ def run(args: argparse.Namespace) -> bool:
     if not reset_secrets(args):
         return False
 
-    override_conf_dir_path = None
-    if args.override_conf_dir:
-        if pathlib.Path(args.override_conf_dir).is_dir():
-            override_conf_dir_path = pathlib.Path(args.override_conf_dir)
-        else:
-            logger.warning(
-                _(
-                    "The specified override configuration directory "
-                    "('%(override_conf_dir)s') does not exist."
-                ),
-                {"override_conf_dir": args.override_conf_dir},
-            )
+    override_conf_dir_path = resolve_override_conf_dir(args.override_conf_dir)
     write_config_files(override_conf_dir_path)
     try:
         systemctl_reload()
@@ -370,12 +412,4 @@ def run(args: argparse.Namespace) -> bool:
     if not loginctl_utils.enable_linger(args.linger):
         return False
 
-    if not args.quiet:
-        print(
-            INSTALL_SUCCESS_LONG_MESSAGE
-            % {
-                "server_software_name": settings.SERVER_SOFTWARE_NAME,
-                "server_software_package": settings.SERVER_SOFTWARE_PACKAGE,
-            },
-        )
-    return True
+    return start_server(args)

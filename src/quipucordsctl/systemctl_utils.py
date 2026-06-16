@@ -2,6 +2,9 @@
 
 import logging
 import os
+import subprocess
+import textwrap
+import time
 from gettext import gettext as _
 
 from quipucordsctl import settings, shell_utils
@@ -80,6 +83,14 @@ def reload_daemon() -> bool:
     return True
 
 
+def is_service_installed() -> bool:
+    """Return True if the quipucords-app systemd unit file is present."""
+    __, __, exit_code = shell_utils.run_command(
+        settings.SYSTEMCTL_USER_LIST_QUIPUCORDS_APP, raise_error=False
+    )
+    return exit_code == 0
+
+
 def check_service_running() -> bool:
     """Check if quipucords-app service is currently running."""
     logger.debug(
@@ -99,3 +110,75 @@ def check_service_running() -> bool:
         raise_error=False,
     )
     return status_exit == 0
+
+
+START_FAILURE_GUIDANCE = textwrap.dedent(
+    _(
+        """
+        %(server_software_name)s failed to start. Check the journal for errors:
+
+            journalctl --user -u %(server_software_package)s-app
+
+        You may also run '%(program_name)s check' for a system health check.
+        """
+    ).strip()
+)
+
+
+def log_start_failure_details() -> None:
+    """Print service status and log user guidance after a failed start."""
+    stdout, __, __ = shell_utils.run_command(
+        settings.SYSTEMCTL_USER_STATUS_QUIPUCORDS_APP,
+        raise_error=False,
+    )
+    if stdout and not settings.runtime.quiet:
+        print(stdout)
+    logger.error(
+        START_FAILURE_GUIDANCE
+        % {
+            "server_software_name": settings.SERVER_SOFTWARE_NAME,
+            "server_software_package": settings.SERVER_SOFTWARE_PACKAGE,
+            "program_name": settings.PROGRAM_NAME,
+        }
+    )
+
+
+def start_service() -> bool:
+    """Start quipucords-app and wait until the service becomes active."""
+    logger.info(
+        _("Starting the %(server_software_name)s server."),
+        {"server_software_name": settings.SERVER_SOFTWARE_NAME},
+    )
+    try:
+        shell_utils.run_command(settings.SYSTEMCTL_USER_RESET_FAILED_CMD)
+        shell_utils.run_command(settings.SYSTEMCTL_USER_START_QUIPUCORDS_NETWORK)
+        shell_utils.run_command(
+            settings.SYSTEMCTL_USER_START_QUIPUCORDS_APP,
+            wait_timeout=settings.DEFAULT_APP_START_TIMEOUT,
+        )
+    except subprocess.CalledProcessError:
+        logger.error(
+            _("Failed to issue start command for %(server_software_name)s."),
+            {"server_software_name": settings.SERVER_SOFTWARE_NAME},
+        )
+        log_start_failure_details()
+        return False
+
+    deadline = time.monotonic() + settings.DEFAULT_SERVICE_START_WAIT_TIMEOUT
+    while time.monotonic() < deadline:
+        if check_service_running():
+            logger.info(
+                _("%(server_software_name)s server is active."),
+                {"server_software_name": settings.SERVER_SOFTWARE_NAME},
+            )
+            return True
+        __, __, failed_exit = shell_utils.run_command(
+            settings.SYSTEMCTL_USER_IS_FAILED_QUIPUCORDS_APP,
+            raise_error=False,
+        )
+        if failed_exit == 0:
+            break
+        time.sleep(5)
+
+    log_start_failure_details()
+    return False

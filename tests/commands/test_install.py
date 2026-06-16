@@ -35,6 +35,9 @@ def test_get_description():
         (["--linger"], "linger", True),
         (["--no-linger"], "linger", False),
         ([], "linger", True),
+        (["--start"], "start", True),
+        (["--no-start"], "start", False),
+        ([], "start", True),
     ),
 )
 def test_setup_parser(args, attr_name, expected):
@@ -89,6 +92,8 @@ def test_install_run(
     ):
         reset_secrets.return_value = True
         loginctl_utils.enable_linger.return_value = True
+        systemctl_utils.start_service.return_value = True
+        mock_args.start = True
 
         install.run(mock_args)
 
@@ -98,6 +103,7 @@ def test_install_run(
         reset_secrets.assert_called_once_with(mock_args)
         systemctl_reload.assert_called_once()
         loginctl_utils.enable_linger.assert_called_once()
+        systemctl_utils.start_service.assert_called_once()
 
         # Spot-check only a few paths that should now exist.
         assert (data_dir / "data").is_dir()
@@ -235,16 +241,18 @@ def test_install_run_ensure_images_called(
     """Test that install calls ensure_images."""
     mock_args = mock.Mock()
     mock_args.override_conf_dir = None
+    mock_args.start = True
 
     with (
         mock.patch.object(install, "podman_utils") as mock_podman_utils,
-        mock.patch.object(install, "systemctl_utils"),
+        mock.patch.object(install, "systemctl_utils") as mock_systemctl_utils,
         mock.patch.object(install, "reset_secrets", return_value=True),
         mock.patch.object(install, "systemctl_reload"),
         mock.patch.object(install, "loginctl_utils") as mock_loginctl_utils,
     ):
         mock_podman_utils.ensure_images.return_value = True
         mock_loginctl_utils.enable_linger.return_value = True
+        mock_systemctl_utils.start_service.return_value = True
 
         result = install.run(mock_args)
 
@@ -258,6 +266,7 @@ def test_install_run_fails_when_ensure_images_fails(
     """Test that install returns False when ensure_images fails."""
     mock_args = mock.Mock()
     mock_args.override_conf_dir = None
+    mock_args.start = True
 
     with (
         mock.patch.object(install, "podman_utils") as mock_podman_utils,
@@ -274,3 +283,77 @@ def test_install_run_fails_when_ensure_images_fails(
         assert result is False
         mock_podman_utils.ensure_images.assert_called_once()
         mock_loginctl_utils.enable_linger.assert_not_called()
+
+
+def test_install_run_with_no_start_skips_start_service(
+    temp_config_directories: dict[str, pathlib.Path], tmp_path: pathlib.Path
+):
+    """Test that install with --no-start does not call start_service."""
+    mock_args = mock.Mock()
+    mock_args.override_conf_dir = None
+    mock_args.start = False
+    mock_args.quiet = False
+
+    with (
+        mock.patch.object(install, "podman_utils") as mock_podman_utils,
+        mock.patch.object(install, "systemctl_utils") as mock_systemctl_utils,
+        mock.patch.object(install, "reset_secrets", return_value=True),
+        mock.patch.object(install, "systemctl_reload"),
+        mock.patch.object(install, "loginctl_utils") as mock_loginctl_utils,
+    ):
+        mock_podman_utils.ensure_images.return_value = True
+        mock_loginctl_utils.enable_linger.return_value = True
+
+        result = install.run(mock_args)
+
+        assert result is True
+        mock_systemctl_utils.start_service.assert_not_called()
+
+
+def test_resolve_override_conf_dir_nonexistent(tmp_path, caplog):
+    """Test resolve_override_conf_dir returns None and warns for a non-existent dir."""
+    caplog.set_level(logging.WARNING)
+    nonexistent_dir = str(tmp_path / "does_not_exist")
+    result = install.resolve_override_conf_dir(nonexistent_dir)
+    assert result is None
+    assert "does not exist" in caplog.text
+
+
+def test_start_server_prints_message_on_quiet_false(capsys):
+    """Test start_server prints success message when start succeeds."""
+    mock_args = mock.Mock()
+    mock_args.start = True
+    mock_args.quiet = False
+
+    with mock.patch.object(install, "systemctl_utils") as mock_systemctl_utils:
+        mock_systemctl_utils.start_service.return_value = True
+        result = install.start_server(mock_args)
+
+    assert result is True
+    captured = capsys.readouterr()
+    assert settings.SERVER_SOFTWARE_NAME in captured.out
+
+
+def test_install_run_fails_when_start_service_fails(
+    temp_config_directories: dict[str, pathlib.Path], tmp_path: pathlib.Path
+):
+    """Test that install returns False when start_service fails."""
+    mock_args = mock.Mock()
+    mock_args.override_conf_dir = None
+    mock_args.start = True
+
+    with (
+        mock.patch.object(install, "podman_utils") as mock_podman_utils,
+        mock.patch.object(install, "systemctl_utils") as mock_systemctl_utils,
+        mock.patch.object(install, "reset_secrets", return_value=True),
+        mock.patch.object(install, "systemctl_reload"),
+        mock.patch.object(install, "loginctl_utils") as mock_loginctl_utils,
+    ):
+        mock_podman_utils.ensure_images.return_value = True
+        mock_loginctl_utils.enable_linger.return_value = True
+        mock_systemctl_utils.start_service.return_value = False
+
+        result = install.run(mock_args)
+
+        assert result is False
+        mock_systemctl_utils.start_service.assert_called_once()
