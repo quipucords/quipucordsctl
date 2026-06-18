@@ -1,11 +1,11 @@
 ###############################################################
 %global product_name_lower quipucords
 %global product_name_title Quipucords
-%global server_image quay.io/quipucords/quipucords:2.5
-%global ui_image quay.io/quipucords/quipucords-ui:2.5
+%global server_image quay.io/quipucords/quipucords:2.6
+%global ui_image quay.io/quipucords/quipucords-ui:2.6
 ###############################################################
 
-%global version_ctl 2.5.0
+%global version_ctl 2.6.0
 %global templates_dir src/quipucordsctl/templates
 %global product_name_upper %(echo %{product_name_lower} | tr '[:lower:]' '[:upper:]')
 
@@ -188,6 +188,10 @@ sed -i 's#^Image=.*#Image=%{ui_image}#g' %{buildroot}/%{_datadir}/%{name}/config
 %endif
 
 %changelog
+* Thu Jun 18 2026 Ruda Moura <rmoura@redhat.com> - 0:2.6.0-1
+- Added support for server start command
+- Added new man page
+
 * Tue Mar 10 2026 Brad Smith <brasmith@redhat.com> - 0:2.5.0-1
 - First public release
 - provide and obsolete %{old_installer_package}
