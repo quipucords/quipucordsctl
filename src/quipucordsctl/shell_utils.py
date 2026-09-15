@@ -108,7 +108,7 @@ def run_command(  # noqa: C901, PLR0913, PLR0912
         cmd_env = os.environ.copy()
         cmd_env.update(env)
     try:
-        process = subprocess.Popen(
+        process = subprocess.Popen(  # noqa: S603
             args=command,  # a list like ["systemctl", "--user", "reset-failed"]
             stdin=subprocess.PIPE if stdin else subprocess.DEVNULL,
             stdout=stdout,
