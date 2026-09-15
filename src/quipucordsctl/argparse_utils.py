@@ -20,7 +20,7 @@ class DisplayGroups(enum.Enum):
     OTHER = _("Other Commands")
 
 
-def add_command(  # noqa: PLR0913
+def add_command(  # noqa: PLR0913, PLR0917
     subparser: argparse._SubParsersAction,
     command_module: types.ModuleType,
     argparse_display_group: argparse._ArgumentGroup,
