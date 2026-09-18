@@ -65,7 +65,8 @@ endif
 else
 	$(error Specify either SEGMENT=<major|minor|patch> or VERSION=<x.y.z>)
 endif
-	$(SED) -i "s/^Version:.*/Version:        $$(uv run python scripts/get-version.py)/" quipucordsctl.spec
+	$(SED) -i "/global version_ctl/s/.*/%global version_ctl $$(uv run python scripts/get-version.py)/" quipucordsctl.spec
+	$(SED) -i "s/^%global \(\(server\|ui\)_image .*\):[0-9\.]\+/%global \1:$$(uv run python scripts/get-version.py --major-minor)/" quipucordsctl.spec
 
 .PHONY: test
 test:
