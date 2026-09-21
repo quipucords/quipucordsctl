@@ -360,6 +360,52 @@ def image_exists(image_name: str) -> bool:
     return False
 
 
+def container_is_running(container_name: str) -> bool:
+    """Check if the named container exists and is currently running."""
+    verify_podman_argument_string(_("container name"), container_name)
+    stdout, __, exit_code = shell_utils.run_command(
+        [
+            "podman",
+            "container",
+            "inspect",
+            "--format",
+            "{{.State.Running}}",
+            container_name,
+        ],
+        raise_error=False,
+    )
+    if exit_code == 0 and stdout.strip() == "true":
+        logger.debug(
+            _("Container '%(container_name)s' is running."),
+            {"container_name": container_name},
+        )
+        return True
+    logger.debug(
+        _("Container '%(container_name)s' is not running."),
+        {"container_name": container_name},
+    )
+    return False
+
+
+def exec_in_container(container_name: str, command: list[str]) -> bool:
+    """Run a command inside an already-running container."""
+    verify_podman_argument_string(_("container name"), container_name)
+    __, __, exit_code = shell_utils.run_command(
+        ["podman", "exec", container_name, *command], raise_error=False
+    )
+    if exit_code == 0:
+        logger.debug(
+            _("Command succeeded inside container '%(container_name)s'."),
+            {"container_name": container_name},
+        )
+        return True
+    logger.debug(
+        _("Command failed inside container '%(container_name)s'."),
+        {"container_name": container_name},
+    )
+    return False
+
+
 def get_missing_images() -> set[str]:
     """
     Get the set of required container images that are not present locally.

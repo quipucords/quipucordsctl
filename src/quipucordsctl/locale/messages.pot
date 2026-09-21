@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-05-28 21:13-0400\n"
+"POT-Creation-Date: 2026-09-21 17:08-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -38,21 +38,21 @@ msgstr ""
 msgid "{prog} [OPTIONS...] {name} [COMMAND OPTIONS...]"
 msgstr ""
 
-#: src/quipucordsctl/argparse_utils.py:68
+#: src/quipucordsctl/argparse_utils.py:74
 #, python-format
 msgid ""
 "subparser._choices_actions[-1].dest was %(value)r, but add_command "
 "expected %(command_name)r"
 msgstr ""
 
-#: src/quipucordsctl/argparse_utils.py:79
+#: src/quipucordsctl/argparse_utils.py:85
 #, python-format
 msgid ""
 "Failed to add command '%(command_name)s' to argparse display group due to"
 " an unexpected error: %(error)s"
 msgstr ""
 
-#: src/quipucordsctl/argparse_utils.py:89
+#: src/quipucordsctl/argparse_utils.py:95
 #, python-format
 msgid "invalid non-negative integer value: '%(value)s'"
 msgstr ""
@@ -266,103 +266,127 @@ msgstr ""
 msgid "Container image '%(image_name)s' does not exist locally."
 msgstr ""
 
+#: src/quipucordsctl/podman_utils.py:365 src/quipucordsctl/podman_utils.py:392
+msgid "container name"
+msgstr ""
+
 #: src/quipucordsctl/podman_utils.py:379
+#, python-format
+msgid "Container '%(container_name)s' is running."
+msgstr ""
+
+#: src/quipucordsctl/podman_utils.py:384
+#, python-format
+msgid "Container '%(container_name)s' is not running."
+msgstr ""
+
+#: src/quipucordsctl/podman_utils.py:398
+#, python-format
+msgid "Command succeeded inside container '%(container_name)s'."
+msgstr ""
+
+#: src/quipucordsctl/podman_utils.py:403
+#, python-format
+msgid "Command failed inside container '%(container_name)s'."
+msgstr ""
+
+#: src/quipucordsctl/podman_utils.py:425
 #, python-format
 msgid "Missing %(count)d of %(total)d required images."
 msgstr ""
 
-#: src/quipucordsctl/podman_utils.py:383
+#: src/quipucordsctl/podman_utils.py:429
 msgid "All required images are present locally."
 msgstr ""
 
-#: src/quipucordsctl/podman_utils.py:395 src/quipucordsctl/podman_utils.py:424
+#: src/quipucordsctl/podman_utils.py:441 src/quipucordsctl/podman_utils.py:470
 msgid "registry"
 msgstr ""
 
-#: src/quipucordsctl/podman_utils.py:406
+#: src/quipucordsctl/podman_utils.py:452
 #, python-format
 msgid "Valid credentials already exist for registry '%(registry)s'."
 msgstr ""
 
-#: src/quipucordsctl/podman_utils.py:411
+#: src/quipucordsctl/podman_utils.py:457
 #, python-format
 msgid "Not logged in to registry '%(registry)s'."
 msgstr ""
 
-#: src/quipucordsctl/podman_utils.py:431
+#: src/quipucordsctl/podman_utils.py:477
 #, python-format
 msgid "Log in to registry '%(registry)s'?"
 msgstr ""
 
-#: src/quipucordsctl/podman_utils.py:435
+#: src/quipucordsctl/podman_utils.py:481
 msgid "Username: "
 msgstr ""
 
 #: src/quipucordsctl/commands/reset_admin_username.py:64
-#: src/quipucordsctl/podman_utils.py:437
+#: src/quipucordsctl/podman_utils.py:483
 msgid "Username cannot be empty."
 msgstr ""
 
-#: src/quipucordsctl/podman_utils.py:439
+#: src/quipucordsctl/podman_utils.py:485
 msgid "Password: "
 msgstr ""
 
-#: src/quipucordsctl/podman_utils.py:441
+#: src/quipucordsctl/podman_utils.py:487
 msgid "Password cannot be empty."
 msgstr ""
 
-#: src/quipucordsctl/podman_utils.py:453
+#: src/quipucordsctl/podman_utils.py:499
 #, python-format
 msgid "Successfully logged in to registry '%(registry)s'."
 msgstr ""
 
-#: src/quipucordsctl/podman_utils.py:459
+#: src/quipucordsctl/podman_utils.py:505
 #, python-format
 msgid "Failed to log in to registry '%(registry)s'."
 msgstr ""
 
-#: src/quipucordsctl/podman_utils.py:469
+#: src/quipucordsctl/podman_utils.py:515
 #, python-format
 msgid "Required container image '%(image)s' is missing."
 msgstr ""
 
-#: src/quipucordsctl/podman_utils.py:480
+#: src/quipucordsctl/podman_utils.py:526
 #, python-format
 msgid "Valid credentials do not exist for registry '%(registry)s'."
 msgstr ""
 
-#: src/quipucordsctl/podman_utils.py:485
+#: src/quipucordsctl/podman_utils.py:531
 #, python-format
 msgid "Could not log in to registry '%(registry)s'."
 msgstr ""
 
-#: src/quipucordsctl/podman_utils.py:497
+#: src/quipucordsctl/podman_utils.py:543
 msgid "Pulling container images. This may take a few minutes."
 msgstr ""
 
-#: src/quipucordsctl/podman_utils.py:500
+#: src/quipucordsctl/podman_utils.py:546
 #, python-format
 msgid "Pulling image: %(image)s"
 msgstr ""
 
-#: src/quipucordsctl/podman_utils.py:517
+#: src/quipucordsctl/podman_utils.py:563
 msgid "All required container images are present."
 msgstr ""
 
-#: src/quipucordsctl/podman_utils.py:523
+#: src/quipucordsctl/podman_utils.py:569
 #, python-format
 msgid "Should %(program)s pull missing images from the container registry?"
 msgstr ""
 
-#: src/quipucordsctl/podman_utils.py:527
+#: src/quipucordsctl/podman_utils.py:573
 msgid "Installation cannot proceed without all required container images."
 msgstr ""
 
-#: src/quipucordsctl/podman_utils.py:529
+#: src/quipucordsctl/podman_utils.py:575
 msgid "For disconnected installation, see the online documentation."
 msgstr ""
 
-#: src/quipucordsctl/podman_utils.py:537
+#: src/quipucordsctl/podman_utils.py:583
 msgid "All required images have been pulled successfully."
 msgstr ""
 
@@ -756,77 +780,79 @@ msgstr ""
 
 #: src/quipucordsctl/commands/install.py:33
 #, python-format
-msgid "Installation of %(server_software_name)s completed successfully."
+msgid ""
+"Installation of %(server_software_name)s completed and the server started"
+" successfully."
 msgstr ""
 
-#: src/quipucordsctl/commands/install.py:56
+#: src/quipucordsctl/commands/install.py:57
 #, python-format
 msgid "Install and start the %(server_software_name)s server"
 msgstr ""
 
-#: src/quipucordsctl/commands/install.py:93
-#: src/quipucordsctl/commands/upgrade.py:74
+#: src/quipucordsctl/commands/install.py:94
+#: src/quipucordsctl/commands/upgrade.py:76
 msgid "Automatically enable lingering for the current user (default: --linger)"
 msgstr ""
 
-#: src/quipucordsctl/commands/install.py:101
+#: src/quipucordsctl/commands/install.py:102
 msgid "Automatically start the server after installation (default: --start)"
 msgstr ""
 
-#: src/quipucordsctl/commands/install.py:114
+#: src/quipucordsctl/commands/install.py:115
 #, python-format
 msgid "Ensuring directory exists: %(dir_path)s"
 msgstr ""
 
-#: src/quipucordsctl/commands/install.py:126
+#: src/quipucordsctl/commands/install.py:127
 msgid "The install command failed to reset encryption secret."
 msgstr ""
 
-#: src/quipucordsctl/commands/install.py:128
+#: src/quipucordsctl/commands/install.py:129
 msgid "The install command failed to reset session secret."
 msgstr ""
 
-#: src/quipucordsctl/commands/install.py:129
+#: src/quipucordsctl/commands/install.py:130
 msgid "The install command failed to reset admin username."
 msgstr ""
 
-#: src/quipucordsctl/commands/install.py:130
+#: src/quipucordsctl/commands/install.py:131
 msgid "The install command failed to reset admin password."
 msgstr ""
 
-#: src/quipucordsctl/commands/install.py:132
+#: src/quipucordsctl/commands/install.py:133
 msgid "The install command failed to reset database password."
 msgstr ""
 
-#: src/quipucordsctl/commands/install.py:134
+#: src/quipucordsctl/commands/install.py:135
 msgid "The install command failed to reset redis password."
 msgstr ""
 
-#: src/quipucordsctl/commands/install.py:156
+#: src/quipucordsctl/commands/install.py:157
 #, python-format
 msgid "No override file found at: %(override_conf_path)s"
 msgstr ""
 
-#: src/quipucordsctl/commands/install.py:164
+#: src/quipucordsctl/commands/install.py:165
 #, python-format
 msgid ""
 "Please check file permissions. Cannot read override file at: "
 "%(override_conf_path)s"
 msgstr ""
 
-#: src/quipucordsctl/commands/install.py:173
+#: src/quipucordsctl/commands/install.py:174
 #, python-format
 msgid ""
 "Please check file permissions. Cannot access override file at: "
 "%(override_conf_path)s"
 msgstr ""
 
-#: src/quipucordsctl/commands/install.py:180
+#: src/quipucordsctl/commands/install.py:181
 #, python-format
 msgid "Override file found at: %(override_conf_path)s"
 msgstr ""
 
-#: src/quipucordsctl/commands/install.py:209
+#: src/quipucordsctl/commands/install.py:210
 #, python-format
 msgid ""
 "Skipping overrides for %(template_filename)s due to missing section "
@@ -834,57 +860,57 @@ msgid ""
 "any typos or errors."
 msgstr ""
 
-#: src/quipucordsctl/commands/install.py:236
+#: src/quipucordsctl/commands/install.py:237
 #, python-format
 msgid ""
 "Overriding %(template_filename)s %(section)s.%(option)s from "
 "%(old_value)s to %(value)s"
 msgstr ""
 
-#: src/quipucordsctl/commands/install.py:270
-#: src/quipucordsctl/commands/install.py:315
+#: src/quipucordsctl/commands/install.py:271
+#: src/quipucordsctl/commands/install.py:316
 #, python-format
 msgid "Writing config to %(destination)s"
 msgstr ""
 
-#: src/quipucordsctl/commands/install.py:291
+#: src/quipucordsctl/commands/install.py:292
 #, python-format
 msgid ""
 "Appending overrides (%(line_count)s lines) to template for "
 "%(template_filename)s before writing."
 msgstr ""
 
-#: src/quipucordsctl/commands/install.py:300
+#: src/quipucordsctl/commands/install.py:301
 #, python-format
 msgid ""
 "The following 'override' content was added by the user during "
 "installation at %(now)s"
 msgstr ""
 
-#: src/quipucordsctl/commands/install.py:307
+#: src/quipucordsctl/commands/install.py:308
 #, python-format
 msgid ""
 "Override file for %(template_filename)s appears to be empty and will be "
 "skipped."
 msgstr ""
 
-#: src/quipucordsctl/commands/install.py:323
+#: src/quipucordsctl/commands/install.py:324
 msgid "Generating config files"
 msgstr ""
 
-#: src/quipucordsctl/commands/install.py:343
+#: src/quipucordsctl/commands/install.py:344
 #, python-format
 msgid "Reloading systemctl to recognize %(server_software_name)s units"
 msgstr ""
 
-#: src/quipucordsctl/commands/install.py:361
+#: src/quipucordsctl/commands/install.py:362
 #, python-format
 msgid ""
 "The specified override configuration directory ('%(override_conf_dir)s') "
 "does not exist."
 msgstr ""
 
-#: src/quipucordsctl/commands/install.py:405
+#: src/quipucordsctl/commands/install.py:406
 msgid "systemctl reload failed unexpectedly. Please check logs."
 msgstr ""
 
@@ -1194,45 +1220,61 @@ msgid ""
 "and manually review that %(server_software_name)s uninstalled completely."
 msgstr ""
 
-#: src/quipucordsctl/commands/upgrade.py:21
+#: src/quipucordsctl/commands/unlock_admin_password.py:37
+msgid "Unlock the admin login after too many failed attempts"
+msgstr ""
+
+#: src/quipucordsctl/commands/unlock_admin_password.py:82
+msgid "Failed to clear the login lockouts."
+msgstr ""
+
+#: src/quipucordsctl/commands/unlock_admin_password.py:85
+msgid "Login lockouts were successfully cleared."
+msgstr ""
+
+#: src/quipucordsctl/commands/unlock_admin_password.py:87
+msgid "Login lockouts were cleared. You may now attempt to log in again."
+msgstr ""
+
+#: src/quipucordsctl/commands/upgrade.py:23
 #, python-format
 msgid "Upgrade the %(server_software_name)s server"
 msgstr ""
 
-#: src/quipucordsctl/commands/upgrade.py:54
+#: src/quipucordsctl/commands/upgrade.py:56
 msgid ""
 "Do not automatically pull the latest container images (default: pull, "
 "requires network connection)"
 msgstr ""
 
-#: src/quipucordsctl/commands/upgrade.py:64
+#: src/quipucordsctl/commands/upgrade.py:66
 #, python-format
 msgid ""
 "Maximum number of seconds to wait for `podman pull` to complete (default:"
 " %(default)s)"
 msgstr ""
 
-#: src/quipucordsctl/commands/upgrade.py:94
+#: src/quipucordsctl/commands/upgrade.py:96
 msgid ""
 "Failed to pull at least one image. Please review the logs, check network "
 "connectivity, and verify your podman credentials before trying again."
 msgstr ""
 
-#: src/quipucordsctl/commands/upgrade.py:127
+#: src/quipucordsctl/commands/upgrade.py:129
 #, python-format
 msgid ""
 "Could not upgrade the %(server_software_name)s software because the "
 "service failed to stop normally."
 msgstr ""
 
-#: src/quipucordsctl/commands/upgrade.py:141
+#: src/quipucordsctl/commands/upgrade.py:143
 #, python-format
 msgid ""
 "Could not upgrade the %(server_software_name)s software because the "
 "software failed to install normally."
 msgstr ""
 
-#: src/quipucordsctl/commands/upgrade.py:151
+#: src/quipucordsctl/commands/upgrade.py:153
 #, python-format
 msgid ""
 "You requested an upgrade without pulling the latest container images. "

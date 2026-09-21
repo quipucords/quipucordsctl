@@ -41,6 +41,10 @@ The ``QUIPUCORDSCTL_VAR_PROGRAM_NAME`` command manages the QUIPUCORDSCTL_VAR_PRO
 
   ``QUIPUCORDSCTL_VAR_PROGRAM_NAME reset_admin_username``
 
+* Unlocking the administrator login:
+
+  ``QUIPUCORDSCTL_VAR_PROGRAM_NAME unlock_admin_password``
+
 * Collecting diagnostic logs:
 
   ``QUIPUCORDSCTL_VAR_PROGRAM_NAME export_logs``
@@ -113,6 +117,13 @@ Resetting Administrator Username
 To reset the administrator username for the QUIPUCORDSCTL_VAR_PROJECT web interface and CLI, use the ``reset_admin_username`` command. This command prompts for a new username and updates the stored credentials. Set the ``QUIPUCORDS_SERVER_USERNAME`` environment variable to provide a value non-interactively.
 
 ``QUIPUCORDSCTL_VAR_PROGRAM_NAME reset_admin_username``
+
+Unlocking the Administrator Login
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+After too many failed login attempts, QUIPUCORDSCTL_VAR_PROJECT locks the account out, and correct credentials are rejected until the lockout expires. To clear the lockout immediately, use the ``unlock_admin_password`` command. Because the lockout records are stored in the QUIPUCORDSCTL_VAR_PROJECT database, this command requires the server to be running. Note that resetting the administrator password does not clear an existing lockout.
+
+``QUIPUCORDSCTL_VAR_PROGRAM_NAME unlock_admin_password``
 
 Resetting Database Password
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -219,6 +230,10 @@ Examples
 * Resetting administrator username::
 
     $ QUIPUCORDSCTL_VAR_PROGRAM_NAME reset_admin_username
+
+* Unlocking the administrator login after too many failed attempts::
+
+    $ QUIPUCORDSCTL_VAR_PROGRAM_NAME unlock_admin_password
 
 * Resetting database password::
 

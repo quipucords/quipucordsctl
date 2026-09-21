@@ -108,6 +108,24 @@ SYSTEMCTL_USER_IS_FAILED_QUIPUCORDS_APP = [
     f"{SERVER_SOFTWARE_PACKAGE}-app",
 ]
 
+# The container that runs the Django server, and how to invoke its manage.py.
+# The name comes from ContainerName in the "quipucords-server.container" template.
+# The server's container image has no entrypoint, puts its venv first on PATH, and
+# uses /app as its working directory, so plain "python" and a relative path work here.
+SERVER_CONTAINER_NAME = f"{SERVER_SOFTWARE_PACKAGE}-server"
+SERVER_MANAGE_COMMAND = [
+    "python",
+    f"{SERVER_SOFTWARE_PACKAGE}/manage.py",
+]
+SERVER_DJANGO_SETTINGS_ARGS = ["--settings", f"{SERVER_SOFTWARE_PACKAGE}.settings"]
+# django-axes command that clears login lockouts. Lockouts live in the database,
+# so this only needs the server container running to reach its DB connection.
+SERVER_AXES_RESET_COMMAND = [
+    *SERVER_MANAGE_COMMAND,
+    "axes_reset",
+    *SERVER_DJANGO_SETTINGS_ARGS,
+]
+
 # podman secrets we use
 QUIPUCORDS_SECRETS = {
     "db": f"{SERVER_SOFTWARE_PACKAGE}-db-password",
