@@ -582,6 +582,91 @@ def test_image_exists_raises_value_error_for_empty_string(value):
         podman_utils.image_exists(value)
 
 
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_container_is_running_returns_true(mock_run_command, faker, caplog):
+    """Test container_is_running returns True when podman reports "true"."""
+    caplog.set_level(logging.DEBUG)
+    container_name = faker.slug()
+    mock_run_command.return_value = "true\n", None, 0
+
+    assert podman_utils.container_is_running(container_name)
+    mock_run_command.assert_called_once_with(
+        [
+            "podman",
+            "container",
+            "inspect",
+            "--format",
+            "{{.State.Running}}",
+            container_name,
+        ],
+        raise_error=False,
+    )
+    assert f"Container '{container_name}' is running." in caplog.messages[-1]
+
+
+@pytest.mark.parametrize(
+    "stdout,exit_code",
+    (
+        ("false\n", 0),  # container exists but is stopped
+        ("", 125),  # podman's code for "no such container"
+        ("true\n", 125),  # stale output alongside a failure
+    ),
+)
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_container_is_running_returns_false(
+    mock_run_command, stdout, exit_code, faker, caplog
+):
+    """Test container_is_running returns False when stopped or absent."""
+    caplog.set_level(logging.DEBUG)
+    container_name = faker.slug()
+    mock_run_command.return_value = stdout, None, exit_code
+
+    assert not podman_utils.container_is_running(container_name)
+    assert f"Container '{container_name}' is not running." in caplog.messages[-1]
+
+
+@pytest.mark.parametrize("value", (None, 123, ["list"], {"dict": "value"}))
+def test_container_is_running_raises_type_error_for_non_string(value):
+    """Test container_is_running raises TypeError for non-string inputs."""
+    with pytest.raises(TypeError):
+        podman_utils.container_is_running(value)
+
+
+@pytest.mark.parametrize("value", ("", " ", "\t", "\n", "   "))
+def test_container_is_running_raises_value_error_for_empty_string(value):
+    """Test container_is_running raises ValueError for empty/whitespace strings."""
+    with pytest.raises(ValueError):
+        podman_utils.container_is_running(value)
+
+
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_exec_in_container_success(mock_run_command, faker):
+    """Test exec_in_container appends the command to "podman exec"."""
+    container_name = faker.slug()
+    command = ["python", "quipucords/manage.py", "axes_reset"]
+    mock_run_command.return_value = None, None, 0
+
+    assert podman_utils.exec_in_container(container_name, command)
+    mock_run_command.assert_called_once_with(
+        ["podman", "exec", container_name, *command], raise_error=False
+    )
+
+
+@mock.patch.object(podman_utils.shell_utils, "run_command")
+def test_exec_in_container_failure(mock_run_command, faker):
+    """Test exec_in_container returns False when the command exits non-zero."""
+    mock_run_command.return_value = None, None, 1
+
+    assert not podman_utils.exec_in_container(faker.slug(), ["false"])
+
+
+@pytest.mark.parametrize("value", (None, 123, ["list"], {"dict": "value"}))
+def test_exec_in_container_raises_type_error_for_non_string(value):
+    """Test exec_in_container raises TypeError for a non-string container name."""
+    with pytest.raises(TypeError):
+        podman_utils.exec_in_container(value, ["true"])
+
+
 @mock.patch.object(podman_utils, "image_exists")
 @mock.patch.object(podman_utils, "list_expected_podman_container_images")
 def test_get_missing_images_all_present(
