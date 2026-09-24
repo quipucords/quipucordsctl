@@ -17,13 +17,13 @@ reviews:
     - "!*.egg-info/**"
     - "!**_cache/**"
 
-  instructions: |
-    - Ensure proper error handling with clear user-facing messages for CLI errors.
-    - Flag broad "except Exception" handlers - prefer specific exception types.
-    - Verify secrets are never logged or returned in output.
-    - Shell commands should be constructed safely - no shell injection risks.
-
   path_instructions:
+    - path: "**/*"
+      instructions: |
+        - Ensure proper error handling with clear user-facing messages for CLI errors.
+        - Flag broad "except Exception" handlers - prefer specific exception types.
+        - Verify secrets are never logged or returned in output.
+        - Shell commands should be constructed safely - no shell injection risks.
     - path: "src/quipucordsctl/secrets.py"
       instructions: |
         - Ensure secrets are never logged or exposed in output.
