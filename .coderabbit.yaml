@@ -1,0 +1,53 @@
+language: en-US
+
+reviews:
+  profile: "chill"
+  auto_review:
+    enabled: true
+    drafts: false
+    ignore_title_keywords:
+      - "build(deps)"
+    ignore_usernames:
+      - "dependabot[bot]"
+      - "konflux-internal-p02[bot]"
+      - "mintmaker[bot]"
+
+  path_filters:
+    - "!uv.lock"
+    - "!*.egg-info/**"
+    - "!**_cache/**"
+
+  instructions: |
+    - Ensure proper error handling with clear user-facing messages for CLI errors.
+    - Flag broad "except Exception" handlers - prefer specific exception types.
+    - Verify secrets are never logged or returned in output.
+    - Shell commands should be constructed safely - no shell injection risks.
+
+  path_instructions:
+    - path: "src/quipucordsctl/secrets.py"
+      instructions: |
+        - Ensure secrets are never logged or exposed in output.
+        - Verify secret generation uses cryptographically secure methods.
+    - path: "src/quipucordsctl/commands/**"
+      instructions: |
+        - Verify proper error handling for subprocess/shell operations.
+        - Ensure credentials and secrets are never logged or exposed.
+        - Check for safe handling of user-supplied input.
+    - path: "src/quipucordsctl/podman_utils.py"
+      instructions: |
+        - Check for proper error handling in container operations.
+        - Verify timeout handling on container commands.
+    - path: "src/quipucordsctl/systemctl_utils.py"
+      instructions: |
+        - Verify safe construction of systemctl commands.
+        - Ensure proper error handling for service operations.
+    - path: "src/quipucordsctl/shell_utils.py"
+      instructions: |
+        - Verify shell commands are constructed safely to prevent injection.
+        - Ensure proper error handling and timeout management.
+    - path: "tests/**"
+      instructions: |
+        - Tests should not depend on execution order.
+        - Use pytest patterns: plain assert, standalone test functions, not unittest classes.
+        - Flag tests that use sleep or hardcoded waits.
+        - Naming convention: test_<function>_<scenario>.
