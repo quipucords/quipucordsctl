@@ -89,6 +89,7 @@ else
 endif
 	$(SED) -i "/global version_ctl/s/.*/%global version_ctl $$(uv run python scripts/get-version.py)/" quipucordsctl.spec
 	$(SED) -i "s/^%global \(\(server\|ui\)_image .*\):[0-9\.]\+/%global \1:$$(uv run python scripts/get-version.py --major-minor)/" quipucordsctl.spec
+	$(MAKE) manpage
 
 .PHONY: test
 test:
@@ -130,7 +131,7 @@ update-man-template-roff:
 	fi; \
 	$$SPHINX_BUILD -b man -q \
 	  -D project='QUIPUCORDSCTL_VAR_PROGRAM_NAME' \
-	  -D release='PKG_VERSION' \
+	  -D version='PKG_VERSION' \
 	  -D today='BUILD_DATE' \
 	  docs/source docs/_build
 
