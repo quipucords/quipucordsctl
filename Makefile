@@ -154,6 +154,7 @@ generate-man-quipucordsctl-roff:
 .PHONY: update-man-quipucordsctl-roff
 update-man-quipucordsctl-roff:
 	$(MAKE) --no-print-directory generate-man-quipucordsctl-roff > docs/_build/quipucordsctl.1
+	$(SED) '/^\.SH/{n;/^\.sp$$/d}' docs/_build/quipucordsctl.1 | $(SED) '/^\.SS/{n;/^\.sp$$/d}' > docs/_build/quipucordsctl.1.tmp && mv docs/_build/quipucordsctl.1.tmp docs/_build/quipucordsctl.1
 
 # Common man page generation steps
 .PHONY: generate-manpage-files
