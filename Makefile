@@ -36,19 +36,19 @@ OLD_MAN_PAGE_BUILD_DATE := $(shell grep -e "^\.TH" docs/_build/quipucordsctl.1 2
 .PHONY: help
 help:
 	@echo "Please use \`make <target>' where <target> is one of:"
-	@echo "  help                          to show this message"
-	@echo "  all                           to run check-requirements, lint, and test-coverage"
-	@echo "  clean                         to remove pyc/cache files"
-	@echo "  lint                          to run all linters"
-	@echo "  lint-ruff                     to run ultrafast ruff linter"
-	@echo "  check-requirements            to check all python dependencies"
-	@echo "  lock-requirements             to lock all python dependencies"
-	@echo "  update-requirements           to update all python dependencies"
-	@echo "  test                          to run unit tests"
-	@echo "  test-coverage                 to run unit tests and measure test coverage"
-	@echo "  manpage                       to regenerate all man page files"
-	@echo "  manpage-test                  to verify man pages haven't changed (CI)"
-	@echo "  bump-version                  to bump the project version (VERSION=x.y.z or SEGMENT=major|minor|patch)"
+	@echo "  help                to show this message"
+	@echo "  all                 to run check-requirements, lint, and test-coverage"
+	@echo "  clean               to remove pyc/cache files"
+	@echo "  lint                to run all linters"
+	@echo "  lint-ruff           to run ultrafast ruff linter"
+	@echo "  check-requirements  to check all python dependencies"
+	@echo "  lock-requirements   to lock all python dependencies"
+	@echo "  update-requirements to update all python dependencies"
+	@echo "  test                to run unit tests"
+	@echo "  test-coverage       to run unit tests and measure test coverage"
+	@echo "  manpage             to regenerate all man page files"
+	@echo "  manpage-test        to verify man pages haven't changed (CI)"
+	@echo "  bump-version        to bump the project version (VERSION=x.y.z or SEGMENT=major|minor|patch)"
 
 .PHONY: all
 all: check-requirements lint test-coverage
