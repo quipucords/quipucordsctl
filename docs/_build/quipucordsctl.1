@@ -27,7 +27,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "quipucordsctl" "1" "June 09, 2026" "" "quipucordsctl"
+.TH "quipucordsctl" "1" "September 29, 2026" "" "quipucordsctl"
 .SH NAME
 quipucordsctl \- Deploy and manage Quipucords in Podman containers
 .SH SYNOPSIS
@@ -43,7 +43,6 @@ quipucordsctl [\-\-help] [\-v | \-\-verbose] [\-q | \-\-quiet]
 .UNINDENT
 .UNINDENT
 .SH DESCRIPTION
-.sp
 \fBquipucordsctl\fP is a command\-line management tool for Quipucords, an agentless inspection and reporting tool that collects relevant facts about Red Hat software usage. This tool simplifies the installation, configuration, and management of Quipucords and all of its required components to run in Podman containers on your local system.
 .sp
 The quipucordsctl tool manages the complete lifecycle of a Quipucords deployment, including container image management, systemd service configuration, database setup, and secret management. It provides commands for installation, health checking, secret rotation, log collection, and system maintenance.
@@ -52,7 +51,6 @@ By default, Quipucords configuration is stored under \fB~/.config/quipucords/\fP
 .sp
 This manual page describes the commands and options for the \fBquipucordsctl\fP command and includes usage information and example commands.
 .SH USAGE
-.sp
 The \fBquipucordsctl\fP command manages the Quipucords deployment lifecycle. Within that workflow, \fBquipucordsctl\fP performs the following major tasks:
 .INDENT 0.0
 .IP \(bu 2
@@ -82,7 +80,6 @@ Uninstalling Quipucords:
 The following sections describe these commands and their options in more detail.
 .SH INSTALLATION
 .SS Installing Quipucords
-.sp
 To install Quipucords and configure all required components, use the \fBinstall\fP command. This command sets up container volumes, generates initial secrets, creates systemd service unit files, prepares the environment for running Quipucords and starts the Quipucords application service.
 .sp
 \fBquipucordsctl install\fP
@@ -94,7 +91,6 @@ Automatically start the server after installation (default: \-\-start)
 .sp
 After the installation, access Quipucords at \X'tty: link https://localhost:9443'\fI\%https://localhost:9443\fP\X'tty: link'
 .SS Uninstalling Quipucords
-.sp
 To completely remove Quipucords and all its data, use the \fBuninstall\fP command. This command stops all running services, removes systemd unit files, removes secrets and configuration files, and deletes all data directories.
 .sp
 \fBquipucordsctl uninstall\fP
@@ -105,32 +101,26 @@ Preserve data directories and secrets while still removing services, unit files,
 .UNINDENT
 .SH DIAGNOSTICS
 .SS Checking System Health
-.sp
 To verify the installation status and health of Quipucords services, use the \fBcheck\fP command. This command checks for the presence and correct permissions of data directories, certificate files, configuration files, and systemd unit files required by Quipucords.
 .sp
 \fBquipucordsctl check\fP
 .SS Exporting Logs
-.sp
 To export Quipucords logs for troubleshooting, use the \fBexport_logs\fP command. This command creates a compressed archive containing log files from all running containers and systemd services.
 .sp
 \fBquipucordsctl export_logs\fP
 .sp
 The command outputs the path to the generated log archive file.
 .SH CONFIGURATION
-.sp
 \fBquipucordsctl\fP provides commands for managing Quipucords configuration and secrets. These commands allow you to reset credentials and rotate secrets without reinstalling the system.
 .SS Resetting Administrator Password
-.sp
 To reset the administrator password for the Quipucords web interface and CLI, use the \fBreset_admin_password\fP command. This command prompts for a new password and updates the stored credentials. Set the \fBQUIPUCORDS_SERVER_PASSWORD\fP environment variable to provide a value non\-interactively.
 .sp
 \fBquipucordsctl reset_admin_password\fP
 .SS Resetting Administrator Username
-.sp
 To reset the administrator username for the Quipucords web interface and CLI, use the \fBreset_admin_username\fP command. This command prompts for a new username and updates the stored credentials. Set the \fBQUIPUCORDS_SERVER_USERNAME\fP environment variable to provide a value non\-interactively.
 .sp
 \fBquipucordsctl reset_admin_username\fP
 .SS Resetting Database Password
-.sp
 To reset the database password used by Quipucords, use the \fBreset_database_password\fP command. By default, this command generates a cryptographically strong random password. Set the \fBQUIPUCORDS_DBMS_PASSWORD\fP environment variable to use a specific value without prompting. Resetting this password on a running system may break the installation or cause data loss.
 .sp
 \fBquipucordsctl reset_database_password\fP
@@ -140,7 +130,6 @@ To reset the database password used by Quipucords, use the \fBreset_database_pas
 Prompt for a custom password instead of generating a random value.
 .UNINDENT
 .SS Resetting Redis Password
-.sp
 To reset the Redis password used by Quipucords for caching and session management, use the \fBreset_redis_password\fP command. By default, this command generates a cryptographically strong random password. Set the \fBQUIPUCORDS_REDIS_PASSWORD\fP environment variable to use a specific value without prompting. Resetting this password on a running system may cause disruption.
 .sp
 \fBquipucordsctl reset_redis_password\fP
@@ -150,7 +139,6 @@ To reset the Redis password used by Quipucords for caching and session managemen
 Prompt for a custom password instead of generating a random value.
 .UNINDENT
 .SS Resetting Encryption Secret
-.sp
 To reset the encryption secret key used to protect sensitive data stored by Quipucords, use the \fBreset_encryption_secret\fP command. By default, this command generates a cryptographically strong random key. Set the \fBQUIPUCORDS_ENCRYPTION_SECRET_KEY\fP environment variable to use a specific value without prompting. Resetting this secret on a running system may break the installation or cause data loss.
 .sp
 \fBquipucordsctl reset_encryption_secret\fP
@@ -160,7 +148,6 @@ To reset the encryption secret key used to protect sensitive data stored by Quip
 Prompt for a custom secret key instead of generating a random value.
 .UNINDENT
 .SS Resetting Session Secret
-.sp
 To reset the session secret key used for web session management in Quipucords, use the \fBreset_session_secret\fP command. By default, this command generates a cryptographically strong random key. Set the \fBQUIPUCORDS_SESSION_SECRET_KEY\fP environment variable to use a specific value without prompting. Resetting this secret on a running system may cause active sessions to become invalid.
 .sp
 \fBquipucordsctl reset_session_secret\fP
@@ -170,7 +157,6 @@ To reset the session secret key used for web session management in Quipucords, u
 Prompt for a custom secret key instead of generating a random value.
 .UNINDENT
 .SH OPTIONS FOR ALL COMMANDS
-.sp
 The following options are available for every quipucordsctl command.
 .INDENT 0.0
 .TP
@@ -459,10 +445,8 @@ General error. The command failed due to invalid arguments, missing prerequisite
 The \fBcheck\fP command exits with the number of issues found. For example, if three problems are detected, the exit code is 3.
 .UNINDENT
 .SH SEE ALSO
-.sp
 \fBpodman(1)\fP, \fBsystemctl(1)\fP, \fBjournalctl(1)\fP
 .SH NOTES
-.sp
 quipucordsctl requires Podman and systemd user sessions to function. All commands except the initial RPM installation should be run as a regular non\-root user.
 .sp
 To enable the Quipucords service to start automatically at login:
@@ -471,7 +455,6 @@ To enable the Quipucords service to start automatically at login:
 .sp
 quipucordsctl upstream source code: \X'tty: link https://github.com/quipucords/quipucordsctl'\fI\%https://github.com/quipucords/quipucordsctl\fP\X'tty: link'
 .SH SECURITY CONSIDERATIONS
-.sp
 The configuration and environment files in \fB~/.config/quipucords/\fP are stored with user\-only permissions (mode 0600 for files, 0700 for directories). Ensure your home directory has appropriate permissions to protect these files.
 .sp
 Database passwords, Redis passwords, encryption secrets, and session secrets are stored as Podman secrets, managed by Podman\(aqs secret storage. They are not stored as plain text files in the configuration directory.
