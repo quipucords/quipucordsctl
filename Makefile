@@ -2,15 +2,36 @@ PYTHON		= $(shell uv run which python 2>/dev/null || which python)
 TEST_TIMEOUT ?= "0.5"
 TEST_SESSION_TIMEOUT ?= "5.0"
 TEST_OPTS := -ra --timeout=$(TEST_TIMEOUT) --session-timeout=$(TEST_SESSION_TIMEOUT)
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+  # macOS/Darwin's built-in `sed` and `date` are BSD-style and incompatible with Linux/GNU-style arguments.
+  # However, macOS users can install GNU sed as `gsed` and GNU date as `gdate` using Homebrew.
+  ifneq ($(shell command -v gsed),)
+    SED := gsed
+  else
+    $(info "Warning: gsed may be required on macOS, but it is not installed.")
+    $(info "Please run 'brew install gnu-sed' to install it.")
+    SED := sed # Fall back to default sed for now
+  endif
+  ifneq ($(shell command -v gdate),)
+    DATE := gdate
+  else
+    $(info "Warning: gdate may be required on macOS, but it is not installed.")
+    $(info "Please run 'brew install coreutils' to install it.")
+    DATE := date # Fall back to default date for now
+  endif
+else
+  SED := sed
+  DATE := date
+endif
 
 # Man page generation variables
 PKG_VERSION = $(shell uv run python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
-BUILD_DATE = $(shell date '+%B %d, %Y')
-QUIPUCORDSCTL_VAR_CURRENT_YEAR = $(shell date '+%Y')
+BUILD_DATE = $(shell $(DATE) '+%B %d, %Y')
+QUIPUCORDSCTL_VAR_CURRENT_YEAR = $(shell $(DATE) '+%Y')
 QUIPUCORDSCTL_VAR_PROGRAM_NAME = quipucordsctl
 QUIPUCORDSCTL_VAR_PROJECT = Quipucords
 OLD_MAN_PAGE_BUILD_DATE := $(shell grep -e "^\.TH" docs/_build/quipucordsctl.1 2>/dev/null | cut -d '"' -f 6)
-SED = sed
 
 .PHONY: help
 help:
