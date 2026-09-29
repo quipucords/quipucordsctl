@@ -42,6 +42,10 @@ sudo firewall-cmd --reload  # optional if you want external access
 
 ## setup
 
+quipucordsctl development requires Python 3.12+, uv, and mandoc.
+
+`mandoc` is used by `make lint-docs` to validate the generated man page. It is pre-installed on macOS. On Linux, install it with your package manager (e.g. `dnf install mandoc` or `apt-get install mandoc`).
+
 ```sh
 git clone git@github.com:quipucords/quipucordsctl.git quipucordsctl
 cd quipucordsctl
