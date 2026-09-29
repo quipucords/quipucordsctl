@@ -41,6 +41,7 @@ help:
 	@echo "  clean               to remove pyc/cache files"
 	@echo "  lint                to run all linters"
 	@echo "  lint-ruff           to run ultrafast ruff linter"
+	@echo "  lint-docs           to run rstcheck and mandoc lint against docs"
 	@echo "  check-requirements  to check all python dependencies"
 	@echo "  lock-requirements   to lock all python dependencies"
 	@echo "  update-requirements to update all python dependencies"
@@ -104,12 +105,18 @@ test-coverage:
 	uv run coverage report --show-missing
 
 .PHONY: lint
-lint: lint-ruff
+lint: lint-ruff lint-docs
 
 .PHONY: lint-ruff
 lint-ruff:
 	uv run ruff check .
 	uv run ruff format --check .
+
+.PHONY: lint-docs
+lint-docs:
+	uv run rstcheck docs/source/man-template.rst
+	uv run rstcheck docs/_build/man-quipucordsctl.rst
+	mandoc -T lint docs/_build/quipucordsctl.1 2>&1 | grep -vE '^mandoc:.*STYLE:' | (! grep .)
 
 # Man page generation targets
 
