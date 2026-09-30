@@ -124,12 +124,11 @@ lint-docs:
 # Write a man page (roff format) with placeholders for names, version, and dates
 .PHONY: update-man-template-roff
 update-man-template-roff:
-	@SPHINX_BUILD=$$(uv run which sphinx-build 2>/dev/null); \
-	if [ -z "$$SPHINX_BUILD" ]; then \
+	@if ! uv run sphinx-build --version >/dev/null 2>&1; then \
 		echo "Error: sphinx-build not found. Install with: uv sync --group build"; \
 		exit 1; \
 	fi; \
-	$$SPHINX_BUILD -b man -q \
+	uv run sphinx-build -b man -q \
 	  -D project='QUIPUCORDSCTL_VAR_PROGRAM_NAME' \
 	  -D version='PKG_VERSION' \
 	  -D today='BUILD_DATE' \
