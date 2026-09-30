@@ -117,7 +117,7 @@ lint-ruff:
 lint-docs:
 	uv run rstcheck docs/source/man-template.rst
 	uv run rstcheck docs/_build/man-quipucordsctl.rst
-	mandoc -T lint docs/_build/quipucordsctl.1 2>&1 | grep -vE '^mandoc:.*STYLE:' | (! grep .)
+	mandoc -T lint -W warning docs/_build/quipucordsctl.1
 
 # Man page generation targets
 
