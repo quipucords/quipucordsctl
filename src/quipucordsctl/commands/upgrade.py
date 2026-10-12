@@ -5,7 +5,13 @@ import logging
 import textwrap
 from gettext import gettext as _
 
-from quipucordsctl import argparse_utils, podman_utils, settings, systemctl_utils
+from quipucordsctl import (
+    argparse_utils,
+    podman_utils,
+    settings,
+    systemctl_utils,
+    user_utils,
+)
 from quipucordsctl.commands import install
 
 logger = logging.getLogger(__name__)
@@ -123,6 +129,10 @@ def print_success():
 
 def run(args: argparse.Namespace) -> bool:
     """Stop the quipucords-app service."""
+    # Reject root before stopping anything. The nested "install" command checks this
+    # too, but only after stop_service() would already have stopped the server.
+    user_utils.ensure_not_root()
+
     if not systemctl_utils.stop_service():
         logger.error(
             _(
