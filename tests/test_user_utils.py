@@ -7,7 +7,7 @@ import pytest
 from quipucordsctl import settings, user_utils
 
 
-def test_get_username():
+def test_get_username_known_uid():
     """Test get_username returns the name from the passwd database."""
     with mock.patch.object(user_utils.pwd, "getpwuid") as mock_getpwuid:
         mock_getpwuid.return_value.pw_name = "potatoboi"
@@ -30,7 +30,7 @@ def test_get_username_no_passwd_entry():
         (1000, 1000, False),  # the only acceptable case
     ),
 )
-def test_is_root(uid, euid, expected):
+def test_is_root_uid_and_euid_combinations(uid, euid, expected):
     """Test is_root considers both the real and the effective uid."""
     with (
         mock.patch.object(user_utils.os, "getuid", return_value=uid),
@@ -39,7 +39,7 @@ def test_is_root(uid, euid, expected):
         assert user_utils.is_root() is expected
 
 
-def test_describe_current_user():
+def test_describe_current_user_uid_matches_euid():
     """Test describe_current_user reports the name and uid."""
     with (
         mock.patch.object(user_utils.os, "getuid", return_value=1000),
