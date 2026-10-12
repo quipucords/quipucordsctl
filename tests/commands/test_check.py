@@ -12,6 +12,13 @@ from quipucordsctl.commands import check
 from quipucordsctl.commands.check import PathCheckResult, StatusType
 
 
+@pytest.fixture(autouse=True)
+def not_root():
+    """Pretend not to be root so tests behave the same for any test runner user."""
+    with mock.patch.object(check.user_utils, "is_root", return_value=False):
+        yield
+
+
 @pytest.mark.parametrize(
     "missing_ok,expected_status",
     (
@@ -269,6 +276,56 @@ def test_run_all_files_present_and_valid(
         msg for msg in caplog.messages if "All checks passed successfully" in msg
     ]
     assert len(success_messages) == 1
+
+
+@mock.patch.object(check, "check_service_running")
+def test_run_reports_current_user(
+    mock_check_running, temp_config_directories: dict[str, pathlib.Path], caplog
+):
+    """Test run reports the current user even when everything else is fine."""
+    caplog.set_level(logging.INFO)
+    mock_args = mock.Mock()
+    mock_check_running.return_value = True
+
+    create_full_quipucords_structure(temp_config_directories)
+
+    with mock.patch.object(
+        check.user_utils, "describe_current_user", return_value="potatoboi (uid 1000)"
+    ):
+        assert check.run(mock_args) is True
+
+    assert "Running as potatoboi (uid 1000)" in caplog.messages
+
+
+@mock.patch.object(check, "check_service_running")
+def test_run_reports_root_as_an_error(
+    mock_check_running, temp_config_directories: dict[str, pathlib.Path], caplog
+):
+    """Test run counts running as root among the issues it reports."""
+    caplog.set_level(logging.INFO)
+    mock_args = mock.Mock()
+    mock_check_running.return_value = True
+
+    create_full_quipucords_structure(temp_config_directories)
+
+    with (
+        mock.patch.object(check.user_utils, "is_root", return_value=True),
+        mock.patch.object(
+            check.user_utils, "describe_current_user", return_value="root (uid 0)"
+        ),
+        pytest.raises(SystemExit) as exc_info,
+    ):
+        check.run(mock_args)
+
+    assert exc_info.value.code == 1
+    root_messages = [
+        msg for msg in caplog.messages if "must not be run as the root user" in msg
+    ]
+    assert len(root_messages) == 1
+    assert root_messages[0].startswith("Running as root (uid 0).")
+    # The informational "Running as ..." line is for non-root only; as root the
+    # error above reports the user instead, so it must not also be logged.
+    assert "Running as root (uid 0)" not in caplog.messages
 
 
 @mock.patch.object(check, "check_service_running")
