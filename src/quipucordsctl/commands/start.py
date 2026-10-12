@@ -4,7 +4,13 @@ import argparse
 import textwrap
 from gettext import gettext as _
 
-from quipucordsctl import argparse_utils, podman_utils, settings, systemctl_utils
+from quipucordsctl import (
+    argparse_utils,
+    podman_utils,
+    settings,
+    systemctl_utils,
+    user_utils,
+)
 
 START_SUCCESS_MESSAGE = _("%(server_software_name)s server started successfully.")
 SERVER_NOT_INSTALLED_MESSAGE = _(
@@ -47,6 +53,8 @@ def get_description() -> str:
 
 def run(args: argparse.Namespace) -> bool:
     """Start the server, ensuring requirements are met and images are present."""
+    user_utils.ensure_not_root()
+
     if not systemctl_utils.is_service_installed():
         print(
             SERVER_NOT_INSTALLED_MESSAGE
