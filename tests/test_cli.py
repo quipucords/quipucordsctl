@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from quipucordsctl import argparse_utils, cli
+from quipucordsctl import argparse_utils, cli, user_utils
 
 
 def test_load_commands():
@@ -194,6 +194,7 @@ def test_cli_nonzero_exit_when_command_fails():
         (Exception("uh oh"), "uh oh"),
         (KeyboardInterrupt, "Exiting due to keyboard interrupt."),
         (EOFError, "Input closed unexpectedly."),
+        (user_utils.RunningAsRootError("do not be root"), "do not be root"),
     ],
 )
 def test_cli_nonzero_exit_when_command_raises_exception(

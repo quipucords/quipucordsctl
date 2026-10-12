@@ -9,7 +9,7 @@ import sys
 from gettext import gettext as _
 from types import ModuleType
 
-from . import argparse_utils, podman_utils, settings, systemctl_utils
+from . import argparse_utils, podman_utils, settings, systemctl_utils, user_utils
 
 logger = logging.getLogger(__name__)
 
@@ -215,7 +215,7 @@ def install_console_handler(verbosity: int, color: str) -> None:
     root.addHandler(handler)
 
 
-def run(install_logging_handlers=False):
+def run(install_logging_handlers=False):  # noqa: C901
     """Run the program with arguments from the CLI."""
     commands = load_commands()
     parser = create_parser(commands)
@@ -242,6 +242,11 @@ def run(install_logging_handlers=False):
         except EOFError:  # can occur via control-d input
             print()  # new line for cleaner output before logger
             logger.error(_("Input closed unexpectedly."))
+            sys.exit(1)
+        except user_utils.RunningAsRootError as e:
+            # the command must not run as the root user
+            print()
+            logger.error(e)
             sys.exit(1)
         except podman_utils.PodmanIsNotReadyError as e:
             # can occur if podman is not available or running

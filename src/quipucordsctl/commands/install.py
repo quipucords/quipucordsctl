@@ -18,6 +18,7 @@ from quipucordsctl import (
     settings,
     shell_utils,
     systemctl_utils,
+    user_utils,
 )
 from quipucordsctl.commands import (
     reset_admin_password,
@@ -391,6 +392,7 @@ def start_server(args: argparse.Namespace) -> bool:
 def run(args: argparse.Namespace) -> bool:
     """Install and start the server, ensuring requirements are met."""
     logger.debug("Starting install command")
+    user_utils.ensure_not_root()
     systemctl_utils.ensure_systemd_user_session()
     podman_utils.ensure_podman_socket()
     podman_utils.ensure_cgroups_v2()
