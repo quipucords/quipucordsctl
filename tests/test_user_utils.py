@@ -60,7 +60,7 @@ def test_describe_current_user_differing_euid():
         ),
     ):
         description = user_utils.describe_current_user()
-    assert description == "user1000 (uid 1000), running as user0 (euid 0)"
+    assert description == "user1000 (uid 1000), effectively user0 (euid 0)"
 
 
 def test_ensure_not_root_happy_path():
@@ -79,5 +79,4 @@ def test_ensure_not_root_raises_for_root():
 
     message = str(exc_info.value)
     assert settings.PROGRAM_NAME in message
-    assert settings.SERVER_SOFTWARE_NAME in message
     assert "sudo" in message

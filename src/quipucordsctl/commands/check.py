@@ -253,18 +253,16 @@ def _check_current_user() -> int:
     if user_utils.is_root():
         logger.error(
             _(
-                "Running as %(current_user)s. %(program_name)s must not be run as the "
-                "root user, and a %(server_software_name)s server installed as root "
-                "will not work."
+                "Current user: %(current_user)s. "
+                "A %(server_software_name)s server installed as root will not work."
             ),
             {
                 "current_user": current_user,
-                "program_name": settings.PROGRAM_NAME,
                 "server_software_name": settings.SERVER_SOFTWARE_NAME,
             },
         )
         return 1
-    logger.info(_("Running as %(current_user)s"), {"current_user": current_user})
+    logger.info(_("Current user: %(current_user)s"), {"current_user": current_user})
     return 0
 
 

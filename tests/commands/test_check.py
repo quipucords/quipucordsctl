@@ -294,7 +294,7 @@ def test_run_reports_current_user(
     ):
         assert check.run(mock_args) is True
 
-    assert "Running as potatoboi (uid 1000)" in caplog.messages
+    assert "Current user: potatoboi (uid 1000)" in caplog.messages
 
 
 @mock.patch.object(check, "check_service_running")
@@ -319,13 +319,13 @@ def test_run_reports_root_as_an_error(
 
     assert exc_info.value.code == 1
     root_messages = [
-        msg for msg in caplog.messages if "must not be run as the root user" in msg
+        msg for msg in caplog.messages if "installed as root will not work" in msg
     ]
     assert len(root_messages) == 1
-    assert root_messages[0].startswith("Running as root (uid 0).")
-    # The informational "Running as ..." line is for non-root only; as root the
-    # error above reports the user instead, so it must not also be logged.
-    assert "Running as root (uid 0)" not in caplog.messages
+    assert root_messages[0].startswith("Current user: root (uid 0).")
+    # The plain informational line is for non-root only; as root the error above
+    # reports the user instead, so it must not also be logged.
+    assert "Current user: root (uid 0)" not in caplog.messages
 
 
 @mock.patch.object(check, "check_service_running")

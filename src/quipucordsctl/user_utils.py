@@ -17,13 +17,8 @@ RUNNING_AS_ROOT_MESSAGE = _(
         """
         %(program_name)s must not be run as the root user.
 
-        %(server_software_name)s runs as rootless Podman containers inside a systemd user session.
-        Installing or starting it as root writes configuration and data under root's home directory,
-        and the resulting server will not work.
-
-        Log in directly as the unprivileged user that owns the %(server_software_name)s installation,
-        and run %(program_name)s without sudo, su, or any other means of becoming root.
-        """  # noqa: E501
+        Run %(program_name)s without sudo, su, or any other means of becoming root.
+        """
     ).strip()
 )
 
@@ -61,7 +56,7 @@ def describe_current_user() -> str:
             "uid": uid,
         }
     return _(
-        "%(username)s (uid %(uid)d), running as %(effective_username)s (euid %(euid)d)"
+        "%(username)s (uid %(uid)d), effectively %(effective_username)s (euid %(euid)d)"
     ) % {
         "username": get_username(uid),
         "uid": uid,
@@ -75,9 +70,5 @@ def ensure_not_root() -> None:
     logger.debug(_("Ensuring this program is not running as root."))
     if is_root():
         raise RunningAsRootError(
-            RUNNING_AS_ROOT_MESSAGE
-            % {
-                "program_name": settings.PROGRAM_NAME,
-                "server_software_name": settings.SERVER_SOFTWARE_NAME,
-            }
+            RUNNING_AS_ROOT_MESSAGE % {"program_name": settings.PROGRAM_NAME}
         )
