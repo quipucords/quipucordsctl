@@ -3,8 +3,10 @@ Unlock the admin login after too many failed login attempts.
 
 The server locks an account out after repeated failed logins. Clearing that
 lockout is separate from resetting the password itself, because a user who
-knows their password can still be locked out, and a user who resets their
-password is still locked out until the lockout is cleared.
+knows their password can still be locked out. The server does clear the
+admin's lockout when it applies the admin password, but it only does that at
+startup, so resetting the password frees the account no sooner than the next
+server restart. This command clears the lockout on a running server.
 
 The server locks out by username and by source address independently, so a
 lockout the admin earned from one address may also have blocked that address.
