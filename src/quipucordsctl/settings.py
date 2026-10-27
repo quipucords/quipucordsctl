@@ -129,6 +129,17 @@ SERVER_AXES_RESET_USERNAME_COMMAND = [
     "axes_reset_username",
     *SERVER_DJANGO_SETTINGS_ARGS,
 ]
+# Resolve the admin username inside the container instead of reading its podman
+# secret on the host. The host read would pick up the newline that "podman secret
+# inspect --format" appends, and would see a secret changed after the server
+# started, whereas the server keeps using the username it was given at startup.
+# The management command arrives as "$@" and the username never leaves the
+# container, so nothing is interpolated into this script. ":?" fails loudly
+# rather than resetting the empty username, which axes reports as a success.
+SERVER_AXES_RESET_ADMIN_SCRIPT = (
+    f'exec "$@" -- "${{{ENV_VAR_PREFIX}SERVER_USERNAME:?'
+    f'not set in the {SERVER_SOFTWARE_PACKAGE} server container}}"'
+)
 
 # podman secrets we use
 QUIPUCORDS_SECRETS = {

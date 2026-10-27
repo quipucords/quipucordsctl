@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-26 20:05-0400\n"
+"POT-Creation-Date: 2026-10-27 09:52-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1220,19 +1220,19 @@ msgid ""
 "and manually review that %(server_software_name)s uninstalled completely."
 msgstr ""
 
-#: src/quipucordsctl/commands/unlock_admin_password.py:55
+#: src/quipucordsctl/commands/unlock_admin_password.py:43
 msgid "Unlock the admin login after too many failed attempts"
 msgstr ""
 
-#: src/quipucordsctl/commands/unlock_admin_password.py:123
+#: src/quipucordsctl/commands/unlock_admin_password.py:106
 msgid "Failed to clear the admin login lockout."
 msgstr ""
 
-#: src/quipucordsctl/commands/unlock_admin_password.py:126
+#: src/quipucordsctl/commands/unlock_admin_password.py:109
 msgid "The admin login lockout was successfully cleared."
 msgstr ""
 
-#: src/quipucordsctl/commands/unlock_admin_password.py:129
+#: src/quipucordsctl/commands/unlock_admin_password.py:112
 msgid "The admin login lockout was cleared. You may now try to log in again."
 msgstr ""
 

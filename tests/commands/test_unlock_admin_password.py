@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+import subprocess
 
 import pytest
 
@@ -30,20 +31,15 @@ def mock_requirements(mocker):
 def mock_server(mocker, faker):
     """Mock the container interactions, defaulting to a running, cooperative server."""
 
-    def _mock_server(*, is_running=True, exec_succeeds=True, admin_username=UNSET):
-        if admin_username is UNSET:
-            admin_username = faker.user_name()
+    def _mock_server(*, is_running=True, exec_succeeds=True):
         return {
-            "admin_username": admin_username,
             "container_is_running": mocker.patch.object(
                 unlock_admin_password.podman_utils,
                 "container_is_running",
                 return_value=is_running,
             ),
             "get_secret_value": mocker.patch.object(
-                unlock_admin_password.podman_utils,
-                "get_secret_value",
-                return_value=admin_username,
+                unlock_admin_password.podman_utils, "get_secret_value"
             ),
             "exec_in_container": mocker.patch.object(
                 unlock_admin_password.podman_utils,
@@ -83,15 +79,14 @@ def test_unlock_admin_password_run_success(
     caplog.set_level(logging.DEBUG)
     assert unlock_admin_password.run(argparse.Namespace())
 
-    mocks["get_secret_value"].assert_called_once_with(
-        unlock_admin_password.PODMAN_SECRET_NAME
-    )
     mocks["exec_in_container"].assert_called_once_with(
         settings.SERVER_CONTAINER_NAME,
         [
+            "sh",
+            "-c",
+            settings.SERVER_AXES_RESET_ADMIN_SCRIPT,
+            "sh",
             *settings.SERVER_AXES_RESET_USERNAME_COMMAND,
-            "--",
-            mocks["admin_username"],
         ],
     )
     assert "The admin login lockout was successfully cleared." == caplog.messages[-1]
@@ -122,31 +117,22 @@ def test_unlock_admin_password_run_fails_when_exec_fails(
     assert "Failed to clear the admin login lockout." == caplog.messages[-1]
 
 
-@pytest.mark.parametrize("admin_username", [None, "", "   "])
-def test_unlock_admin_password_run_fails_when_username_unavailable(
-    mock_requirements, mock_server, caplog, admin_username
-):
-    """Test run returns False when the admin username secret cannot be read."""
-    mocks = mock_server(admin_username=admin_username)
-
-    caplog.set_level(logging.ERROR)
-    assert not unlock_admin_password.run(argparse.Namespace())
-
-    mocks["exec_in_container"].assert_not_called()
-    assert unlock_admin_password.PODMAN_SECRET_NAME in caplog.text
-    assert f"{settings.PROGRAM_NAME} reset_admin_username" in caplog.text
-
-
-def test_unlock_admin_password_passes_dash_dash_before_username(
+def test_unlock_admin_password_never_reads_username_on_the_host(
     mock_requirements, mock_server
 ):
-    """Test a username starting with "-" is not parsed as a command-line option."""
-    mocks = mock_server(admin_username="-rf")
+    """Test the username is resolved in the container, not from the host secret.
+
+    Reading the podman secret here would append the newline that "podman secret
+    inspect --format" adds, and would miss a secret changed after the server
+    started, so axes would silently find no records and still report success.
+    """
+    mocks = mock_server()
 
     assert unlock_admin_password.run(argparse.Namespace())
 
+    mocks["get_secret_value"].assert_not_called()
     command = mocks["exec_in_container"].call_args.args[1]
-    assert command[-2:] == ["--", "-rf"]
+    assert settings.QUIPUCORDS_SECRETS["username"] not in command
 
 
 def test_unlock_admin_password_run_checks_requirements_first(
@@ -188,3 +174,60 @@ def test_axes_reset_command_invokes_manage_py():
         "quipucords.settings",
     ]
     assert "axes_reset" not in settings.SERVER_AXES_RESET_USERNAME_COMMAND
+
+
+# conftest's autouse forbid_shell_utils_subprocess fixture blocks subprocess.Popen
+# so product code cannot shell out during tests. The two tests below are not
+# exercising product code; they run the reset script through a real "sh" to prove
+# it handles the container's username correctly, so they restore the real Popen.
+_REAL_POPEN = subprocess.Popen
+
+
+@pytest.fixture
+def allow_real_subprocess(monkeypatch):
+    """Undo the autouse Popen guard for tests that must run a real shell."""
+    monkeypatch.setattr("quipucordsctl.shell_utils.subprocess.Popen", _REAL_POPEN)
+
+
+def _run_admin_script(username_env: dict[str, str]) -> subprocess.CompletedProcess:
+    """Run the admin reset script with "echo" standing in for the real command."""
+    return subprocess.run(  # noqa: S603
+        [
+            "/bin/sh",  # absolute here; the container resolves "sh" from its PATH
+            "-c",
+            settings.SERVER_AXES_RESET_ADMIN_SCRIPT,
+            "sh",
+            "echo",
+            "axes_reset_username",
+        ],
+        env=username_env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+@pytest.mark.parametrize(
+    "username", ["admin", "-rf", "name with spaces", "admin\twith\ttabs"]
+)
+def test_admin_script_passes_container_username_after_dash_dash(
+    username, allow_real_subprocess
+):
+    """Test the script forwards the container's username verbatim after "--"."""
+    result = _run_admin_script({"QUIPUCORDS_SERVER_USERNAME": username})
+
+    assert result.returncode == 0
+    assert result.stdout == f"axes_reset_username -- {username}\n"
+
+
+@pytest.mark.parametrize("env", [{}, {"QUIPUCORDS_SERVER_USERNAME": ""}])
+def test_admin_script_fails_when_container_username_missing(env, allow_real_subprocess):
+    """Test the script fails loudly rather than resetting an empty username.
+
+    axes_reset_username exits 0 when it matches no records, so an empty value
+    would be reported to the user as a successful unlock.
+    """
+    result = _run_admin_script(env)
+
+    assert result.returncode != 0
+    assert result.stdout == ""

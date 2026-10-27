@@ -22,24 +22,12 @@ from quipucordsctl import argparse_utils, podman_utils, settings, systemctl_util
 
 logger = logging.getLogger(__name__)
 
-PODMAN_SECRET_NAME = settings.QUIPUCORDS_SECRETS["username"]
-
 SERVER_NOT_RUNNING_MESSAGE = _(
     textwrap.dedent(
         """
         %(server_software_name)s is not running. Login lockouts are stored in the database, which is only reachable while the server is running. Please start the server and try again:
 
             %(program_name)s start
-        """  # noqa: E501 line-too-long
-    ).strip()
-)
-
-NO_ADMIN_USERNAME_MESSAGE = _(
-    textwrap.dedent(
-        """
-        Could not read the admin login username from the '%(secret_name)s' podman secret, so there is no account to unlock. Please set the username and try again:
-
-            %(program_name)s reset_admin_username
         """  # noqa: E501 line-too-long
     ).strip()
 )
@@ -81,9 +69,9 @@ def run(args: argparse.Namespace) -> bool:
     Clear the admin account's login lockout on the server.
 
     Requires the server container to be running so that the management command
-    can reach the database where the lockout records live. The container cannot
-    start without the admin username secret, so reading it here should always
-    succeed, but we check anyway rather than unlock the wrong account.
+    can reach the database where the lockout records live, and so that we can
+    unlock the username the server is actually serving rather than whatever the
+    podman secret happens to hold now.
 
     Only the admin's own lockout is cleared. Other accounts keep their lockouts,
     and so does any address-based lockout that other accounts' failed logins
@@ -102,23 +90,18 @@ def run(args: argparse.Namespace) -> bool:
         )
         return False
 
-    admin_username = podman_utils.get_secret_value(PODMAN_SECRET_NAME)
-    if not admin_username or not admin_username.strip():
-        logger.error(
-            NO_ADMIN_USERNAME_MESSAGE
-            % {
-                "secret_name": PODMAN_SECRET_NAME,
-                "program_name": settings.PROGRAM_NAME,
-            }
-        )
-        return False
-
-    # "--" stops the management command's parser from reading a username that
-    # happens to start with "-" as an option. Usernames are only checked for
-    # being non-empty when they are set, so that is a reachable input.
+    # The script resolves the username from the container's own environment and
+    # appends it after "--", which stops the management command's parser from
+    # reading a username that happens to start with "-" as an option.
     if not podman_utils.exec_in_container(
         settings.SERVER_CONTAINER_NAME,
-        [*settings.SERVER_AXES_RESET_USERNAME_COMMAND, "--", admin_username],
+        [
+            "sh",
+            "-c",
+            settings.SERVER_AXES_RESET_ADMIN_SCRIPT,
+            "sh",
+            *settings.SERVER_AXES_RESET_USERNAME_COMMAND,
+        ],
     ):
         logger.error(_("Failed to clear the admin login lockout."))
         return False
