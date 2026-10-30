@@ -41,6 +41,10 @@ The ``quipucordsctl`` command manages the Quipucords deployment lifecycle. Withi
 
   ``quipucordsctl reset_admin_username``
 
+* Unlocking the administrator login:
+
+  ``quipucordsctl unlock_admin_password``
+
 * Collecting diagnostic logs:
 
   ``quipucordsctl export_logs``
@@ -113,6 +117,13 @@ Resetting Administrator Username
 To reset the administrator username for the Quipucords web interface and CLI, use the ``reset_admin_username`` command. This command prompts for a new username and updates the stored credentials. Set the ``QUIPUCORDS_SERVER_USERNAME`` environment variable to provide a value non-interactively.
 
 ``quipucordsctl reset_admin_username``
+
+Unlocking the Administrator Login
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+After too many failed login attempts, Quipucords locks the account out, and correct credentials are rejected until the lockout expires. To clear the lockout immediately, use the ``unlock_admin_password`` command. Because the lockout records are stored in the Quipucords database, this command requires the server to be running. Resetting the administrator password with ``reset_admin_password`` also clears an existing lockout, but only after the server restarts and applies the new password; ``unlock_admin_password`` clears the lockout immediately on a running server without changing the password.
+
+``quipucordsctl unlock_admin_password``
 
 Resetting Database Password
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -219,6 +230,10 @@ Examples
 * Resetting administrator username::
 
     $ quipucordsctl reset_admin_username
+
+* Unlocking the administrator login after too many failed attempts::
+
+    $ quipucordsctl unlock_admin_password
 
 * Resetting database password::
 

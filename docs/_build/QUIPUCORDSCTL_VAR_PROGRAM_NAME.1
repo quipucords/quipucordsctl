@@ -70,6 +70,10 @@ Resetting administrator credentials:
 .sp
 \fBQUIPUCORDSCTL_VAR_PROGRAM_NAME reset_admin_username\fP
 .IP \(bu 2
+Unlocking the administrator login:
+.sp
+\fBQUIPUCORDSCTL_VAR_PROGRAM_NAME unlock_admin_password\fP
+.IP \(bu 2
 Collecting diagnostic logs:
 .sp
 \fBQUIPUCORDSCTL_VAR_PROGRAM_NAME export_logs\fP
@@ -129,6 +133,11 @@ To reset the administrator password for the QUIPUCORDSCTL_VAR_PROJECT web interf
 To reset the administrator username for the QUIPUCORDSCTL_VAR_PROJECT web interface and CLI, use the \fBreset_admin_username\fP command. This command prompts for a new username and updates the stored credentials. Set the \fBQUIPUCORDS_SERVER_USERNAME\fP environment variable to provide a value non\-interactively.
 .sp
 \fBQUIPUCORDSCTL_VAR_PROGRAM_NAME reset_admin_username\fP
+.SS Unlocking the Administrator Login
+.sp
+After too many failed login attempts, QUIPUCORDSCTL_VAR_PROJECT locks the account out, and correct credentials are rejected until the lockout expires. To clear the lockout immediately, use the \fBunlock_admin_password\fP command. Because the lockout records are stored in the QUIPUCORDSCTL_VAR_PROJECT database, this command requires the server to be running. Resetting the administrator password with \fBreset_admin_password\fP also clears an existing lockout, but only after the server restarts and applies the new password; \fBunlock_admin_password\fP clears the lockout immediately on a running server without changing the password.
+.sp
+\fBQUIPUCORDSCTL_VAR_PROGRAM_NAME unlock_admin_password\fP
 .SS Resetting Database Password
 .sp
 To reset the database password used by QUIPUCORDSCTL_VAR_PROJECT, use the \fBreset_database_password\fP command. By default, this command generates a cryptographically strong random password. Set the \fBQUIPUCORDS_DBMS_PASSWORD\fP environment variable to use a specific value without prompting. Resetting this password on a running system may break the installation or cause data loss.
@@ -291,6 +300,16 @@ Resetting administrator username:
 .sp
 .EX
 $ QUIPUCORDSCTL_VAR_PROGRAM_NAME reset_admin_username
+.EE
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Unlocking the administrator login after too many failed attempts:
+.INDENT 2.0
+.INDENT 3.5
+.sp
+.EX
+$ QUIPUCORDSCTL_VAR_PROGRAM_NAME unlock_admin_password
 .EE
 .UNINDENT
 .UNINDENT

@@ -108,6 +108,39 @@ SYSTEMCTL_USER_IS_FAILED_QUIPUCORDS_APP = [
     f"{SERVER_SOFTWARE_PACKAGE}-app",
 ]
 
+# The container that runs the Django server, and how to invoke its manage.py.
+# The name comes from ContainerName in the "quipucords-server.container" template.
+# The server's container image has no entrypoint, puts its venv first on PATH, and
+# uses /app as its working directory, so plain "python" and a relative path work here.
+SERVER_CONTAINER_NAME = f"{SERVER_SOFTWARE_PACKAGE}-server"
+SERVER_MANAGE_COMMAND = [
+    "python",
+    f"{SERVER_SOFTWARE_PACKAGE}/manage.py",
+]
+SERVER_DJANGO_SETTINGS_ARGS = ["--settings", f"{SERVER_SOFTWARE_PACKAGE}.settings"]
+# django-axes command that clears login lockouts for specific usernames, which the
+# caller must append. Lockouts live in the database, so this only needs the server
+# container running to reach its DB connection. We deliberately use the username-scoped
+# command instead of the unqualified "axes_reset" because the latter also deletes every
+# other account's and source address's lockouts, discarding brute-force protection the
+# admin never asked us to touch.
+SERVER_AXES_RESET_USERNAME_COMMAND = [
+    *SERVER_MANAGE_COMMAND,
+    "axes_reset_username",
+    *SERVER_DJANGO_SETTINGS_ARGS,
+]
+# Resolve the admin username inside the container instead of reading its podman
+# secret on the host. The host read would pick up the newline that "podman secret
+# inspect --format" appends, and would see a secret changed after the server
+# started, whereas the server keeps using the username it was given at startup.
+# The management command arrives as "$@" and the username never leaves the
+# container, so nothing is interpolated into this script. ":?" fails loudly
+# rather than resetting the empty username, which axes reports as a success.
+SERVER_AXES_RESET_ADMIN_SCRIPT = (
+    f'exec "$@" -- "${{{ENV_VAR_PREFIX}SERVER_USERNAME:?'
+    f'not set in the {SERVER_SOFTWARE_PACKAGE} server container}}"'
+)
+
 # podman secrets we use
 QUIPUCORDS_SECRETS = {
     "db": f"{SERVER_SOFTWARE_PACKAGE}-db-password",
