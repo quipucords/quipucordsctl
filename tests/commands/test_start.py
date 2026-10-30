@@ -2,8 +2,17 @@
 
 from unittest import mock
 
+import pytest
+
 from quipucordsctl import argparse_utils, settings
 from quipucordsctl.commands import start
+
+
+@pytest.fixture(autouse=True)
+def not_root():
+    """Pretend not to be root so tests behave the same for any test runner user."""
+    with mock.patch.object(start.user_utils, "is_root", return_value=False):
+        yield
 
 
 def test_get_help():
@@ -58,6 +67,23 @@ def test_start_run_happy_path():
         mock_podman_utils.ensure_cgroups_v2.assert_called_once()
         mock_podman_utils.ensure_images.assert_called_once()
         mock_systemctl_utils.start_service.assert_called_once()
+
+
+def test_start_run_rejects_root():
+    """Test start refuses to run as root and does nothing else."""
+    mock_args = mock.Mock()
+
+    with (
+        mock.patch.object(start, "systemctl_utils") as mock_systemctl_utils,
+        mock.patch.object(start, "podman_utils") as mock_podman_utils,
+        mock.patch.object(start.user_utils, "is_root", return_value=True),
+        pytest.raises(start.user_utils.RunningAsRootError),
+    ):
+        start.run(mock_args)
+
+    mock_systemctl_utils.is_service_installed.assert_not_called()
+    mock_systemctl_utils.start_service.assert_not_called()
+    mock_podman_utils.ensure_images.assert_not_called()
 
 
 def test_start_run_fails_when_ensure_images_fails():

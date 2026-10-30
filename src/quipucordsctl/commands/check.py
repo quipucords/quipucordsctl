@@ -13,7 +13,7 @@ from enum import Enum
 from gettext import gettext as _
 from typing import Optional
 
-from quipucordsctl import argparse_utils, settings
+from quipucordsctl import argparse_utils, settings, user_utils
 from quipucordsctl.systemctl_utils import check_service_running
 
 logger = logging.getLogger(__name__)
@@ -247,6 +247,25 @@ def check_file_and_print_status(path: pathlib.Path, missing_ok: bool = False) ->
     return result.status in (StatusType.OK, StatusType.OK_MISSING)
 
 
+def _check_current_user() -> int:
+    """Report the user running this command. Returns error count."""
+    current_user = user_utils.describe_current_user()
+    if user_utils.is_root():
+        logger.error(
+            _(
+                "Current user: %(current_user)s. "
+                "A %(server_software_name)s server installed as root will not work."
+            ),
+            {
+                "current_user": current_user,
+                "server_software_name": settings.SERVER_SOFTWARE_NAME,
+            },
+        )
+        return 1
+    logger.info(_("Current user: %(current_user)s"), {"current_user": current_user})
+    return 0
+
+
 def _check_data_directories(server_running: bool = True) -> int:
     """Check main data directory and subdirectories. Returns error count."""
     error_count = 0
@@ -327,6 +346,7 @@ def run(args: argparse.Namespace) -> bool:
     server_running = check_service_running()
 
     error_count = 0
+    error_count += _check_current_user()
     error_count += _check_data_directories(server_running=server_running)
     error_count += _check_required_files(server_running=server_running)
     error_count += _check_configuration_directories()

@@ -12,6 +12,13 @@ from quipucordsctl.commands import install
 from quipucordsctl.systemdunitparser import SystemdUnitParser
 
 
+@pytest.fixture(autouse=True)
+def not_root():
+    """Pretend not to be root so tests behave the same for any test runner user."""
+    with mock.patch.object(install.user_utils, "is_root", return_value=False):
+        yield
+
+
 @pytest.fixture
 def mock_shell_utils():
     """Mock the entire shell_utils module to prevent external program execution."""
@@ -89,6 +96,7 @@ def test_install_run(
         mock.patch.object(install, "reset_secrets") as reset_secrets,
         mock.patch.object(install, "systemctl_reload") as systemctl_reload,
         mock.patch.object(install, "loginctl_utils") as loginctl_utils,
+        mock.patch.object(install, "user_utils") as user_utils,
     ):
         reset_secrets.return_value = True
         loginctl_utils.enable_linger.return_value = True
@@ -97,6 +105,7 @@ def test_install_run(
 
         install.run(mock_args)
 
+        user_utils.ensure_not_root.assert_called_once()
         podman_utils.ensure_podman_socket.assert_called_once()
         podman_utils.ensure_cgroups_v2.assert_called_once()
         systemctl_utils.ensure_systemd_user_session.assert_called_once()
@@ -123,6 +132,24 @@ def test_install_run(
         parser = SystemdUnitParser()
         parser.read(str((systemd_dir / "quipucords-app.container")))
         assert parser[unit_override_section][unit_override_key] == unit_override_value
+
+
+def test_install_run_rejects_root():
+    """Test the "install" command refuses to run as root and does nothing else."""
+    mock_args = mock.Mock()
+
+    with (
+        mock.patch.object(install, "podman_utils") as podman_utils,
+        mock.patch.object(install, "systemctl_utils") as systemctl_utils,
+        mock.patch.object(install, "reset_secrets") as reset_secrets,
+        mock.patch.object(install.user_utils, "is_root", return_value=True),
+        pytest.raises(install.user_utils.RunningAsRootError),
+    ):
+        install.run(mock_args)
+
+    systemctl_utils.ensure_systemd_user_session.assert_not_called()
+    podman_utils.ensure_podman_socket.assert_not_called()
+    reset_secrets.assert_not_called()
 
 
 def test_reset_secrets_happy_path(caplog):

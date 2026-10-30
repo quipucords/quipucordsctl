@@ -10,6 +10,13 @@ from quipucordsctl import settings
 from quipucordsctl.commands import upgrade
 
 
+@pytest.fixture(autouse=True)
+def not_root():
+    """Pretend not to be root so tests behave the same for any test runner user."""
+    with mock.patch.object(upgrade.user_utils, "is_root", return_value=False):
+        yield
+
+
 def test_get_help():
     """Test the get_help returns an appropriate string."""
     assert "Upgrade" in upgrade.get_help()
@@ -117,6 +124,27 @@ def test_run_service_stop_fails(
     mock_args.timeout = 0
     mock_args.quiet = False
     assert not upgrade.run(mock_args)
+    mock_install_run.assert_not_called()
+    mock_pull_latest_images.assert_not_called()
+
+
+@mock.patch("quipucordsctl.commands.upgrade.pull_latest_images")
+@mock.patch("quipucordsctl.commands.upgrade.install.run")
+@mock.patch("quipucordsctl.commands.upgrade.systemctl_utils.stop_service")
+def test_run_rejects_root_before_stopping_service(
+    mock_stop_service, mock_install_run, mock_pull_latest_images
+):
+    """Test upgrade.run refuses to run as root without stopping the server first."""
+    mock_args = argparse.Namespace(no_pull=False, timeout=0, quiet=False)
+
+    with (
+        mock.patch.object(upgrade.user_utils, "is_root", return_value=True),
+        pytest.raises(upgrade.user_utils.RunningAsRootError),
+    ):
+        upgrade.run(mock_args)
+
+    # The whole point of checking here: stop_service() must not have run yet.
+    mock_stop_service.assert_not_called()
     mock_install_run.assert_not_called()
     mock_pull_latest_images.assert_not_called()
 
