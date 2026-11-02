@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+import pathlib
 import subprocess
 
 import pytest
@@ -174,6 +175,46 @@ def test_axes_reset_command_invokes_manage_py():
         "quipucords.settings",
     ]
     assert "axes_reset" not in settings.SERVER_AXES_RESET_USERNAME_COMMAND
+
+
+def test_axes_reset_names_are_not_rebranded_downstream():
+    """Test the server image's internal names survive the downstream rebranding.
+
+    "quipucordsctl.spec" rewrites SERVER_SOFTWARE_PACKAGE and ENV_VAR_PREFIX to
+    the downstream product's names, but the server image keeps its upstream
+    Python package and environment variables. Building these from the rebranded
+    constants gave "discovery/manage.py" and "--settings discovery.settings"
+    downstream, which fail with "No module named 'discovery'".
+    """
+    assert settings.SERVER_CONTAINER_PACKAGE == "quipucords"
+    assert settings.SERVER_CONTAINER_ENV_VAR_PREFIX == "QUIPUCORDS_"
+    for rebranded in (settings.SERVER_SOFTWARE_PACKAGE, settings.ENV_VAR_PREFIX):
+        assert rebranded not in settings.SERVER_AXES_RESET_USERNAME_COMMAND
+
+
+def test_admin_script_reads_the_container_env_var_from_the_template():
+    """Test the script reads the username variable the server container defines.
+
+    The .container template's "target=" name is the only env var the container
+    actually has. The spec rebrands the lowercase secret name on that line but
+    not the uppercase target, so deriving the name from the rebranded
+    ENV_VAR_PREFIX looked for an unset variable and failed every run downstream.
+    """
+    template = (
+        pathlib.Path(settings.__file__).parent
+        / "templates"
+        / "config"
+        / "quipucords-server.container"
+    ).read_text(encoding="utf-8")
+    secret_name = settings.QUIPUCORDS_SECRETS["username"]
+    target = next(
+        line.partition("target=")[2].strip()
+        for line in template.splitlines()
+        if line.startswith(f"Secret={secret_name},")
+    )
+
+    assert target == "QUIPUCORDS_SERVER_USERNAME"
+    assert f"${{{target}:?" in settings.SERVER_AXES_RESET_ADMIN_SCRIPT
 
 
 # conftest's autouse forbid_shell_utils_subprocess fixture blocks subprocess.Popen
