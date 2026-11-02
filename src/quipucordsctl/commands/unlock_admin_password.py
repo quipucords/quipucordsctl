@@ -54,10 +54,6 @@ def get_description() -> str:
             to the admin account after too many failed login attempts.
             Run the `%(command_name)s` command if you are locked out and cannot log in
             from your web browser or CLI, even with the correct password.
-            This command requires the server to be running because the lockout records
-            are stored in the server's database.
-            Only the admin account is unlocked; lockouts for other accounts and for
-            addresses that other accounts' failed logins blocked are left in place.
             """
         )
     ) % {

@@ -121,7 +121,7 @@ To reset the administrator username for the Quipucords web interface and CLI, us
 Unlocking the Administrator Login
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-After too many failed login attempts, Quipucords locks the account out, and correct credentials are rejected until the lockout expires. To clear the lockout immediately, use the ``unlock_admin_password`` command. Because the lockout records are stored in the Quipucords database, this command requires the server to be running. Resetting the administrator password with ``reset_admin_password`` also clears an existing lockout, but only after the server restarts and applies the new password; ``unlock_admin_password`` clears the lockout immediately on a running server without changing the password.
+After too many failed login attempts, Quipucords locks the account out, and correct credentials are rejected until the lockout expires. To clear the lockout immediately, use the ``unlock_admin_password`` command on a running server. Resetting the administrator password with ``reset_admin_password`` also clears an existing lockout, but only after the server restarts and applies the new password.
 
 ``quipucordsctl unlock_admin_password``
 
