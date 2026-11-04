@@ -9,6 +9,17 @@ SERVER_SOFTWARE_PACKAGE = "quipucords"  # used for constructing server's file pa
 SERVER_SOFTWARE_NAME = "Quipucords"  # server's user-facing "product" name
 ENV_VAR_PREFIX = "QUIPUCORDS_"  # used to construct env vars to bypass input prompts
 
+# The four names above are rebranded at RPM build time; see the "sed" calls in
+# "quipucordsctl.spec" that rewrite them to the downstream product's names. The
+# two names below must NOT be, because they refer to the server's
+# internal container image, which keeps its upstream names in every build: the Python
+# package is always "quipucords/" and the container's own environment variables
+# are always "QUIPUCORDS_*" (the spec rebrands the lowercase "quipucords" secret
+# names in the .container templates, but not their uppercase "target=" env vars).
+# Never build container-internal names from the rebranded constants above.
+SERVER_CONTAINER_PACKAGE = "quipucords"  # Python package inside the server image
+SERVER_CONTAINER_ENV_VAR_PREFIX = "QUIPUCORDS_"  # env vars inside the server image
+
 COMMANDS_PACKAGE_PATH = str(pathlib.Path(__file__).parent.resolve() / "commands")
 
 DEFAULT_LOG_LEVEL = logging.WARNING
@@ -107,6 +118,46 @@ SYSTEMCTL_USER_IS_FAILED_QUIPUCORDS_APP = [
     "is-failed",
     f"{SERVER_SOFTWARE_PACKAGE}-app",
 ]
+
+# The container that runs the Django server, and how to invoke its manage.py.
+# The container name IS rebranded downstream, because it comes from ContainerName
+# in the "quipucords-server.container" template, which the spec renames. The paths
+# below are NOT, because they are internal to the server image; see the note on
+# SERVER_CONTAINER_PACKAGE above.
+# The server's container image has no entrypoint, puts its venv first on PATH, and
+# uses /app as its working directory, so plain "python" and a relative path work here.
+SERVER_CONTAINER_NAME = f"{SERVER_SOFTWARE_PACKAGE}-server"
+SERVER_MANAGE_COMMAND = [
+    "python",
+    f"{SERVER_CONTAINER_PACKAGE}/manage.py",
+]
+SERVER_DJANGO_SETTINGS_ARGS = ["--settings", f"{SERVER_CONTAINER_PACKAGE}.settings"]
+# django-axes command that clears login lockouts for specific usernames, which the
+# caller must append. Lockouts live in the database, so this only needs the server
+# container running to reach its DB connection. We deliberately use the username-scoped
+# command instead of the unqualified "axes_reset" because the latter also deletes every
+# other account's and source address's lockouts, discarding brute-force protection the
+# admin never asked us to touch.
+SERVER_AXES_RESET_USERNAME_COMMAND = [
+    *SERVER_MANAGE_COMMAND,
+    "axes_reset_username",
+    *SERVER_DJANGO_SETTINGS_ARGS,
+]
+# Resolve the admin username inside the container instead of reading its podman
+# secret on the host. The host read would pick up the newline that "podman secret
+# inspect --format" appends, and would see a secret changed after the server
+# started, whereas the server keeps using the username it was given at startup.
+# The management command arrives as "$@" and the username never leaves the
+# container, so nothing is interpolated into this script. ":?" fails loudly
+# rather than resetting the empty username, which axes reports as a success.
+# The variable read here is the container's own, named by "target=" in the
+# .container template, so it uses the container prefix and not ENV_VAR_PREFIX
+# (which names the host-side variables that bypass this program's prompts, and
+# which is rebranded downstream). Only the message text is rebranded.
+SERVER_AXES_RESET_ADMIN_SCRIPT = (
+    f'exec "$@" -- "${{{SERVER_CONTAINER_ENV_VAR_PREFIX}SERVER_USERNAME:?'
+    f'not set in the {SERVER_SOFTWARE_PACKAGE} server container}}"'
+)
 
 # podman secrets we use
 QUIPUCORDS_SECRETS = {
