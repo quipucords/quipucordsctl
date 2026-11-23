@@ -9,8 +9,6 @@ agents["failFast"] = false
             timestamps {
                 stage("[${distro_label}] Setup test environment") {
                     echo "Setting up Quipucordsctl PR tests"
-                    // Set USE_CTL=true to use ctl instead of installer
-                    env.USE_CTL = "true"
                     discoveryLib.setupCIEnv()
                 }
                 stage("[${distro_label}] Run tests") {
