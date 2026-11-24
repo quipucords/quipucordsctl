@@ -42,6 +42,7 @@ help:
 	@echo "  lint                to run all linters"
 	@echo "  lint-ruff           to run ultrafast ruff linter"
 	@echo "  lint-docs           to run rstcheck and mandoc lint against docs"
+	@echo "  auto-fix            to run linter auto-fix commands"
 	@echo "  check-requirements  to check all python dependencies"
 	@echo "  lock-requirements   to lock all python dependencies"
 	@echo "  update-requirements to update all python dependencies"
@@ -118,6 +119,19 @@ lint-docs:
 	uv run rstcheck docs/source/man-template.rst
 	uv run rstcheck docs/_build/man-quipucordsctl.rst
 	mandoc -T lint -W warning docs/_build/quipucordsctl.1
+
+# auto-fix code using multiple linter commands.
+# We invoke ruff multiple times because: https://docs.astral.sh/ruff/formatter/#sorting-imports
+# "In order to both sort imports and format, call the Ruff linter and then the formatter"
+# The sequence is a ;-chained command with status checks so one command doesn't block another from running.
+.PHONY: auto-fix
+auto-fix:
+	@final_status=0; \
+	uv run ruff check --select I --fix src/; status=$$?; \
+	if [ $$status -ne 0 ]; then final_status=$$status; fi; \
+	uv run ruff format src/; status=$$?; \
+	if [ $$status -ne 0 ]; then final_status=$$status; fi; \
+	exit $$final_status
 
 # Man page generation targets
 
