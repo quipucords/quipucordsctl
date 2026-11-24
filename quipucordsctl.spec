@@ -1,11 +1,11 @@
 ###############################################################
 %global product_name_lower quipucords
 %global product_name_title Quipucords
-%global server_image quay.io/quipucords/quipucords:2.9
-%global ui_image quay.io/quipucords/quipucords-ui:2.9
+%global server_image quay.io/quipucords/quipucords:2.10
+%global ui_image quay.io/quipucords/quipucords-ui:2.10
 ###############################################################
 
-%global version_ctl 2.9.0
+%global version_ctl 2.10.0
 %global templates_dir src/quipucordsctl/templates
 %global product_name_upper %(echo %{product_name_lower} | tr '[:lower:]' '[:upper:]')
 
