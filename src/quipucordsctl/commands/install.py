@@ -4,6 +4,7 @@ import argparse
 import configparser
 import logging
 import pathlib
+import platform
 import stat
 import subprocess
 import textwrap
@@ -46,6 +47,30 @@ INSTALL_SUCCESS_NO_START_MESSAGE = _(
 
 
 logger = logging.getLogger(__name__)
+
+RHEL8_DEPRECATION_WARNING = _(
+    "You are installing %(server_software_name)s on RHEL 8. "
+    "Support for RHEL 8 is deprecated and will be removed in an upcoming release. "
+    "Please consider upgrading to RHEL 9 or later."
+)
+
+
+def is_rhel8() -> bool:
+    """Return True if the host OS is RHEL 8."""
+    try:
+        info = platform.freedesktop_os_release()
+    except OSError:
+        return False
+    return info.get("ID") == "rhel" and info.get("VERSION", "").startswith("8.")
+
+
+def warn_if_rhel8() -> None:
+    """Log a deprecation warning if running on RHEL 8."""
+    if is_rhel8():
+        logger.warning(
+            RHEL8_DEPRECATION_WARNING,
+            {"server_software_name": settings.SERVER_SOFTWARE_NAME},
+        )
 
 
 def get_display_group() -> argparse_utils.DisplayGroups:
@@ -392,6 +417,7 @@ def start_server(args: argparse.Namespace) -> bool:
 def run(args: argparse.Namespace) -> bool:
     """Install and start the server, ensuring requirements are met."""
     logger.debug("Starting install command")
+    warn_if_rhel8()
     user_utils.ensure_not_root()
     systemctl_utils.ensure_systemd_user_session()
     podman_utils.ensure_podman_socket()

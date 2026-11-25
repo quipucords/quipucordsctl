@@ -384,3 +384,47 @@ def test_install_run_fails_when_start_service_fails(
 
         assert result is False
         mock_systemctl_utils.start_service.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "os_release_info,expected",
+    (
+        ({"ID": "rhel", "VERSION": "8.10"}, True),
+        ({"ID": "rhel", "VERSION": "8.0"}, True),
+        ({"ID": "rhel", "VERSION": "80"}, False),
+        ({"ID": "rhel", "VERSION": "9.4"}, False),
+        ({"ID": "rhel", "VERSION": "10"}, False),
+        ({"ID": "fedora", "VERSION": "41"}, False),
+        ({}, False),
+    ),
+)
+def test_is_rhel8(os_release_info, expected):
+    """Test is_rhel8 correctly identifies RHEL 8."""
+    with mock.patch("platform.freedesktop_os_release", return_value=os_release_info):
+        assert install.is_rhel8() is expected
+
+
+def test_is_rhel8_missing_file():
+    """Test is_rhel8 returns False when os-release file does not exist."""
+    with mock.patch("platform.freedesktop_os_release", side_effect=OSError):
+        assert install.is_rhel8() is False
+
+
+def test_warn_if_rhel8_logs_warning(caplog):
+    """Test warn_if_rhel8 emits a warning on RHEL 8."""
+    with (
+        caplog.at_level(logging.WARNING),
+        mock.patch.object(install, "is_rhel8", return_value=True),
+    ):
+        install.warn_if_rhel8()
+    assert "deprecated" in caplog.text.lower()
+
+
+def test_warn_if_rhel8_no_warning_on_non_rhel8(caplog):
+    """Test warn_if_rhel8 emits no warning on non-RHEL-8 hosts."""
+    with (
+        caplog.at_level(logging.WARNING),
+        mock.patch.object(install, "is_rhel8", return_value=False),
+    ):
+        install.warn_if_rhel8()
+    assert "deprecated" not in caplog.text.lower()
